@@ -1,0 +1,166 @@
+{
+  "id": "CRK-N64H-1788612499777",
+  "code": "CRK-N64H",
+  "matchName": "ll",
+  "hostPhone": "91999999999",
+  "savedAt": 1788612499779,
+  "status": "completed",
+  "result": {
+    "winner": "team2",
+    "winnerName": "Team 2",
+    "summary": "Team 2 won by 10 wickets"
+  },
+  "teams": {
+    "team1": {
+      "name": "Team 1",
+      "players": [
+        "virat",
+        "Abchdjrud"
+      ]
+    },
+    "team2": {
+      "name": "Team 2",
+      "players": [
+        "Kaksksk",
+        "kohli"
+      ]
+    }
+  },
+  "overs": 20,
+  "toss": {
+    "winner": "team1",
+    "choice": "bat"
+  },
+  "battingFirst": "team1",
+  "location": {
+    "text": "hiii",
+    "mapUrl": "https://maps.app.goo.gl/bsRkUpcnueGGt1CN6"
+  },
+  "innings": [
+    {
+      "battingTeam": "team1",
+      "bowlingTeam": "team2",
+      "runs": 12,
+      "wickets": 1,
+      "overs": 1,
+      "balls": 7,
+      "extras": {
+        "wide": 0,
+        "noBall": 0,
+        "bye": 0,
+        "legBye": 0
+      },
+      "batsmen": [
+        {
+          "name": "virat",
+          "runs": 12,
+          "balls": 6,
+          "fours": 0,
+          "sixes": 2,
+          "out": true,
+          "dismissal": "out"
+        },
+        {
+          "name": "Abchdjrud",
+          "runs": 0,
+          "balls": 1,
+          "fours": 0,
+          "sixes": 0,
+          "out": false,
+          "dismissal": ""
+        }
+      ],
+      "bowlers": [
+        {
+          "name": "kohli",
+          "overs": 1,
+          "maidens": 0,
+          "runs": 12,
+          "wickets": 1
+        },
+        {
+          "name": "Kaksksk",
+          "overs": 0,
+          "maidens": 0,
+          "runs": 0,
+          "wickets": 0
+        }
+      ],
+      "currentBatsmen": [
+        1,
+        0
+      ],
+      "currentBowler": 1,
+      "ballLog": [
+        [
+          "6",
+          "6",
+          "W",
+          "0",
+          "0",
+          "0"
+        ]
+      ],
+      "currentOver": [
+        "0"
+      ],
+      "target": null,
+      "completed": true,
+      "awaitingNewBowler": false,
+      "lastBowlerIdx": 0,
+      "awaitingNewBatsman": false
+    },
+    {
+      "battingTeam": "team2",
+      "bowlingTeam": "team1",
+      "runs": 15,
+      "wickets": 0,
+      "overs": 0,
+      "balls": 3,
+      "extras": {
+        "wide": 0,
+        "noBall": 0,
+        "bye": 0,
+        "legBye": 0
+      },
+      "batsmen": [
+        {
+          "name": "kohli",
+          "runs": 15,
+          "balls": 3,
+          "fours": 1,
+          "sixes": 1,
+          "out": false,
+          "dismissal": ""
+        }
+      ],
+      "bowlers": [
+        {
+          "name": "virat",
+          "overs": 0,
+          "maidens": 0,
+          "runs": 15,
+          "wickets": 0
+        }
+      ],
+      "currentBatsmen": [
+        0,
+        null
+      ],
+      "currentBowler": 0,
+      "ballLog": [],
+      "currentOver": [
+        "6",
+        "5",
+        "4"
+      ],
+      "target": 13,
+      "completed": true,
+      "awaitingNewBowler": false,
+      "lastBowlerIdx": null,
+      "isSingleBatter": true,
+      "awaitingNewBatsman": false
+    }
+  ],
+  "announcements": []
+}

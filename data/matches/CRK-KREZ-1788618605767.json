@@ -1,0 +1,153 @@
+{
+  "id": "CRK-KREZ-1788618605767",
+  "code": "CRK-KREZ",
+  "matchName": "aa",
+  "hostPhone": "91111111111",
+  "savedAt": 1788618605768,
+  "status": "completed",
+  "result": {
+    "winner": "team1",
+    "winnerName": "Team 1",
+    "summary": "Team 1 won by 12 runs"
+  },
+  "teams": {
+    "team1": {
+      "name": "Team 1",
+      "players": [
+        "aq",
+        "ok"
+      ]
+    },
+    "team2": {
+      "name": "Team 2",
+      "players": [
+        "kohli"
+      ]
+    }
+  },
+  "overs": 20,
+  "toss": {
+    "winner": "team2",
+    "choice": "bowl"
+  },
+  "battingFirst": "team1",
+  "location": {
+    "text": "",
+    "mapUrl": ""
+  },
+  "innings": [
+    {
+      "battingTeam": "team1",
+      "bowlingTeam": "team2",
+      "runs": 12,
+      "wickets": 2,
+      "overs": 0,
+      "balls": 4,
+      "extras": {
+        "wide": 0,
+        "noBall": 0,
+        "bye": 0,
+        "legBye": 0
+      },
+      "batsmen": [
+        {
+          "name": "aq",
+          "runs": 12,
+          "balls": 3,
+          "fours": 0,
+          "sixes": 2,
+          "out": true,
+          "dismissal": "out"
+        },
+        {
+          "name": "ok",
+          "runs": 0,
+          "balls": 1,
+          "fours": 0,
+          "sixes": 0,
+          "out": true,
+          "dismissal": "out"
+        }
+      ],
+      "bowlers": [
+        {
+          "name": "kohli",
+          "overs": 0,
+          "maidens": 0,
+          "runs": 12,
+          "wickets": 2
+        }
+      ],
+      "currentBatsmen": [
+        null,
+        null
+      ],
+      "currentBowler": 0,
+      "ballLog": [],
+      "currentOver": [
+        "6",
+        "6",
+        "W",
+        "W"
+      ],
+      "target": null,
+      "completed": true,
+      "awaitingNewBowler": false,
+      "awaitingNewBatsman": false,
+      "dismissedBatsmanIdx": 1,
+      "isSingleBatter": true,
+      "lastBowlerIdx": null
+    },
+    {
+      "battingTeam": "team2",
+      "bowlingTeam": "team1",
+      "runs": 0,
+      "wickets": 1,
+      "overs": 0,
+      "balls": 1,
+      "extras": {
+        "wide": 0,
+        "noBall": 0,
+        "bye": 0,
+        "legBye": 0
+      },
+      "batsmen": [
+        {
+          "name": "kohli",
+          "runs": 0,
+          "balls": 1,
+          "fours": 0,
+          "sixes": 0,
+          "out": true,
+          "dismissal": "out"
+        }
+      ],
+      "bowlers": [
+        {
+          "name": "aq",
+          "overs": 0,
+          "maidens": 0,
+          "runs": 0,
+          "wickets": 1
+        }
+      ],
+      "currentBatsmen": [
+        null,
+        null
+      ],
+      "currentBowler": 0,
+      "ballLog": [],
+      "currentOver": [
+        "W"
+      ],
+      "target": 13,
+      "completed": true,
+      "awaitingNewBowler": false,
+      "awaitingNewBatsman": false,
+      "dismissedBatsmanIdx": 0,
+      "isSingleBatter": true,
+      "lastBowlerIdx": null
+    }
+  ],
+  "announcements": []
+}

@@ -1,0 +1,151 @@
+{
+  "id": "CRK-RUJK-1788617639924",
+  "code": "CRK-RUJK",
+  "matchName": "2-Player Small Match",
+  "hostPhone": "919999900050",
+  "savedAt": 1788617639924,
+  "status": "completed",
+  "result": {
+    "winner": "team2",
+    "winnerName": "Small Team B",
+    "summary": "Small Team B won by 10 wickets"
+  },
+  "teams": {
+    "team1": {
+      "name": "Small Team A",
+      "players": [
+        "Player One",
+        "Player Two"
+      ]
+    },
+    "team2": {
+      "name": "Small Team B",
+      "players": [
+        "Opponent Bowler"
+      ]
+    }
+  },
+  "overs": 1,
+  "toss": {
+    "winner": "team1",
+    "choice": "bat"
+  },
+  "battingFirst": "team1",
+  "location": {
+    "text": "",
+    "mapUrl": ""
+  },
+  "innings": [
+    {
+      "battingTeam": "team1",
+      "bowlingTeam": "team2",
+      "runs": 4,
+      "wickets": 1,
+      "overs": 0,
+      "balls": 2,
+      "extras": {
+        "wide": 0,
+        "noBall": 0,
+        "bye": 0,
+        "legBye": 0
+      },
+      "batsmen": [
+        {
+          "name": "Player One",
+          "runs": 0,
+          "balls": 1,
+          "fours": 0,
+          "sixes": 0,
+          "out": true,
+          "dismissal": "bowled"
+        },
+        {
+          "name": "Player Two",
+          "runs": 4,
+          "balls": 1,
+          "fours": 1,
+          "sixes": 0,
+          "out": false,
+          "dismissal": ""
+        }
+      ],
+      "bowlers": [
+        {
+          "name": "Opponent Bowler",
+          "overs": 0,
+          "maidens": 0,
+          "runs": 4,
+          "wickets": 1
+        }
+      ],
+      "currentBatsmen": [
+        1,
+        null
+      ],
+      "currentBowler": 0,
+      "ballLog": [],
+      "currentOver": [
+        "W",
+        "4"
+      ],
+      "target": null,
+      "completed": true,
+      "awaitingNewBowler": false,
+      "awaitingNewBatsman": false,
+      "dismissedBatsmanIdx": 0,
+      "isSingleBatter": true,
+      "lastBowlerIdx": null
+    },
+    {
+      "battingTeam": "team2",
+      "bowlingTeam": "team1",
+      "runs": 6,
+      "wickets": 0,
+      "overs": 0,
+      "balls": 1,
+      "extras": {
+        "wide": 0,
+        "noBall": 0,
+        "bye": 0,
+        "legBye": 0
+      },
+      "batsmen": [
+        {
+          "name": "Opponent Bowler",
+          "runs": 6,
+          "balls": 1,
+          "fours": 0,
+          "sixes": 1,
+          "out": false,
+          "dismissal": ""
+        }
+      ],
+      "bowlers": [
+        {
+          "name": "Player Two",
+          "overs": 0,
+          "maidens": 0,
+          "runs": 6,
+          "wickets": 0
+        }
+      ],
+      "currentBatsmen": [
+        0,
+        null
+      ],
+      "currentBowler": 0,
+      "ballLog": [],
+      "currentOver": [
+        "6"
+      ],
+      "target": 5,
+      "completed": true,
+      "awaitingNewBowler": false,
+      "awaitingNewBatsman": false,
+      "dismissedBatsmanIdx": null,
+      "isSingleBatter": true,
+      "lastBowlerIdx": null
+    }
+  ],
+  "announcements": []
+}

@@ -1,0 +1,1336 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#080c14" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>CricketHub — Plan, Play & Score</title>
+  <meta name="description"
+    content="Real-time cricket match planner, availability voting, and score tracker. Login with phone, vote on availability, and track every ball live." />
+  <link rel="manifest" href="/manifest.json" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Rajdhani:wght@400;500;600;700&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="style.css?v=2.9.12" />
+</head>
+
+<body>
+
+  <!-- ════════════════════════════════════════════
+     SCREEN 1 — AUTH (Phone + OTP)
+════════════════════════════════════════════ -->
+  <div id="screen-auth" class="screen active">
+    <div class="landing-bg">
+      <div class="bg-orb orb1"></div>
+      <div class="bg-orb orb2"></div>
+      <div class="bg-orb orb3"></div>
+    </div>
+
+    <div class="auth-content">
+      <div class="logo-wrap">
+        <div class="logo-icon">🏏</div>
+        <h1 class="logo-text">CricketHub</h1>
+        <p class="logo-tagline">Plan · Vote · Play · Score</p>
+      </div>
+
+      <!-- Auth Mode Switcher (Log In vs Sign Up) -->
+      <div class="auth-tabs" id="auth-mode-tabs">
+        <button type="button" class="auth-tab-btn active" id="auth-tab-login" onclick="setAuthMode('login')">🔑 Log
+          In</button>
+        <button type="button" class="auth-tab-btn" id="auth-tab-signup" onclick="setAuthMode('signup')">✨ Sign
+          Up</button>
+      </div>
+
+      <!-- Step 1: Phone (Login) or Name + Phone (Sign Up) -->
+      <div class="auth-card glass-card" id="auth-step-phone">
+        <h2 class="auth-title" id="auth-title">Welcome Back! 🏏</h2>
+        <p class="auth-subtitle" id="auth-subtitle">Enter your mobile number to receive your login OTP</p>
+
+        <div class="form-group" id="auth-group-name" style="display:none">
+          <label>Player Full Name</label>
+          <input type="text" id="auth-name" placeholder="e.g. Virat Kohli" maxlength="30" autocomplete="name" />
+        </div>
+
+        <div class="form-group">
+          <label>Mobile Phone Number</label>
+          <div class="phone-input-wrap">
+            <select id="auth-country-code" class="country-code-select">
+              <option value="91">🇮🇳 +91</option>
+              <option value="1">🇺🇸 +1</option>
+              <option value="44">🇬🇧 +44</option>
+              <option value="61">🇦🇺 +61</option>
+              <option value="92">🇵🇰 +92</option>
+              <option value="94">🇱🇰 +94</option>
+              <option value="880">🇧🇩 +880</option>
+              <option value="27">🇿🇦 +27</option>
+            </select>
+            <input type="tel" id="auth-phone" placeholder="98765 43210" maxlength="12" autocomplete="tel" />
+          </div>
+        </div>
+
+        <button class="btn btn-primary btn-full" id="btn-send-otp" onclick="sendOtp()">
+          <span id="btn-send-otp-text">Send Login OTP 📲</span>
+        </button>
+
+        <div class="auth-privacy-guarantee">
+          <span>🛡️ <strong>Privacy Shield</strong> · Phone numbers are encrypted and masked from other players.</span>
+        </div>
+      </div>
+
+      <!-- Step 2: OTP Verification -->
+      <div class="auth-card glass-card" id="auth-step-otp" style="display:none">
+        <button class="back-btn" id="btn-back-to-phone" onclick="backToPhoneStep()">← Back</button>
+        <h2 class="auth-title">Verify OTP</h2>
+        <p class="auth-subtitle" id="otp-sent-to">Sent to your number</p>
+
+        <!-- Verification Code banner (1-click tap to autofill directly inside OTP step) -->
+        <div class="dev-otp-banner" id="dev-otp-banner" onclick="autofillDevOtp()" style="display:none;cursor:pointer;margin:0.5rem 0 1rem 0">
+          <div class="dev-otp-label">🔐 Verification Code (Dev Mode · Tap to Auto-fill)</div>
+          <div class="dev-otp-code" id="dev-otp-code">------</div>
+          <div class="dev-otp-note">✨ Tap anywhere on this card to auto-enter & verify</div>
+        </div>
+
+        <div class="otp-inputs" id="otp-inputs">
+          <input type="tel" class="otp-digit" maxlength="1" id="otp-0" />
+          <input type="tel" class="otp-digit" maxlength="1" id="otp-1" />
+          <input type="tel" class="otp-digit" maxlength="1" id="otp-2" />
+          <span class="otp-sep">—</span>
+          <input type="tel" class="otp-digit" maxlength="1" id="otp-3" />
+          <input type="tel" class="otp-digit" maxlength="1" id="otp-4" />
+          <input type="tel" class="otp-digit" maxlength="1" id="otp-5" />
+        </div>
+
+        <div class="otp-status-row" style="display:flex;justify-content:space-between;align-items:center;margin:0.75rem 0 0.5rem 0;font-size:0.8rem">
+          <div class="otp-timer" id="otp-timer" style="margin:0;color:var(--text-3)">Expires in <span id="otp-countdown" style="font-weight:700;color:var(--primary)">5:00</span></div>
+          <div id="otp-resend-info" style="color:var(--text-3);font-size:0.75rem">Request 1/5</div>
+        </div>
+
+        <button class="btn btn-primary btn-full" id="btn-verify-otp" onclick="verifyOtp()">Verify & Continue ✅</button>
+        <button class="btn btn-ghost btn-full" id="btn-resend-otp" onclick="resendOtp()" style="margin-top:0.5rem">📲 Resend OTP</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════
+     SCREEN 2 — HOME (Create / Join)
+════════════════════════════════════════════ -->
+  <div id="screen-home" class="screen">
+    <div class="landing-bg">
+      <div class="bg-orb orb1"></div>
+      <div class="bg-orb orb2"></div>
+    </div>
+
+    <header class="app-header">
+      <span class="header-logo">🏏 CricketHub</span>
+      <div class="header-right">
+        <button class="btn btn-ghost btn-sm" id="btn-home-players-dir">👥 Players</button>
+        <div class="user-info-header" id="home-user-info" title="View My Profile" style="cursor:pointer"></div>
+        <button class="btn btn-ghost btn-sm" id="btn-logout">Logout</button>
+      </div>
+    </header>
+
+    <div class="home-content">
+      <div class="home-greeting" id="home-greeting">Welcome back! 👋</div>
+      <p class="home-sub">Ready to plan your next match?</p>
+
+      <div id="home-notif-banner" class="glass-card"
+        style="margin-bottom:1.25rem;padding:0.85rem 1rem;display:flex;align-items:center;justify-content:space-between;gap:0.75rem;border-left:3px solid var(--primary);border-radius:var(--radius-md)">
+        <div id="home-notif-text" style="font-size:0.85rem;color:var(--text-2);flex:1">
+          🔔 <strong>Push Notifications:</strong> Get real-time match alerts and squad pings even when using other apps!
+        </div>
+        <div id="home-notif-actions" style="display:flex;gap:0.5rem;align-items:center">
+          <button class="btn btn-primary btn-sm" id="btn-enable-notifs" style="white-space:nowrap">Enable 🔔</button>
+        </div>
+      </div>
+
+      <!-- Active Saved Room Resume Card -->
+      <div id="home-active-room-banner" class="glass-card active-room-banner" style="display:none">
+        <div class="active-room-info">
+          <div class="active-room-header-row">
+            <span class="pulse-dot"></span>
+            <span class="active-room-status-badge">Planning In Progress (Saved)</span>
+            <span class="room-badge" id="home-active-room-code">CRK-XXXX</span>
+          </div>
+          <div class="active-room-name" id="home-active-room-name">Match Planning</div>
+          <div class="active-room-sub" id="home-active-room-sub">All RSVPs and planning details are safely preserved.
+          </div>
+        </div>
+        <button class="btn btn-primary btn-sm" id="btn-resume-active-room" onclick="resumeActiveRoom()"
+          style="white-space:nowrap;padding:0.65rem 1.25rem;font-weight:700">
+          🏏 Return to Match →
+        </button>
+      </div>
+
+      <!-- Home Quick Broadcast Alert Card -->
+      <div class="glass-card home-alert-box" id="home-alert-box">
+        <div class="home-alert-box-header">
+          <div class="home-alert-box-title">
+            <span style="font-size:1.35rem">📢</span>
+            <div>
+              <h2>Send Match Alert</h2>
+              <p>Ping all squad members and friends on their lockscreen instantly</p>
+            </div>
+          </div>
+          <span
+            style="background:rgba(255,183,77,0.15);color:var(--warning);border:1px solid rgba(255,183,77,0.3);font-size:0.75rem;padding:0.2rem 0.55rem;border-radius:12px;font-weight:600;white-space:nowrap">⚡
+            Instant Push</span>
+        </div>
+        <div class="home-alert-inputs">
+          <input type="text" id="home-broadcast-msg"
+            placeholder="e.g. Cricket match today at 5 PM! Confirm who is playing..." maxlength="120" />
+          <button class="btn btn-warning" id="btn-home-broadcast-alert"
+            style="white-space:nowrap;padding:0.65rem 1.25rem;font-weight:700">
+            ⚡ Send Alert 🚀
+          </button>
+        </div>
+      </div>
+
+      <div class="home-cards">
+        <!-- Create -->
+        <div class="glass-card home-card">
+          <div class="card-icon">⚡</div>
+          <h2>Create Match Room</h2>
+          <p>Start a planning room, invite your squad, vote on availability</p>
+          <div class="form-group">
+            <label>Match Name</label>
+            <input type="text" id="home-match-name" placeholder="e.g. Sunday League Final" maxlength="50" />
+          </div>
+          <button class="btn btn-primary btn-full" id="btn-home-create">Create Room 🏏</button>
+        </div>
+
+        <div class="divider-or"><span>OR</span></div>
+
+        <!-- Join -->
+        <div class="glass-card home-card">
+          <div class="card-icon">🎯</div>
+          <h2>Join a Room</h2>
+          <p>Enter the room code shared by the match organiser</p>
+          <div class="form-group">
+            <label>Room Code</label>
+            <input type="text" id="home-join-code" placeholder="CRK-A7X2" maxlength="8" class="code-input" />
+          </div>
+          <button class="btn btn-secondary btn-full" id="btn-home-join">Join Room 🎯</button>
+        </div>
+      </div>
+
+      <!-- Match History & Profile Actions -->
+      <div class="home-history-wrap" style="display:flex;gap:0.75rem;justify-content:center;flex-wrap:wrap">
+        <button class="btn btn-secondary btn-history" id="btn-open-my-profile-home">
+          👤 My Profile
+        </button>
+        <button class="btn btn-secondary btn-history" id="btn-open-players-dir-home">
+          👥 Player Directory
+        </button>
+        <button class="btn btn-ghost btn-history" id="btn-open-history">
+          📜 Past Match History
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════
+     SCREEN 3 — PLANNING / RSVP
+════════════════════════════════════════════ -->
+  <div id="screen-planning" class="screen">
+    <header class="app-header">
+      <div class="header-left">
+        <button class="btn btn-ghost btn-sm btn-planning-back" id="btn-planning-back" onclick="leavePlanningToHome()"
+          title="Back to Rooms Dashboard (Match is Saved)">
+          ← <span class="btn-hdr-text">Rooms</span>
+        </button>
+        <span class="header-logo"><span class="hdr-logo-icon">🏏</span><span
+            class="hdr-logo-text">CricketHub</span></span>
+        <div class="room-badge" id="planning-room-code"></div>
+      </div>
+      <div class="header-right">
+        <button class="btn btn-ghost btn-sm" id="btn-planning-players-dir">👥 <span
+            class="btn-hdr-text">Players</span></button>
+        <button class="btn btn-ghost btn-sm" id="btn-copy-planning-code">📋 <span
+            class="btn-hdr-text">Share</span></button>
+        <div class="user-badge" id="planning-user-badge" title="View My Profile" style="cursor:pointer"></div>
+      </div>
+    </header>
+
+    <div class="planning-layout">
+
+      <!-- ── LEFT: Match info + Summary ── -->
+      <aside class="planning-sidebar">
+
+        <div class="panel">
+          <div class="planning-match-title" id="planning-match-name">Match Name</div>
+          <div class="planning-match-sub">Planning Phase</div>
+
+          <!-- RSVP Stats -->
+          <div class="rsvp-stats" id="rsvp-stats">
+            <div class="rsvp-stat coming">
+              <div class="rsvp-stat-num" id="stat-coming">0</div>
+              <div class="rsvp-stat-lbl">Coming</div>
+            </div>
+            <div class="rsvp-stat maybe">
+              <div class="rsvp-stat-num" id="stat-maybe">0</div>
+              <div class="rsvp-stat-lbl">Maybe</div>
+            </div>
+            <div class="rsvp-stat not-coming">
+              <div class="rsvp-stat-num" id="stat-not-coming">0</div>
+              <div class="rsvp-stat-lbl">Not Coming</div>
+            </div>
+            <div class="rsvp-stat no-vote">
+              <div class="rsvp-stat-num" id="stat-no-vote">0</div>
+              <div class="rsvp-stat-lbl">Pending</div>
+            </div>
+          </div>
+
+          <!-- Host proceed button -->
+          <button class="btn btn-primary btn-full" id="btn-proceed-setup" style="display:none">
+            ⚙️ Proceed to Match Setup →
+          </button>
+        </div>
+
+        <!-- My Vote -->
+        <div class="panel my-vote-panel" id="my-vote-panel">
+          <div class="panel-header">
+            <h3>🗳️ My Availability</h3>
+          </div>
+
+          <div class="vote-buttons">
+            <button class="vote-btn coming" id="vote-coming" onclick="castVote('coming')">
+              <span class="vote-emoji">✅</span>
+              <span>Coming</span>
+            </button>
+            <button class="vote-btn maybe" id="vote-maybe" onclick="castVote('maybe')">
+              <span class="vote-emoji">🤔</span>
+              <span>Maybe</span>
+            </button>
+            <button class="vote-btn not-coming" id="vote-not-coming" onclick="castVote('not_coming')">
+              <span class="vote-emoji">❌</span>
+              <span>Can't Come</span>
+            </button>
+          </div>
+
+          <div class="form-group" style="margin-top:0.75rem">
+            <label>Comment (optional)</label>
+            <input type="text" id="vote-comment" placeholder="e.g. Might be 30 min late..." maxlength="100" />
+          </div>
+          <button class="btn btn-ghost btn-sm" id="btn-save-comment" style="margin-top:0.4rem;width:100%">
+            💬 Save Comment
+          </button>
+        </div>
+
+        <!-- Match Date & Time / Calendar Picker -->
+        <div class="panel" id="planning-datetime-panel">
+          <div class="panel-header">
+            <h3>📅 Match Schedule</h3>
+          </div>
+          <div id="planning-date-display" class="schedule-display" style="display:none"></div>
+          <div id="planning-date-form" class="schedule-form">
+            <div class="form-group">
+              <label>Match Date</label>
+              <input type="date" id="planning-date-input" />
+            </div>
+            <div class="form-group" style="margin-top:0.4rem">
+              <label>Match Time</label>
+              <input type="time" id="planning-time-input" />
+            </div>
+            <button class="btn btn-secondary btn-full btn-sm" id="btn-save-planning-date" style="margin-top:0.6rem">
+              📅 Save Match Schedule
+            </button>
+          </div>
+        </div>
+
+        <!-- Alert Squad Panel (Ping Members) -->
+        <div class="panel host-ping-panel" id="host-ping-panel">
+          <div class="panel-header">
+            <h3>🔔 Ping Squad</h3>
+          </div>
+          <p class="panel-subtext">Send an instant alert to all squad members to confirm their availability.</p>
+          <div class="form-group" style="margin-top:0.4rem">
+            <input type="text" id="nudge-custom-msg" placeholder="Optional message (e.g. need final count by 8pm)..."
+              maxlength="120" />
+          </div>
+          <button class="btn btn-warning btn-full btn-sm" id="btn-nudge-all" style="margin-top:0.4rem">
+            ⚡ Send Alert to Squad
+          </button>
+        </div>
+
+        <!-- Match Venue & Google Maps Location Panel -->
+        <div class="panel" id="planning-location-panel">
+          <div class="panel-header">
+            <h3>📍 Venue & Google Maps</h3>
+          </div>
+          <div id="planning-location-display" class="schedule-display" style="display:none"></div>
+          <div id="planning-location-form" class="schedule-form">
+            <div class="form-group">
+              <label>Ground / Venue Name</label>
+              <input type="text" id="planning-loc-text" placeholder="e.g. Gymkhana Cricket Ground, Gate 2"
+                maxlength="100" />
+            </div>
+            <div class="form-group" style="margin-top:0.4rem">
+              <label>Google Maps Link / URL</label>
+              <input type="text" id="planning-loc-map" placeholder="https://maps.google.com/?q=..." maxlength="300" />
+            </div>
+            <div class="planning-loc-actions" style="display:flex;flex-direction:column;gap:0.45rem;margin-top:0.6rem">
+              <button class="btn btn-secondary btn-full btn-sm" id="btn-save-planning-loc">
+                📍 Save Venue Location
+              </button>
+              <button class="btn btn-ghost btn-full btn-sm" id="btn-search-gmaps" title="Open search in Google Maps">
+                🗺️ Search in Google Maps
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Announcements -->
+        <div class="panel">
+          <div class="panel-header">
+            <h3>📢 Announcements</h3>
+          </div>
+          <div class="announcements-list" id="planning-announcements">
+            <div class="empty-state">No announcements yet</div>
+          </div>
+          <div class="announce-compose">
+            <input type="text" id="planning-announce-input" placeholder="Post announcement..." maxlength="200" />
+            <button class="btn btn-icon" id="btn-planning-announce">📢</button>
+          </div>
+        </div>
+      </aside>
+
+      <!-- ── MAIN: Player RSVP Cards ── -->
+      <main class="planning-main">
+        <div class="planning-main-header">
+          <h2 class="planning-section-title">👥 Squad Availability</h2>
+          <span class="total-badge" id="planning-total-badge">0 members</span>
+        </div>
+
+        <div class="rsvp-grid" id="rsvp-grid">
+          <!-- Filled by JS -->
+        </div>
+      </main>
+
+      <!-- ── RIGHT: Live Chat ── -->
+      <aside class="planning-chat">
+        <div class="panel chat-panel" style="height:100%">
+          <div class="panel-header">
+            <h3>💬 Chat</h3>
+            <span class="online-dot"></span>
+          </div>
+          <div class="chat-messages" id="planning-chat-messages">
+            <div class="chat-welcome">Chat with the squad 🏏</div>
+          </div>
+          <div class="chat-compose">
+            <input type="text" id="planning-chat-input" placeholder="Say something..." maxlength="200" />
+            <button class="btn btn-icon" id="btn-planning-chat">➤</button>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════
+     SCREEN 4 — MATCH LOBBY (unchanged from before)
+════════════════════════════════════════════ -->
+  <div id="screen-lobby" class="screen">
+    <header class="app-header">
+      <div class="header-left">
+        <button class="btn btn-ghost btn-sm" id="btn-lobby-back-home" onclick="leaveLobbyToHome()"
+          title="Back to Rooms Dashboard (Match is Saved)">← <span class="btn-hdr-text">Rooms</span></button>
+        <button class="btn btn-ghost btn-sm" id="btn-back-planning" title="Back to Planning Phase">← <span
+            class="btn-hdr-text">Plan</span></button>
+        <span class="header-logo"><span class="hdr-logo-icon">🏏</span><span
+            class="hdr-logo-text">CricketHub</span></span>
+        <div class="room-badge" id="room-code-display"></div>
+      </div>
+      <div class="header-right">
+        <button class="btn btn-ghost btn-sm" id="btn-lobby-players-dir">👥 <span
+            class="btn-hdr-text">Players</span></button>
+        <button class="btn btn-ghost btn-sm" id="btn-copy-code">📋 <span class="btn-hdr-text">Share</span></button>
+        <div class="user-badge" id="user-badge" title="View My Profile" style="cursor:pointer"></div>
+      </div>
+    </header>
+
+    <div class="app-layout">
+      <!-- LEFT SIDEBAR -->
+      <aside class="sidebar sidebar-left">
+        <div class="panel" id="panel-players">
+          <div class="panel-header">
+            <h3>👥 Players</h3>
+            <span class="badge" id="player-count">0</span>
+          </div>
+          <div class="players-list" id="players-list"></div>
+        </div>
+
+        <div class="panel" id="panel-announcements">
+          <div class="panel-header">
+            <h3>📢 Announcements</h3>
+          </div>
+          <div class="announcements-list" id="announcements-list">
+            <div class="empty-state">No announcements yet</div>
+          </div>
+          <div class="announce-compose">
+            <input type="text" id="announce-input" placeholder="Make an announcement..." maxlength="200" />
+            <button class="btn btn-icon" id="btn-announce">📢</button>
+          </div>
+        </div>
+      </aside>
+
+      <!-- MAIN AREA -->
+      <main class="main-area">
+        <div class="match-banner glass-card" id="match-banner">
+          <div class="banner-title" id="banner-match-name">Match Name</div>
+          <div class="banner-meta">
+            <span id="banner-status" class="status-pill">Planning</span>
+            <span id="banner-schedule" class="schedule-link"></span>
+            <span id="banner-location" class="location-link"></span>
+          </div>
+        </div>
+
+        <div class="tabs">
+          <button class="tab active" data-tab="setup">⚙️ Setup</button>
+          <button class="tab" data-tab="scorecard">📊 Scorecard</button>
+          <button class="tab" data-tab="scoring">⚾ Scoring</button>
+          <button class="tab" data-tab="summary">🏆 Summary</button>
+        </div>
+
+        <!-- TAB: Setup -->
+        <div class="tab-panel active" id="tab-setup">
+          <div class="setup-grid">
+            <!-- TEAMS CARD -->
+            <div class="glass-card setup-teams-card">
+              <div class="setup-section-header">
+                <div class="setup-title-group">
+                  <h3 class="section-title">🏏 Match Teams Setup</h3>
+                  <span class="setup-subtitle">Assign room participants into Team 1 & Team 2</span>
+                </div>
+                <span class="setup-badge" id="setup-player-count">👥 0 Players Assigned</span>
+              </div>
+
+              <div class="team-setup">
+                <!-- Team 1 Card -->
+                <div class="team-col team1-box">
+                  <div class="team-header team1-color">
+                    <div class="team-title-row">
+                      <span class="team-dot dot-t1"></span>
+                      <input type="text" class="team-name-input" id="team1-name" placeholder="Team 1" value="Team 1"
+                        maxlength="30" />
+                      <span class="team-count-badge badge-t1" id="t1-count">0 Players</span>
+                    </div>
+                  </div>
+                  <div class="player-tags" id="team1-players"></div>
+                  <div class="add-player-row">
+                    <div class="custom-dropdown-container" id="t1-picker-container">
+                      <button type="button" class="custom-dropdown-trigger trigger-t1" id="btn-open-picker-team1"
+                        onclick="togglePlayerPicker('team1')">
+                        <span class="trigger-label">➕ Add Player</span>
+                        <span class="trigger-chevron">▼</span>
+                      </button>
+                      <div class="custom-dropdown-menu" id="picker-menu-team1" style="display:none">
+                        <div class="picker-search-wrap">
+                          <span class="picker-search-icon">🔍</span>
+                          <input type="text" class="picker-search-input" id="search-player-team1"
+                            placeholder="Search or enter player..." oninput="filterPickerPlayers('team1')"
+                            autocomplete="off" />
+                        </div>
+                        <div class="picker-list" id="picker-list-team1">
+                          <!-- Filled by JS -->
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="team-vs">
+                  <span class="vs-circle">VS</span>
+                </div>
+
+                <!-- Team 2 Card -->
+                <div class="team-col team2-box">
+                  <div class="team-header team2-color">
+                    <div class="team-title-row">
+                      <span class="team-dot dot-t2"></span>
+                      <input type="text" class="team-name-input" id="team2-name" placeholder="Team 2" value="Team 2"
+                        maxlength="30" />
+                      <span class="team-count-badge badge-t2" id="t2-count">0 Players</span>
+                    </div>
+                  </div>
+                  <div class="player-tags" id="team2-players"></div>
+                  <div class="add-player-row">
+                    <div class="custom-dropdown-container" id="t2-picker-container">
+                      <button type="button" class="custom-dropdown-trigger trigger-t2" id="btn-open-picker-team2"
+                        onclick="togglePlayerPicker('team2')">
+                        <span class="trigger-label">➕ Add Player</span>
+                        <span class="trigger-chevron">▼</span>
+                      </button>
+                      <div class="custom-dropdown-menu" id="picker-menu-team2" style="display:none">
+                        <div class="picker-search-wrap">
+                          <span class="picker-search-icon">🔍</span>
+                          <input type="text" class="picker-search-input" id="search-player-team2"
+                            placeholder="Search or enter player..." oninput="filterPickerPlayers('team2')"
+                            autocomplete="off" />
+                        </div>
+                        <div class="picker-list" id="picker-list-team2">
+                          <!-- Filled by JS -->
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- MATCH SETTINGS CARD -->
+            <div class="glass-card setup-settings-card">
+              <h3 class="section-title">⚙️ Match Settings</h3>
+              <div class="form-group">
+                <label>Overs per side</label>
+                <div class="custom-dropdown-container" id="overs-picker-container">
+                  <button type="button" class="custom-dropdown-trigger custom-overs-trigger" id="btn-open-overs-picker"
+                    onclick="toggleOversPicker()">
+                    <span id="selected-overs-label" class="overs-trigger-text">🏆 20 Overs (T20 Standard)</span>
+                    <span class="trigger-chevron" id="overs-picker-chevron">▼</span>
+                  </button>
+                  <div class="custom-dropdown-menu custom-overs-menu" id="overs-menu" style="display:none">
+                    <div class="overs-opt-list">
+                      <div class="overs-section-title">🏆 Standard Formats</div>
+                      <div class="overs-option-item" data-value="5"
+                        onclick="selectOversOption('5', '⚡ 5 Overs (Quick Blitz)')">
+                        <span class="overs-opt-icon">⚡</span>
+                        <div class="overs-opt-info">
+                          <span class="overs-opt-title">5 Overs</span>
+                          <span class="overs-opt-sub">Quick Blitz Match</span>
+                        </div>
+                        <span class="overs-opt-check"></span>
+                      </div>
+                      <div class="overs-option-item" data-value="10"
+                        onclick="selectOversOption('10', '🚀 10 Overs (T10)')">
+                        <span class="overs-opt-icon">🚀</span>
+                        <div class="overs-opt-info">
+                          <span class="overs-opt-title">10 Overs</span>
+                          <span class="overs-opt-sub">T10 Speed Match</span>
+                        </div>
+                        <span class="overs-opt-check"></span>
+                      </div>
+                      <div class="overs-option-item" data-value="15" onclick="selectOversOption('15', '🏏 15 Overs')">
+                        <span class="overs-opt-icon">🏏</span>
+                        <div class="overs-opt-info">
+                          <span class="overs-opt-title">15 Overs</span>
+                          <span class="overs-opt-sub">Standard Club Match</span>
+                        </div>
+                        <span class="overs-opt-check"></span>
+                      </div>
+                      <div class="overs-option-item selected" data-value="20"
+                        onclick="selectOversOption('20', '🏆 20 Overs (T20 Standard)')">
+                        <span class="overs-opt-icon">🏆</span>
+                        <div class="overs-opt-info">
+                          <span class="overs-opt-title">20 Overs</span>
+                          <span class="overs-opt-sub">T20 Standard Format</span>
+                        </div>
+                        <span class="overs-opt-check">✓</span>
+                      </div>
+                      <div class="overs-option-item" data-value="25" onclick="selectOversOption('25', '🎯 25 Overs')">
+                        <span class="overs-opt-icon">🎯</span>
+                        <div class="overs-opt-info">
+                          <span class="overs-opt-title">25 Overs</span>
+                          <span class="overs-opt-sub">Medium Format</span>
+                        </div>
+                        <span class="overs-opt-check"></span>
+                      </div>
+                      <div class="overs-option-item" data-value="50"
+                        onclick="selectOversOption('50', '🌍 50 Overs (ODI)')">
+                        <span class="overs-opt-icon">🌍</span>
+                        <div class="overs-opt-info">
+                          <span class="overs-opt-title">50 Overs</span>
+                          <span class="overs-opt-sub">One Day International</span>
+                        </div>
+                        <span class="overs-opt-check"></span>
+                      </div>
+
+                      <div class="overs-section-title">✏️ Custom Overs & Presets</div>
+                      <div class="custom-overs-picker-block">
+                        <div class="quick-overs-pills">
+                          <button type="button" class="quick-over-pill" onclick="applyQuickCustomOvers(6)">6</button>
+                          <button type="button" class="quick-over-pill" onclick="applyQuickCustomOvers(8)">8</button>
+                          <button type="button" class="quick-over-pill" onclick="applyQuickCustomOvers(12)">12</button>
+                          <button type="button" class="quick-over-pill" onclick="applyQuickCustomOvers(16)">16</button>
+                          <button type="button" class="quick-over-pill" onclick="applyQuickCustomOvers(30)">30</button>
+                          <button type="button" class="quick-over-pill" onclick="applyQuickCustomOvers(40)">40</button>
+                        </div>
+                        <div class="custom-overs-mini-row">
+                          <input type="number" id="menu-custom-overs-input" min="1" max="100" placeholder="e.g. 8" />
+                          <button type="button" class="btn btn-sm btn-primary" onclick="applyMenuCustomOvers()">Set
+                            Overs</button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Smooth Animated Custom Overs Stepper Controller -->
+                <div id="custom-overs-wrap" class="custom-overs-wrap" style="display:none">
+                  <div class="custom-overs-input-box">
+                    <span class="custom-overs-input-icon">✏️</span>
+                    <button type="button" class="overs-step-btn" onclick="stepCustomOvers(-1)"
+                      title="Decrease 1 over">−</button>
+                    <input type="number" id="custom-overs-input" min="1" max="100" placeholder="e.g. 8"
+                      oninput="handleCustomOversInput(this.value)" />
+                    <button type="button" class="overs-step-btn" onclick="stepCustomOvers(1)"
+                      title="Increase 1 over">+</button>
+                    <span class="custom-overs-input-unit">Overs</span>
+                  </div>
+                </div>
+
+                <!-- Hidden select for compatibility -->
+                <select id="setting-overs" style="display:none">
+                  <option value="5">5 Overs (Quick Blitz)</option>
+                  <option value="10">10 Overs (T10)</option>
+                  <option value="15">15 Overs</option>
+                  <option value="20" selected>20 Overs (T20 Standard)</option>
+                  <option value="25">25 Overs</option>
+                  <option value="50">50 Overs (ODI)</option>
+                  <option value="custom">✏️ Custom Overs...</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- ACTIONS CARD -->
+            <div class="glass-card setup-actions-card">
+              <div class="setup-actions-flex" style="display:flex;gap:0.75rem;flex-wrap:wrap">
+                <button class="btn btn-toss btn-lg" id="btn-toss" style="flex:1.2;min-width:220px;font-size:1.05rem">🪙 Start Coin Toss →</button>
+                <button class="btn btn-primary btn-lg" id="btn-save-setup" style="flex:1;min-width:160px">💾 Save Setup</button>
+                <button class="btn btn-danger-outline btn-lg" id="btn-reset-match" style="display:none">🔄 Reset Match</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB: Scorecard -->
+        <div class="tab-panel" id="tab-scorecard">
+          <div class="scorecard-wrap" id="scorecard-wrap">
+            <div class="empty-state-large">
+              <div class="empty-icon">📊</div>
+              <p>Scorecard will appear once the match begins</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB: Scoring -->
+        <div class="tab-panel" id="tab-scoring">
+          <div id="scoring-panel">
+            <div class="empty-state-large">
+              <div class="empty-icon">⚾</div>
+              <p>Scoring becomes available once the match starts</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB: Summary -->
+        <div class="tab-panel" id="tab-summary">
+          <div id="summary-panel">
+            <div class="empty-state-large">
+              <div class="empty-icon">🏆</div>
+              <p>Match summary will appear here when the match ends</p>
+            </div>
+          </div>
+        </div>
+      </main>
+
+      <!-- RIGHT SIDEBAR: Chat -->
+      <aside class="sidebar sidebar-right">
+        <div class="panel chat-panel">
+          <div class="panel-header">
+            <h3>💬 Live Chat</h3>
+            <span class="online-dot"></span>
+          </div>
+          <div class="chat-messages" id="chat-messages">
+            <div class="chat-welcome">Welcome to the chat! 🏏</div>
+          </div>
+          <div class="chat-compose">
+            <input type="text" id="chat-input" placeholder="Say something..." maxlength="200" />
+            <button class="btn btn-icon" id="btn-chat-send">➤</button>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════
+     TOSS MODAL — Coin Flip
+════════════════════════════════════════════ -->
+  <div class="modal-overlay" id="toss-modal" style="display:none">
+    <div class="modal glass-card toss-modal-card">
+      <h2>🪙 Toss Time!</h2>
+
+      <!-- Phase 1: Coin flip -->
+      <div id="toss-phase-coin">
+        <p class="toss-sub">Flip the coin to decide who wins the toss</p>
+        <div class="coin-wrap" id="coin-wrap">
+          <div class="coin" id="coin">
+            <div class="coin-face coin-heads" id="coin-heads-label">H</div>
+            <div class="coin-face coin-tails" id="coin-tails-label">T</div>
+          </div>
+        </div>
+        <div class="toss-team-labels" id="toss-team-labels">
+          <!-- Filled by JS: H = Team1, T = Team2 -->
+        </div>
+        <button class="btn btn-primary coin-flip-btn" id="btn-flip-coin" onclick="flipCoin()">
+          🪙 Flip Coin
+        </button>
+      </div>
+
+      <!-- Phase 2: Result + bat/bowl choice (shown after flip) -->
+      <div id="toss-phase-result" style="display:none">
+        <div class="coin-result-badge" id="coin-result-badge"></div>
+        <p class="toss-choice-label" id="toss-choice-label">
+          What did <strong id="toss-winner-name"></strong> choose?
+        </p>
+        <div class="toss-choices" id="toss-choices">
+          <button class="btn btn-primary" onclick="doToss('bat')">🏏 Bat First</button>
+          <button class="btn btn-secondary" onclick="doToss('bowl')">⚾ Bowl First</button>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="resetCoin()" style="margin-top:0.5rem;width:100%">
+          ↩ Re-flip
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Set Batsmen Modal -->
+  <div class="modal-overlay" id="batsmen-modal" style="display:none;z-index:2050">
+    <div class="modal glass-card" style="max-width:460px;width:95%;padding:1.5rem">
+      <h2 style="font-size:1.25rem;margin:0 0 0.4rem;font-weight:800">🏏 Set Opening Batsmen</h2>
+      <p class="modal-subtext" style="font-size:0.85rem;color:var(--text-2);margin-bottom:1rem">Select from roster or enter batter names</p>
+      
+      <div class="form-group" style="margin-bottom:0.85rem">
+        <label style="font-weight:700;font-size:0.85rem">Striker (on strike) *</label>
+        <select id="select-striker" class="form-control country-code-select" style="width:100%;margin-bottom:0.35rem"></select>
+        <input type="text" id="input-striker-custom" placeholder="Or enter custom striker name..." maxlength="30" class="form-control" style="font-size:0.82rem;padding:0.45rem 0.7rem;background:rgba(255,255,255,0.06)" />
+      </div>
+      
+      <div class="form-group" id="nonstriker-select-group" style="margin-bottom:0.85rem">
+        <label style="font-weight:700;font-size:0.85rem">Non-Striker</label>
+        <select id="select-nonstriker" class="form-control country-code-select" style="width:100%;margin-bottom:0.35rem"></select>
+        <input type="text" id="input-nonstriker-custom" placeholder="Or enter custom non-striker name..." maxlength="30" class="form-control" style="font-size:0.82rem;padding:0.45rem 0.7rem;background:rgba(255,255,255,0.06)" />
+      </div>
+
+      <div style="display:flex;align-items:center;gap:0.55rem;margin-bottom:1.1rem;padding:0.6rem 0.8rem;background:rgba(255,255,255,0.04);border-radius:8px">
+        <input type="checkbox" id="check-single-batter-initial" onchange="toggleInitialSingleBatter(this.checked)" style="width:17px;height:17px;cursor:pointer" />
+        <label for="check-single-batter-initial" style="font-size:0.85rem;cursor:pointer;margin:0;color:var(--text-1);font-weight:600">👤 Single Batter Mode (Solo player, no non-striker)</label>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn btn-primary btn-full" id="btn-confirm-batsmen" style="font-weight:800;padding:0.75rem">Confirm & Start Inning</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Next Batsman Modal (Triggered when a Wicket falls) -->
+  <div class="modal-overlay" id="next-batsman-modal" style="display:none;z-index:2050">
+    <div class="modal glass-card" style="max-width:440px;width:95%;padding:1.5rem">
+      <div class="modal-header" style="justify-content:space-between;margin-bottom:0.4rem">
+        <h2 id="next-batsman-title" style="font-size:1.25rem;margin:0;font-weight:800;color:var(--danger)">💥 Wicket! Select Next Batter</h2>
+      </div>
+      <p id="next-batsman-sub" class="modal-subtext" style="font-size:0.85rem;color:var(--text-2);margin-bottom:1rem">
+        A wicket has fallen. Choose who is walking out to the crease next.
+      </p>
+
+      <div class="form-group" id="group-available-teammates" style="margin-bottom:0.75rem">
+        <label style="font-size:0.85rem;font-weight:700">Available Teammates</label>
+        <select id="select-next-batsman" class="form-control country-code-select" style="width:100%"></select>
+      </div>
+
+      <!-- Optional custom player entry -->
+      <div class="form-group" id="group-custom-batter" style="margin-bottom:1rem">
+        <label style="font-size:0.75rem;color:var(--text-3)">Or enter player name</label>
+        <input type="text" id="input-next-batsman-custom" placeholder="e.g. Guest Batter" maxlength="30" class="form-control" />
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:0.6rem">
+        <button class="btn btn-primary btn-full" id="btn-confirm-next-batsman" onclick="confirmNextBatsman()" style="font-weight:800;padding:0.75rem">
+          🏏 Confirm Next Batter
+        </button>
+        <button class="btn btn-secondary btn-full" id="btn-continue-single-batter" onclick="confirmSingleBatter()" style="font-weight:700;background:rgba(255,145,0,0.15);border:1px solid rgba(255,145,0,0.4);color:#ffab00">
+          👤 Play with 1 Batter (Single Batter Mode)
+        </button>
+        <button class="btn btn-ghost btn-full" id="btn-declare-all-out" onclick="declareAllOut()" style="font-weight:700;color:var(--danger);border:1px dashed rgba(255,82,82,0.4);font-size:0.85rem">
+          🏁 All Out / End Innings (Next Team Bats)
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Set Bowler Modal -->
+  <div class="modal-overlay" id="bowler-modal" style="display:none;z-index:2050">
+    <div class="modal glass-card" style="max-width:440px;width:95%;padding:1.5rem">
+      <h2 id="bowler-modal-title" style="font-size:1.25rem;margin:0 0 0.4rem;font-weight:800">⚾ Set Bowler</h2>
+      <p id="bowler-modal-sub" class="modal-subtext" style="display:none;font-size:0.85rem;margin-bottom:0.85rem"></p>
+      <div class="form-group" style="margin-bottom:0.85rem">
+        <label style="font-weight:700;font-size:0.85rem">Bowler for this over</label>
+        <select id="select-bowler" class="form-control country-code-select" style="width:100%;margin-bottom:0.35rem"></select>
+        <input type="text" id="input-bowler-custom" placeholder="Or enter custom bowler name..." maxlength="30" class="form-control" style="font-size:0.82rem;padding:0.45rem 0.7rem;background:rgba(255,255,255,0.06)" />
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-primary btn-full" id="btn-confirm-bowler" style="font-weight:800;padding:0.75rem">Confirm Bowler</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Share Match Room Modal -->
+  <div class="modal-overlay" id="share-modal" style="display:none">
+    <div class="modal glass-card share-modal-card">
+      <div class="modal-header">
+        <h2>📲 Share Match Room</h2>
+        <button class="btn btn-ghost btn-sm modal-close-btn" id="btn-close-share-modal">✕</button>
+      </div>
+      <div class="share-modal-body">
+        <div class="share-code-box">
+          <span class="share-code-label">Room Code</span>
+          <span class="share-code-val" id="share-modal-code">CRK-XXXX</span>
+        </div>
+        <div class="share-actions-list">
+          <button class="btn btn-whatsapp btn-full btn-lg" id="btn-share-whatsapp">
+            💬 Share via WhatsApp
+          </button>
+          <button class="btn btn-primary btn-full" id="btn-share-copy-code">
+            📋 Copy Code
+          </button>
+          <button class="btn btn-secondary btn-full" id="btn-share-copy-link">
+            🔗 Copy Link
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Popup Alert Modal (Squad Ping & Match Invite Alert) -->
+  <div class="modal-overlay" id="popup-alert-modal" style="display:none">
+    <div class="modal glass-card popup-alert-card">
+      <div class="popup-alert-icon">⚡🔔</div>
+      <div
+        style="display:inline-block;padding:0.25rem 0.65rem;border-radius:999px;background:rgba(0,229,255,0.15);border:1px solid var(--primary);color:var(--primary);font-size:0.75rem;font-weight:700;letter-spacing:1px;margin-bottom:0.5rem"
+        id="popup-alert-code-badge">CRK-MATCH</div>
+      <h2 class="popup-alert-title" id="popup-alert-title" style="margin-bottom:0.25rem">Match Alert!</h2>
+      <div id="popup-alert-match-name"
+        style="font-weight:700;font-size:1.15rem;color:var(--text-1);margin-bottom:0.35rem"></div>
+      <div id="popup-alert-schedule" style="font-size:0.85rem;color:var(--primary);margin-bottom:0.75rem"></div>
+      <p class="popup-alert-msg" id="popup-alert-msg"
+        style="background:rgba(255,255,255,0.04);padding:0.75rem;border-radius:var(--radius-sm);border:1px solid var(--glass-border);margin-bottom:0.75rem">
+        The match organizer is asking you to confirm availability!</p>
+      <div class="popup-alert-meta" style="font-size:0.8rem;color:var(--text-3);margin-bottom:1.25rem">
+        <span id="popup-alert-author">Organizer</span> · <span id="popup-alert-time">Just now</span>
+      </div>
+      <div class="modal-actions" style="display:flex;flex-direction:column;gap:0.5rem">
+        <button class="btn btn-primary btn-full" id="btn-alert-rsvp-coming">🏏 Open Match & Confirm (Coming) ✅</button>
+        <div style="display:flex;gap:0.5rem;width:100%">
+          <button class="btn btn-secondary" style="flex:1" id="btn-alert-view-match">👀 Just View</button>
+          <button class="btn btn-ghost" style="flex:1" id="btn-dismiss-alert">Dismiss</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- iOS Push Setup Guide Modal -->
+  <div class="modal-overlay" id="ios-guide-modal" style="display:none">
+    <div class="modal glass-card" style="max-width:440px;text-align:left">
+      <div style="text-align:center;font-size:2rem;margin-bottom:0.5rem">🍎📲</div>
+      <h2 style="text-align:center;font-size:1.3rem;margin-bottom:0.25rem">iPhone Push Setup</h2>
+      <p style="text-align:center;color:var(--text-2);font-size:0.85rem;margin-bottom:1.25rem">
+        Apple requires installing to your iPhone Home Screen via Safari for background alerts.
+      </p>
+      <div
+        style="display:flex;flex-direction:column;gap:0.85rem;background:rgba(255,255,255,0.03);padding:1rem;border-radius:var(--radius-md);border:1px solid var(--glass-border)">
+        <div style="display:flex;gap:0.75rem;align-items:flex-start">
+          <div
+            style="background:var(--primary);color:#000;font-weight:800;border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-size:0.8rem;flex-shrink:0">
+            1</div>
+          <div style="font-size:0.88rem;color:var(--text-1)">
+            Open this app link in <strong>Safari</strong> (Apple blocks background push in Chrome on iOS).
+          </div>
+        </div>
+        <div style="display:flex;gap:0.75rem;align-items:flex-start">
+          <div
+            style="background:var(--primary);color:#000;font-weight:800;border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-size:0.8rem;flex-shrink:0">
+            2</div>
+          <div style="font-size:0.88rem;color:var(--text-1)">
+            Tap the <strong>Share</strong> button at the bottom of Safari (the square with arrow <strong>⬆️</strong>).
+          </div>
+        </div>
+        <div style="display:flex;gap:0.75rem;align-items:flex-start">
+          <div
+            style="background:var(--primary);color:#000;font-weight:800;border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-size:0.8rem;flex-shrink:0">
+            3</div>
+          <div style="font-size:0.88rem;color:var(--text-1)">
+            Scroll down and tap <strong>"Add to Home Screen" ➕</strong>, then tap <strong>"Add"</strong>.
+          </div>
+        </div>
+        <div style="display:flex;gap:0.75rem;align-items:flex-start">
+          <div
+            style="background:var(--primary);color:#000;font-weight:800;border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-size:0.8rem;flex-shrink:0">
+            4</div>
+          <div style="font-size:0.88rem;color:var(--text-1)">
+            Open <strong>CricketHub</strong> from your iPhone Home Screen & tap <strong>"Enable 🔔"</strong>.
+          </div>
+        </div>
+      </div>
+      <div style="margin-top:1.25rem;text-align:center">
+        <button class="btn btn-primary btn-full" id="btn-close-ios-guide">Got It! 👍</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Reset Confirmation Warning Modal -->
+  <div class="modal-overlay" id="reset-confirm-modal" style="display:none">
+    <div class="modal glass-card reset-modal">
+      <div class="reset-modal-icon">⚠️</div>
+      <h2 class="reset-modal-title">Reset Match?</h2>
+      <p class="reset-modal-text">
+        This will reset toss, innings, and all live scores back to the <strong>planning phase</strong>.
+      </p>
+      <div class="reset-modal-note">
+        💾 If any balls were bowled, this match is safely archived in <strong>Match History</strong> before reset. Teams
+        and player lists will be kept.
+      </div>
+      <div class="modal-actions reset-modal-actions">
+        <button class="btn btn-ghost" id="btn-cancel-reset">Cancel</button>
+        <button class="btn btn-danger" id="btn-confirm-reset">🔄 Yes, Reset Match</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scorecard Poster Export Modal -->
+  <div class="modal-overlay" id="poster-modal" style="display:none">
+    <div class="modal glass-card poster-modal-card">
+      <div class="modal-header">
+        <div class="poster-modal-header-text">
+          <h2>🎨 Match Scorecard Poster</h2>
+          <p class="modal-subtext">High-res match graphic for WhatsApp Stories & Instagram</p>
+        </div>
+        <button class="btn btn-ghost btn-sm modal-close-btn" id="btn-close-poster-modal">✕</button>
+      </div>
+      <div class="poster-canvas-wrap">
+        <canvas id="poster-canvas" width="1080" height="1350"></canvas>
+      </div>
+      <div class="poster-actions-row">
+        <button class="btn btn-primary btn-full" id="btn-download-poster">
+          📥 Download Poster (.png)
+        </button>
+        <button class="btn btn-whatsapp btn-full" id="btn-share-poster">
+          📲 Share Match Story
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Super Over Tie-Breaker Modal -->
+  <div class="modal-overlay" id="super-over-modal" style="display:none">
+    <div class="modal glass-card super-over-card">
+      <div class="super-over-badge">⚡ TIE BREAKER</div>
+      <div class="super-over-icon">🪙🏏</div>
+      <h2 class="super-over-title">MATCH TIED!</h2>
+      <p class="super-over-sub" id="super-over-score-sub">Both teams finished on exact equal scores!</p>
+      <div class="super-over-rules">
+        <div class="rule-pill">⏱️ 1 Over per team</div>
+        <div class="rule-pill">🎯 2 Wickets Max</div>
+        <div class="rule-pill">🔥 Winner takes all</div>
+      </div>
+      <div class="modal-actions" id="super-over-host-actions"
+        style="margin-top:1rem;display:flex;flex-direction:column;gap:0.5rem">
+        <button class="btn btn-primary btn-lg btn-full" id="btn-start-super-over">
+          🏏 Launch Super Over Shootout! 🚀
+        </button>
+        <button class="btn btn-ghost btn-full" id="btn-decline-super-over">
+          Declare Match as Draw
+        </button>
+      </div>
+      <div id="super-over-guest-msg"
+        style="display:none;font-size:0.9rem;color:var(--primary);font-weight:600;margin-top:0.5rem">
+        Waiting for match organizer to launch Super Over...
+      </div>
+    </div>
+  </div>
+
+  <!-- Offline Status Bar -->
+  <div id="offline-bar" class="offline-bar" style="display:none">
+    <span>📶 Offline Mode • Local scores cached and will auto-sync on reconnect</span>
+  </div>
+
+  <!-- ════════════════════════════════════════════
+     SCREEN: MATCH HISTORY
+════════════════════════════════════════════ -->
+  <div id="screen-history" class="screen">
+    <div class="landing-bg">
+      <div class="bg-orb orb1"></div>
+      <div class="bg-orb orb2"></div>
+    </div>
+
+    <header class="app-header">
+      <div class="header-left">
+        <button class="back-btn" id="btn-history-back" style="margin-right:0.75rem">← Back</button>
+        <span class="header-logo">📜 Match History</span>
+      </div>
+      <div class="header-right">
+        <button class="btn btn-ghost btn-sm" id="btn-refresh-history">🔄 Refresh</button>
+      </div>
+    </header>
+
+    <div class="history-container">
+      <div class="history-hero">
+        <h2>Match Archive 🏆</h2>
+        <p class="history-sub">Browse through previous cricket matches, scorecards, and player performances.</p>
+      </div>
+
+      <div class="history-search-row">
+        <input type="text" id="history-search" class="history-search-input"
+          placeholder="🔍 Search by match name, team, or venue..." />
+      </div>
+
+      <div id="history-list" class="history-list">
+        <div class="empty-state-large">
+          <div class="empty-icon">🏏</div>
+          <p>Loading match history...</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════
+     PLAYER PROFILE MODAL
+════════════════════════════════════════════ -->
+  <div class="modal-overlay" id="player-profile-modal" style="display:none">
+    <div class="modal glass-card profile-modal">
+      <div class="profile-modal-header">
+        <div class="profile-hero">
+          <div class="profile-avatar-wrap">
+            <div class="profile-avatar" id="prof-avatar">🏏</div>
+            <button class="avatar-edit-badge" id="btn-edit-avatar" title="Change Profile Picture" style="display:none">
+              📷
+            </button>
+            <input type="file" id="avatar-file-input" accept="image/*" style="display:none" />
+          </div>
+          <div class="profile-info">
+            <div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap">
+              <h2 id="prof-name" class="profile-name">Player Name</h2>
+              <span id="prof-badge" class="profile-badge">Player</span>
+            </div>
+            <div class="profile-meta">
+              <span id="prof-phone" class="prof-meta-item">📱 Phone</span>
+              <span id="prof-joined" class="prof-meta-item">🗓️ Joined</span>
+            </div>
+            <div id="prof-avatar-actions"
+              style="display:none;margin-top:0.35rem;gap:0.45rem;align-items:center;flex-wrap:wrap">
+              <button class="btn btn-ghost btn-sm" id="btn-trigger-upload-photo"
+                style="padding:0.25rem 0.65rem;font-size:0.75rem;border:1px solid rgba(0,229,255,0.4);color:var(--primary);border-radius:12px">📷
+                Change Photo</button>
+              <button class="btn btn-ghost btn-sm" id="btn-remove-photo"
+                style="padding:0.25rem 0.65rem;font-size:0.75rem;color:var(--text-3);display:none;border-radius:12px">🗑️
+                Remove</button>
+            </div>
+          </div>
+        </div>
+        <button class="btn btn-ghost btn-sm modal-close-btn" id="btn-close-profile-modal">✕</button>
+      </div>
+
+      <!-- Profile Tab Switcher -->
+      <div class="profile-tabs">
+        <button class="profile-tab-btn active" id="prof-tab-stats">📊 Career Stats</button>
+        <button class="profile-tab-btn" id="prof-tab-matches">📅 Matches & Scorecards <span class="tab-badge"
+            id="prof-match-count-badge">0</span></button>
+      </div>
+
+      <div class="profile-modal-body" id="prof-body">
+        <!-- Tab 1: Stats -->
+        <div id="prof-pane-stats" class="prof-pane active">
+          <!-- Quick Summary Stats -->
+          <div class="profile-summary-cards">
+            <div class="prof-sum-card">
+              <div class="prof-sum-val" id="prof-total-matches">0</div>
+              <div class="prof-sum-lbl">Matches</div>
+            </div>
+            <div class="prof-sum-card">
+              <div class="prof-sum-val team1-score" id="prof-total-runs">0</div>
+              <div class="prof-sum-lbl">Total Runs</div>
+            </div>
+            <div class="prof-sum-card">
+              <div class="prof-sum-val team2-score" id="prof-total-wickets">0</div>
+              <div class="prof-sum-lbl">Total Wickets</div>
+            </div>
+            <div class="prof-sum-card">
+              <div class="prof-sum-val" style="color:var(--warning)" id="prof-high-score">0</div>
+              <div class="prof-sum-lbl">High Score</div>
+            </div>
+          </div>
+
+          <!-- Batting Stats Block -->
+          <div class="prof-stats-section">
+            <div class="prof-section-heading">🏏 Batting Career</div>
+            <div class="prof-stats-grid">
+              <div class="prof-stat-box"><span class="lbl">Innings</span><span class="val"
+                  id="prof-bat-innings">0</span></div>
+              <div class="prof-stat-box"><span class="lbl">Runs</span><span class="val highlight"
+                  id="prof-bat-runs">0</span></div>
+              <div class="prof-stat-box"><span class="lbl">Balls</span><span class="val" id="prof-bat-balls">0</span>
+              </div>
+              <div class="prof-stat-box"><span class="lbl">Highest</span><span class="val" id="prof-bat-hs">0</span>
+              </div>
+              <div class="prof-stat-box"><span class="lbl">Average</span><span class="val" id="prof-bat-avg">0.00</span>
+              </div>
+              <div class="prof-stat-box"><span class="lbl">Strike Rate</span><span class="val"
+                  id="prof-bat-sr">0.00</span></div>
+              <div class="prof-stat-box"><span class="lbl">Fours (4s)</span><span class="val"
+                  id="prof-bat-fours">0</span></div>
+              <div class="prof-stat-box"><span class="lbl">Sixes (6s)</span><span class="val"
+                  id="prof-bat-sixes">0</span></div>
+              <div class="prof-stat-box"><span class="lbl">Fifties (50s)</span><span class="val"
+                  id="prof-bat-fifties">0</span></div>
+              <div class="prof-stat-box"><span class="lbl">Hundreds (100s)</span><span class="val"
+                  id="prof-bat-hundreds">0</span></div>
+              <div class="prof-stat-box"><span class="lbl">Not Outs</span><span class="val"
+                  id="prof-bat-notouts">0</span></div>
+              <div class="prof-stat-box"><span class="lbl">Ducks (0s)</span><span class="val"
+                  id="prof-bat-ducks">0</span></div>
+            </div>
+          </div>
+
+          <!-- Bowling Stats Block -->
+          <div class="prof-stats-section">
+            <div class="prof-section-heading">⚾ Bowling Career</div>
+            <div class="prof-stats-grid">
+              <div class="prof-stat-box"><span class="lbl">Innings</span><span class="val"
+                  id="prof-bowl-innings">0</span></div>
+              <div class="prof-stat-box"><span class="lbl">Overs</span><span class="val" id="prof-bowl-overs">0.0</span>
+              </div>
+              <div class="prof-stat-box"><span class="lbl">Maidens</span><span class="val"
+                  id="prof-bowl-maidens">0</span></div>
+              <div class="prof-stat-box"><span class="lbl">Runs Conceded</span><span class="val"
+                  id="prof-bowl-runs">0</span></div>
+              <div class="prof-stat-box"><span class="lbl">Wickets</span><span class="val highlight"
+                  id="prof-bowl-wickets">0</span></div>
+              <div class="prof-stat-box"><span class="lbl">Best Bowling</span><span class="val"
+                  id="prof-bowl-bbi">—</span></div>
+              <div class="prof-stat-box"><span class="lbl">Economy</span><span class="val"
+                  id="prof-bowl-econ">0.00</span></div>
+              <div class="prof-stat-box"><span class="lbl">Average</span><span class="val"
+                  id="prof-bowl-avg">0.00</span></div>
+              <div class="prof-stat-box"><span class="lbl">Strike Rate</span><span class="val"
+                  id="prof-bowl-sr">0.00</span></div>
+              <div class="prof-stat-box"><span class="lbl">3W Hauls</span><span class="val" id="prof-bowl-3w">0</span>
+              </div>
+              <div class="prof-stat-box"><span class="lbl">5W Hauls</span><span class="val" id="prof-bowl-5w">0</span>
+              </div>
+              <div class="prof-stat-box"><span class="lbl">Dot Balls</span><span class="val"
+                  id="prof-bowl-dots">0</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab 2: Day-by-Day Match Performance Log -->
+        <div id="prof-pane-matches" class="prof-pane" style="display:none">
+          <div id="prof-matches-list" class="prof-matches-list">
+            <!-- Populated dynamically with Day groups & Personal Scorecards -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Profile Footer: Logout & Privacy Shield -->
+      <div class="profile-modal-footer" id="prof-footer">
+        <div class="prof-privacy-note" id="prof-privacy-note">
+          <span>🛡️ <strong>Privacy Protection:</strong> Phone numbers are strictly private and encrypted.</span>
+        </div>
+        <div class="prof-footer-actions" id="prof-footer-actions" style="display:none">
+          <button type="button" class="btn btn-danger-outline btn-full" id="prof-btn-logout" onclick="logoutUser()">
+            🚪 Log Out of Account
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════
+     PLAYERS DIRECTORY MODAL
+════════════════════════════════════════════ -->
+  <div class="modal-overlay" id="players-directory-modal" style="display:none">
+    <div class="modal glass-card players-dir-modal">
+      <div class="modal-header">
+        <div>
+          <h2>👥 Player Directory</h2>
+          <p style="font-size:0.82rem;color:var(--text-2);margin-top:0.2rem">Browse players and check individual career
+            statistics & match scorecards.</p>
+        </div>
+        <button class="btn btn-ghost btn-sm modal-close-btn" id="btn-close-players-dir-modal">✕</button>
+      </div>
+      <div style="margin-bottom:1rem">
+        <input type="text" id="players-dir-search" placeholder="🔍 Search player by name or phone..."
+          class="history-search-input" />
+      </div>
+      <div id="players-dir-list" class="players-dir-list">
+        <!-- Rendered list of all players -->
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════
+     PHOTO PICKER & LIVE CAMERA MODALS
+════════════════════════════════════════════ -->
+  <div class="modal-overlay" id="photo-picker-modal" style="display:none;z-index:2050">
+    <div class="modal glass-card" style="max-width:380px;text-align:center;padding:1.75rem 1.5rem">
+      <div style="font-size:2.6rem;margin-bottom:0.4rem">📸</div>
+      <h3 style="font-size:1.3rem;font-weight:800;color:var(--text-1);margin-bottom:0.25rem">Profile Picture</h3>
+      <p style="font-size:0.85rem;color:var(--text-2);margin-bottom:1.35rem">Choose how you would like to set your photo
+      </p>
+
+      <div style="display:flex;flex-direction:column;gap:0.75rem">
+        <button class="btn btn-primary btn-full" id="btn-action-open-camera" style="font-weight:700;padding:0.75rem">
+          📸 Open Camera & Take Photo
+        </button>
+        <button class="btn btn-secondary btn-full" id="btn-action-open-gallery" style="padding:0.75rem">
+          🖼️ Choose from Gallery / Files
+        </button>
+        <button class="btn btn-ghost btn-full" id="btn-close-photo-picker">
+          Cancel
+        </button>
+      </div>
+
+      <!-- Hidden native file inputs -->
+      <input type="file" id="camera-native-input" accept="image/*" capture="user" style="display:none" />
+      <input type="file" id="gallery-native-input" accept="image/*" style="display:none" />
+    </div>
+  </div>
+
+  <!-- Live Interactive Camera Modal -->
+  <div class="modal-overlay" id="camera-capture-modal" style="display:none;z-index:2100">
+    <div class="modal glass-card camera-modal" style="max-width:440px;width:95%;text-align:center;padding:1.25rem">
+      <div class="modal-header" style="justify-content:space-between;margin-bottom:0.75rem">
+        <h3 style="font-size:1.15rem;margin:0;font-weight:700">📸 Take Profile Photo</h3>
+        <button class="btn btn-ghost btn-sm modal-close-btn" id="btn-close-camera-modal">✕</button>
+      </div>
+
+      <div class="camera-stream-wrap">
+        <video id="camera-video" autoplay playsinline muted></video>
+        <div class="camera-face-guide"></div>
+      </div>
+
+      <div class="camera-controls"
+        style="display:flex;align-items:center;justify-content:center;gap:0.75rem;margin-top:1rem;flex-wrap:wrap">
+        <button class="btn btn-secondary btn-sm" id="btn-flip-camera" title="Switch Camera" style="display:none">
+          🔄 Flip Camera
+        </button>
+        <button class="btn btn-primary" id="btn-snap-photo"
+          style="border-radius:50px;padding:0.75rem 1.8rem;font-weight:800;box-shadow:0 0 20px rgba(0,229,255,0.4)">
+          📸 Snap Photo
+        </button>
+        <button class="btn btn-ghost btn-sm" id="btn-cancel-camera">
+          Cancel
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="app.js?v=2.9.12"></script>
+</body>
+
+</html>

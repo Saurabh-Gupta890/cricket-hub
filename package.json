@@ -1,0 +1,25 @@
+{
+  "name": "cricket",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "node scratch/test_suite.js && node scratch/test_bowler_wickets_attribution.js && node scratch/test_all_cricket_rules.js",
+    "start": "node server.js",
+    "dev": "node server.js",
+    "kill-port": "lsof -ti:3000 | xargs kill -9 2>/dev/null || true"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "compression": "^1.8.1",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "socket.io": "^4.8.3",
+    "web-push": "^3.6.7"
+  },
+  "devDependencies": {
+    "socket.io-client": "^4.8.3"
+  }
+}

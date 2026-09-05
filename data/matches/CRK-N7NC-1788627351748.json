@@ -1,0 +1,153 @@
+{
+  "id": "CRK-N7NC-1788627351748",
+  "code": "CRK-N7NC",
+  "matchName": "Direct Summary Test Room",
+  "hostPhone": "919999900777",
+  "savedAt": 1788627351748,
+  "status": "completed",
+  "result": {
+    "winner": "tie",
+    "winnerName": "Tie",
+    "summary": "Match Tied (0 - 0)"
+  },
+  "teams": {
+    "team1": {
+      "name": "Team 1",
+      "players": []
+    },
+    "team2": {
+      "name": "Team 2",
+      "players": []
+    }
+  },
+  "overs": 5,
+  "toss": null,
+  "battingFirst": null,
+  "location": {
+    "text": "",
+    "mapUrl": ""
+  },
+  "innings": [
+    {
+      "battingTeam": null,
+      "bowlingTeam": null,
+      "runs": 0,
+      "wickets": 2,
+      "overs": 0,
+      "balls": 2,
+      "extras": {
+        "wide": 0,
+        "noBall": 0,
+        "bye": 0,
+        "legBye": 0
+      },
+      "batsmen": [
+        {
+          "name": "Alpha 1",
+          "runs": 0,
+          "balls": 1,
+          "fours": 0,
+          "sixes": 0,
+          "out": true,
+          "dismissal": "Bowled"
+        },
+        {
+          "name": "Alpha 2",
+          "runs": 0,
+          "balls": 1,
+          "fours": 0,
+          "sixes": 0,
+          "out": true,
+          "dismissal": "Bowled"
+        }
+      ],
+      "bowlers": [
+        {
+          "name": "Beta 1",
+          "overs": 0,
+          "maidens": 0,
+          "runs": 0,
+          "wickets": 2
+        }
+      ],
+      "currentBatsmen": [
+        null,
+        null
+      ],
+      "currentBowler": 0,
+      "ballLog": [],
+      "currentOver": [
+        "W",
+        "W"
+      ],
+      "target": null,
+      "completed": true,
+      "awaitingNewBowler": false,
+      "awaitingNewBatsman": false,
+      "dismissedBatsmanIdx": 1,
+      "isSingleBatter": true,
+      "lastBowlerIdx": null
+    },
+    {
+      "battingTeam": null,
+      "bowlingTeam": null,
+      "runs": 0,
+      "wickets": 2,
+      "overs": 0,
+      "balls": 2,
+      "extras": {
+        "wide": 0,
+        "noBall": 0,
+        "bye": 0,
+        "legBye": 0
+      },
+      "batsmen": [
+        {
+          "name": "Beta 1",
+          "runs": 0,
+          "balls": 1,
+          "fours": 0,
+          "sixes": 0,
+          "out": true,
+          "dismissal": "Bowled"
+        },
+        {
+          "name": "Beta 2",
+          "runs": 0,
+          "balls": 1,
+          "fours": 0,
+          "sixes": 0,
+          "out": true,
+          "dismissal": "Bowled"
+        }
+      ],
+      "bowlers": [
+        {
+          "name": "Alpha 1",
+          "overs": 0,
+          "maidens": 0,
+          "runs": 0,
+          "wickets": 2
+        }
+      ],
+      "currentBatsmen": [
+        null,
+        null
+      ],
+      "currentBowler": 0,
+      "ballLog": [],
+      "currentOver": [
+        "W",
+        "W"
+      ],
+      "target": 1,
+      "completed": true,
+      "awaitingNewBowler": false,
+      "awaitingNewBatsman": false,
+      "dismissedBatsmanIdx": 1,
+      "isSingleBatter": true,
+      "lastBowlerIdx": null
+    }
+  ],
+  "announcements": []
+}

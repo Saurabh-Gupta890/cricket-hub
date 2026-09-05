@@ -4857,7 +4857,16 @@ function renderPlayersDirectoryList(players) {
   });
 
   if (filtered.length === 0) {
-    listEl.innerHTML = `<div class="empty-state-large"><div class="empty-icon">🔍</div><p>No players match "${escHtml(searchVal)}"</p></div>`;
+    if (!searchVal) {
+      listEl.innerHTML = `
+        <div class="empty-state-large">
+          <div class="empty-icon">🏏</div>
+          <p style="font-weight:700;font-size:1rem;color:var(--text-1);margin-bottom:0.3rem">No players registered yet</p>
+          <p style="font-size:0.82rem;color:var(--text-2)">Create a profile or start a match to see players here!</p>
+        </div>`;
+    } else {
+      listEl.innerHTML = `<div class="empty-state-large"><div class="empty-icon">🔍</div><p>No players match "${escHtml(searchVal)}"</p></div>`;
+    }
     return;
   }
 

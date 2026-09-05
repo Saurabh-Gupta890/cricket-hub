@@ -1091,9 +1091,18 @@ app.post('/api/auth/request-otp', (req, res) => {
     });
   }
 
+  // If in signup mode and user already exists
+  if (mode === 'signup' && existingUser) {
+    return res.status(409).json({
+      error: `An account already exists for this number (${existingUser.name || 'Player'}). Please log in instead!`,
+      alreadyExists: true,
+      existingName: existingUser.name
+    });
+  }
+
   // If in signup mode, player name is required for new registration
   const sanitizedName = sanitizeText(name || '', 30);
-  if (mode === 'signup' && !sanitizedName && !existingUser) {
+  if (mode === 'signup' && !sanitizedName) {
     return res.status(400).json({ error: 'Player Name is required to Sign Up' });
   }
 

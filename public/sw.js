@@ -1,4 +1,4 @@
-const CACHE_NAME = 'crickethub-v20';
+const CACHE_NAME = 'crickethub-v21';
 const STATIC_ASSETS = [
   '/',
   '/index.html',

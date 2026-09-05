@@ -1,0 +1,174 @@
+{
+  "id": "CRK-9A4P-1788634555596",
+  "code": "CRK-9A4P",
+  "matchName": "Tie Test Room",
+  "hostPhone": "919999885054",
+  "savedAt": 1788634555596,
+  "status": "completed",
+  "result": {
+    "winner": "tie",
+    "winnerName": "Tie",
+    "summary": "Match Tied (10 - 10)"
+  },
+  "teams": {
+    "team1": {
+      "name": "Red",
+      "players": [
+        "R1",
+        "R2"
+      ]
+    },
+    "team2": {
+      "name": "Blue",
+      "players": [
+        "B1",
+        "B2"
+      ]
+    }
+  },
+  "overs": 1,
+  "toss": {
+    "winner": "team1",
+    "choice": "bat"
+  },
+  "battingFirst": "team1",
+  "location": {
+    "text": "",
+    "mapUrl": ""
+  },
+  "innings": [
+    {
+      "battingTeam": "team1",
+      "bowlingTeam": "team2",
+      "runs": 10,
+      "wickets": 0,
+      "overs": 1,
+      "balls": 6,
+      "extras": {
+        "wide": 0,
+        "noBall": 0,
+        "bye": 0,
+        "legBye": 0
+      },
+      "batsmen": [
+        {
+          "name": "R1",
+          "runs": 10,
+          "balls": 6,
+          "fours": 0,
+          "sixes": 0,
+          "out": false,
+          "dismissal": ""
+        },
+        {
+          "name": "R2",
+          "runs": 0,
+          "balls": 0,
+          "fours": 0,
+          "sixes": 0,
+          "out": false,
+          "dismissal": ""
+        }
+      ],
+      "bowlers": [
+        {
+          "name": "B1",
+          "overs": 1,
+          "maidens": 0,
+          "runs": 10,
+          "wickets": 0
+        }
+      ],
+      "currentBatsmen": [
+        1,
+        0
+      ],
+      "currentBowler": 0,
+      "ballLog": [
+        [
+          "2",
+          "2",
+          "2",
+          "2",
+          "2",
+          "0"
+        ]
+      ],
+      "currentOver": [],
+      "target": null,
+      "completed": true,
+      "awaitingNewBowler": false,
+      "awaitingNewBatsman": false,
+      "dismissedBatsmanIdx": null,
+      "isSingleBatter": false,
+      "lastBowlerIdx": null
+    },
+    {
+      "battingTeam": "team2",
+      "bowlingTeam": "team1",
+      "runs": 10,
+      "wickets": 0,
+      "overs": 1,
+      "balls": 6,
+      "extras": {
+        "wide": 0,
+        "noBall": 0,
+        "bye": 0,
+        "legBye": 0
+      },
+      "batsmen": [
+        {
+          "name": "B1",
+          "runs": 10,
+          "balls": 6,
+          "fours": 0,
+          "sixes": 0,
+          "out": false,
+          "dismissal": ""
+        },
+        {
+          "name": "B2",
+          "runs": 0,
+          "balls": 0,
+          "fours": 0,
+          "sixes": 0,
+          "out": false,
+          "dismissal": ""
+        }
+      ],
+      "bowlers": [
+        {
+          "name": "R1",
+          "overs": 1,
+          "maidens": 0,
+          "runs": 10,
+          "wickets": 0
+        }
+      ],
+      "currentBatsmen": [
+        1,
+        0
+      ],
+      "currentBowler": 0,
+      "ballLog": [
+        [
+          "2",
+          "2",
+          "2",
+          "2",
+          "2",
+          "0"
+        ]
+      ],
+      "currentOver": [],
+      "target": 11,
+      "completed": true,
+      "awaitingNewBowler": false,
+      "awaitingNewBatsman": false,
+      "dismissedBatsmanIdx": null,
+      "isSingleBatter": false,
+      "lastBowlerIdx": null
+    }
+  ],
+  "announcements": []
+}

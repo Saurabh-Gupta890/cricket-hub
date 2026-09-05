@@ -305,6 +305,13 @@ async function sendOtp() {
         if (btn) btn.disabled = false;
         return;
       }
+      if (data.alreadyExists && currentAuthMode === 'signup') {
+        toast('ℹ️ ' + data.error);
+        setAuthMode('login');
+        if (btnText) btnText.textContent = 'Send Login OTP 📲';
+        if (btn) btn.disabled = false;
+        return;
+      }
       toast('❌ ' + data.error);
       if (btnText) btnText.textContent = currentAuthMode === 'signup' ? 'Create Profile & Send OTP 🚀' : 'Send Login OTP 📲';
       if (btn) btn.disabled = false;

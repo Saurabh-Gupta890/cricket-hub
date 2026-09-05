@@ -313,7 +313,7 @@
   "919999900001": {
     "phone": "919999900001",
     "name": "Player",
-    "token": "bbef62b1871634c9cdfced501f54a9075c5fbec72da7bba8d0c7173838614c65",
+    "token": "cd3e05f84c584ae3afed0d1facf3432e9b9be958231305c353aa42a5c117be1b",
     "avatar": null,
     "createdAt": 1788587815765,
     "color": "#7C4DFF"
@@ -321,7 +321,7 @@
   "919999900002": {
     "phone": "919999900002",
     "name": "Player",
-    "token": "8ee2b9b142fcc6ed0f085b2facffa70a90153cd8c80066793666263dcf67bfc5",
+    "token": "5c242a35c0f9b11604be906978aef314d1d1f4168c048f43f5464d93d33ed0b2",
     "avatar": null,
     "createdAt": 1788587815773,
     "color": "#00E676"
@@ -1461,5 +1461,21 @@
     "avatar": null,
     "createdAt": 1788632223144,
     "color": "#FFD740"
+  },
+  "919999900237": {
+    "phone": "919999900237",
+    "name": "Captain Rohit",
+    "token": "93d065f1685475183cfe2618ec9a1251b734bf8861ad513f21f6ac53bc2411ad",
+    "avatar": null,
+    "createdAt": 1788633576135,
+    "color": "#69F0AE"
+  },
+  "919999883492": {
+    "phone": "919999883492",
+    "name": "Umpire Official",
+    "token": "516ea64605a43ed78fb17d3693d93be21d8cf578cf932babbb069ccee5745d0a",
+    "avatar": null,
+    "createdAt": 1788633576699,
+    "color": "#40C4FF"
   }
 }

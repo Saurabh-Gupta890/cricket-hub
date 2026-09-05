@@ -487,7 +487,10 @@ window.verifyOtp = verifyOtp;
 window.resendOtp = resendOtp;
 window.backToPhoneStep = backToPhoneStep;
 
+let isVerifyingOtp = false;
+
 async function verifyOtp() {
+  if (isVerifyingOtp) return;
   const otp = [0, 1, 2, 3, 4, 5].map(i => document.getElementById(`otp-${i}`).value).join('');
   if (otp.length < 6) return toast('Please enter all 6 digits');
 
@@ -502,8 +505,11 @@ async function verifyOtp() {
   const full = cc + cleanPhone;
 
   const btn = document.getElementById('btn-verify-otp');
-  btn.textContent = 'Verifying…';
-  btn.disabled = true;
+  if (btn) {
+    btn.textContent = 'Verifying…';
+    btn.disabled = true;
+  }
+  isVerifyingOtp = true;
 
   try {
     const res = await fetch('/api/auth/verify-otp', {
@@ -514,12 +520,14 @@ async function verifyOtp() {
     const data = await res.json();
 
     if (!data.success) {
-      toast('❌ ' + data.error);
-      btn.textContent = 'Verify & Continue ✅';
-      btn.disabled = false;
+      toast('❌ ' + (data.error || 'Verification failed'));
+      if (btn) {
+        btn.textContent = 'Verify & Continue ✅';
+        btn.disabled = false;
+      }
 
       // Shake the inputs
-      document.getElementById('otp-inputs').animate(
+      document.getElementById('otp-inputs')?.animate(
         [{ transform: 'translateX(-6px)' }, { transform: 'translateX(6px)' }, { transform: 'translateX(0)' }],
         { duration: 300, iterations: 2 }
       );
@@ -540,8 +548,12 @@ async function verifyOtp() {
   } catch (err) {
     console.error('Error verifying OTP:', err);
     toast('❌ Network error during verification.');
-    btn.textContent = 'Verify & Continue ✅';
-    btn.disabled = false;
+  } finally {
+    isVerifyingOtp = false;
+    if (btn) {
+      btn.textContent = 'Verify & Continue ✅';
+      btn.disabled = false;
+    }
   }
 }
 

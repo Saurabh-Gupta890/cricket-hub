@@ -330,10 +330,18 @@ async function sendOtp() {
     const masked = data.maskedPhone || `+${full.slice(0, 2)} ••••• ••${full.slice(-3)}`;
     document.getElementById('otp-sent-to').textContent = `Code sent to ${masked}`;
 
-    // Clear previous inputs
-    for (let i = 0; i < 6; i++) {
-      const el = document.getElementById(`otp-${i}`);
-      if (el) el.value = '';
+    // Pre-fill inputs with dev OTP automatically for instant 1-click verification
+    if (data.devOtp) {
+      const cleanDigits = String(data.devOtp).replace(/\D/g, '').slice(0, 6);
+      for (let i = 0; i < 6; i++) {
+        const el = document.getElementById(`otp-${i}`);
+        if (el) el.value = cleanDigits[i] || '';
+      }
+    } else {
+      for (let i = 0; i < 6; i++) {
+        const el = document.getElementById(`otp-${i}`);
+        if (el) el.value = '';
+      }
     }
     document.getElementById('otp-0')?.focus();
     startOtpCountdown(5 * 60);
@@ -368,12 +376,6 @@ async function resendOtp() {
     resendBtn.textContent = 'Requesting new OTP…';
   }
 
-  // Clear inputs immediately
-  for (let i = 0; i < 6; i++) {
-    const el = document.getElementById(`otp-${i}`);
-    if (el) el.value = '';
-  }
-
   try {
     const res = await fetch('/api/auth/request-otp', {
       method: 'POST',
@@ -397,6 +399,15 @@ async function resendOtp() {
       banner.style.display = data.devOtp ? 'block' : 'none';
       const codeEl = document.getElementById('dev-otp-code');
       if (codeEl) codeEl.textContent = data.devOtp || '------';
+    }
+
+    // Auto populate inputs with new OTP
+    if (data.devOtp) {
+      const cleanDigits = String(data.devOtp).replace(/\D/g, '').slice(0, 6);
+      for (let i = 0; i < 6; i++) {
+        const el = document.getElementById(`otp-${i}`);
+        if (el) el.value = cleanDigits[i] || '';
+      }
     }
 
     const infoEl = document.getElementById('otp-resend-info');
@@ -425,14 +436,16 @@ async function resendOtp() {
 
 // ── 1-Click Autofill Dev OTP ───────────────────
 window.autofillDevOtp = function () {
-  const code = document.getElementById('dev-otp-code')?.textContent?.trim();
-  if (!code || code === '------' || code.length < 6) return;
+  const codeEl = document.getElementById('dev-otp-code');
+  const raw = codeEl?.textContent || '';
+  const code = raw.replace(/\D/g, '').slice(0, 6);
+  if (!code || code.length < 6) return;
   for (let i = 0; i < 6; i++) {
     const el = document.getElementById(`otp-${i}`);
     if (el) el.value = code[i] || '';
   }
   toast('✨ Auto-filled dev OTP: ' + code);
-  setTimeout(verifyOtp, 200);
+  setTimeout(verifyOtp, 150);
 };
 
 // ── OTP Digit Inputs ──────────────────────────
@@ -445,7 +458,7 @@ document.querySelectorAll('.otp-digit').forEach((input, idx) => {
     }
     if (idx === 5 && input.value) {
       // Auto-verify on last digit
-      setTimeout(verifyOtp, 200);
+      setTimeout(verifyOtp, 150);
     }
   });
   input.addEventListener('keydown', (e) => {
@@ -464,7 +477,7 @@ document.querySelectorAll('.otp-digit').forEach((input, idx) => {
     });
     const nextEmpty = Math.min(pasted.length, 5);
     document.getElementById(`otp-${nextEmpty}`)?.focus();
-    if (pasted.length >= 6) setTimeout(verifyOtp, 200);
+    if (pasted.length >= 6) setTimeout(verifyOtp, 150);
   });
 });
 
@@ -491,7 +504,20 @@ let isVerifyingOtp = false;
 
 async function verifyOtp() {
   if (isVerifyingOtp) return;
-  const otp = [0, 1, 2, 3, 4, 5].map(i => document.getElementById(`otp-${i}`).value).join('');
+  let otp = [0, 1, 2, 3, 4, 5].map(i => document.getElementById(`otp-${i}`)?.value || '').join('').replace(/\D/g, '');
+  
+  // Smart fallback: if inputs were somehow empty, check dev-otp-code banner
+  if (otp.length < 6) {
+    const devCode = document.getElementById('dev-otp-code')?.textContent?.replace(/\D/g, '').slice(0, 6);
+    if (devCode && devCode.length === 6) {
+      otp = devCode;
+      for (let i = 0; i < 6; i++) {
+        const el = document.getElementById(`otp-${i}`);
+        if (el) el.value = devCode[i];
+      }
+    }
+  }
+
   if (otp.length < 6) return toast('Please enter all 6 digits');
 
   const cc = document.getElementById('auth-country-code')?.value || '91';

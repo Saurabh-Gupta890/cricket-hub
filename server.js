@@ -37,6 +37,167 @@ if (!fs.existsSync(MATCHES_DIR)) {
 }
 
 // ═══════════════════════════════════════════════
+//  MONGODB CLOUD DATABASE INTEGRATION (DUAL-MODE)
+// ═══════════════════════════════════════════════
+const { MongoClient } = require('mongodb');
+
+let mongoClient = null;
+let mongoDb = null;
+let isMongoConnected = false;
+
+async function initCloudDatabase() {
+  const uri = process.env.MONGODB_URI;
+  if (!uri) {
+    console.log('ℹ️  No MONGODB_URI detected. Running in local JSON persistence mode.');
+    return;
+  }
+  try {
+    console.log('🌐 Connecting to MongoDB Atlas Cloud Database...');
+    mongoClient = new MongoClient(uri, {
+      serverSelectionTimeoutMS: 8000,
+      connectTimeoutMS: 10000
+    });
+    await mongoClient.connect();
+    const dbName = process.env.MONGODB_DB_NAME || 'crickethub';
+    mongoDb = mongoClient.db(dbName);
+    isMongoConnected = true;
+    console.log(`✅ Connected to MongoDB Atlas Cloud Database: "${dbName}"!`);
+
+    await syncCloudData();
+  } catch (err) {
+    console.error('❌ Failed to connect to MongoDB Atlas:', err.message);
+    console.warn('⚠️ Falling back to local JSON persistence mode.');
+  }
+}
+
+async function syncCloudData() {
+  if (!isMongoConnected || !mongoDb) return;
+  try {
+    const usersCol = mongoDb.collection('users');
+    const roomsCol = mongoDb.collection('rooms');
+    const groupsCol = mongoDb.collection('groups');
+    const matchesCol = mongoDb.collection('matches');
+    const subsCol = mongoDb.collection('push_subscriptions');
+
+    // 1. Users Sync
+    const cloudUsersCount = await usersCol.countDocuments();
+    if (cloudUsersCount > 0) {
+      const cloudUsers = await usersCol.find({}).toArray();
+      for (const u of cloudUsers) {
+        const { _id, ...userData } = u;
+        const phone = userData.phone || _id;
+        userStore.set(phone, userData);
+        if (userData.token) tokenIndex.set(userData.token, phone);
+      }
+      saveUsersLocal();
+      console.log(`☁️ Synced ${cloudUsers.length} users from MongoDB Cloud.`);
+    } else if (userStore.size > 0) {
+      const ops = [];
+      for (const [phone, user] of userStore.entries()) {
+        ops.push({ replaceOne: { filter: { _id: phone }, replacement: { _id: phone, ...user }, upsert: true } });
+      }
+      if (ops.length > 0) await usersCol.bulkWrite(ops);
+      console.log(`☁️ Auto-migrated ${userStore.size} local users to MongoDB Cloud.`);
+    }
+
+    // 2. Groups Sync
+    const cloudGroupsCount = await groupsCol.countDocuments();
+    if (cloudGroupsCount > 0) {
+      const cloudGroups = await groupsCol.find({}).toArray();
+      for (const g of cloudGroups) {
+        const { _id, ...groupData } = g;
+        groups.set(_id, groupData);
+      }
+      saveGroupsLocal();
+      console.log(`☁️ Synced ${cloudGroups.length} groups from MongoDB Cloud.`);
+    } else if (groups.size > 0) {
+      const ops = [];
+      for (const [id, g] of groups.entries()) {
+        ops.push({ replaceOne: { filter: { _id: id }, replacement: { _id: id, ...g }, upsert: true } });
+      }
+      if (ops.length > 0) await groupsCol.bulkWrite(ops);
+      console.log(`☁️ Auto-migrated ${groups.size} local groups to MongoDB Cloud.`);
+    }
+
+    // 3. Rooms Sync
+    const cloudRoomsCount = await roomsCol.countDocuments();
+    if (cloudRoomsCount > 0) {
+      const cloudRooms = await roomsCol.find({}).toArray();
+      for (const r of cloudRooms) {
+        const { _id, ...roomData } = r;
+        rooms.set(_id, { ...roomData, sockets: {} });
+        scheduleRoomExpiry(_id);
+      }
+      saveRoomsLocal();
+      console.log(`☁️ Synced ${cloudRooms.length} active rooms from MongoDB Cloud.`);
+    } else if (rooms.size > 0) {
+      const ops = [];
+      for (const [code, r] of rooms.entries()) {
+        const persistObj = {
+          code: r.code,
+          matchName: r.matchName,
+          hostPhone: r.hostPhone,
+          groupId: r.groupId || null,
+          planning: r.planning,
+          match: r.match,
+          createdAt: r.createdAt || Date.now()
+        };
+        ops.push({ replaceOne: { filter: { _id: code }, replacement: { _id: code, ...persistObj }, upsert: true } });
+      }
+      if (ops.length > 0) await roomsCol.bulkWrite(ops);
+      console.log(`☁️ Auto-migrated ${rooms.size} local rooms to MongoDB Cloud.`);
+    }
+
+    // 4. Matches Sync
+    const cloudMatchesCount = await matchesCol.countDocuments();
+    if (cloudMatchesCount > 0) {
+      const cloudMatches = await matchesCol.find({}).toArray();
+      for (const m of cloudMatches) {
+        const { _id, ...matchData } = m;
+        const filePath = path.join(MATCHES_DIR, `${_id}.json`);
+        safeWriteJsonFile(filePath, matchData);
+      }
+      console.log(`☁️ Synced ${cloudMatches.length} historical matches from MongoDB Cloud.`);
+    } else if (fs.existsSync(MATCHES_DIR)) {
+      const files = fs.readdirSync(MATCHES_DIR).filter(f => f.endsWith('.json'));
+      const ops = [];
+      for (const f of files) {
+        try {
+          const raw = fs.readFileSync(path.join(MATCHES_DIR, f), 'utf-8');
+          const data = JSON.parse(raw);
+          const id = data.id || f.replace('.json', '');
+          ops.push({ replaceOne: { filter: { _id: id }, replacement: { _id: id, ...data }, upsert: true } });
+        } catch (e) { }
+      }
+      if (ops.length > 0) {
+        await matchesCol.bulkWrite(ops);
+        console.log(`☁️ Auto-migrated ${ops.length} archived matches to MongoDB Cloud.`);
+      }
+    }
+
+    // 5. Push Subscriptions Sync
+    const cloudSubsCount = await subsCol.countDocuments();
+    if (cloudSubsCount > 0) {
+      const cloudSubs = await subsCol.find({}).toArray();
+      for (const s of cloudSubs) {
+        pushSubscriptions.set(s._id, s.subs || []);
+      }
+      saveSubscriptionsLocal();
+      console.log(`☁️ Synced ${cloudSubs.length} push subscription records from MongoDB Cloud.`);
+    } else if (pushSubscriptions.size > 0) {
+      const ops = [];
+      for (const [phone, subs] of pushSubscriptions.entries()) {
+        ops.push({ replaceOne: { filter: { _id: phone }, replacement: { _id: phone, subs }, upsert: true } });
+      }
+      if (ops.length > 0) await subsCol.bulkWrite(ops);
+      console.log(`☁️ Auto-migrated ${pushSubscriptions.size} push subscriptions to MongoDB Cloud.`);
+    }
+  } catch (err) {
+    console.error('⚠️ Error syncing cloud data with MongoDB:', err);
+  }
+}
+
+// ═══════════════════════════════════════════════
 //  ATOMIC FILE PERSISTENCE HELPERS
 // ═══════════════════════════════════════════════
 function safeWriteJsonFile(filePath, data) {
@@ -234,7 +395,7 @@ function loadSubscriptions() {
   }
 }
 
-function saveSubscriptions() {
+function saveSubscriptionsLocal() {
   try {
     const obj = {};
     for (const [phone, subs] of pushSubscriptions.entries()) {
@@ -243,6 +404,20 @@ function saveSubscriptions() {
     safeWriteJsonFile(SUBS_FILE, obj);
   } catch (e) {
     console.error('Failed to save subscriptions:', e);
+  }
+}
+
+function saveSubscriptions() {
+  saveSubscriptionsLocal();
+  if (isMongoConnected && mongoDb) {
+    const subsCol = mongoDb.collection('push_subscriptions');
+    const ops = [];
+    for (const [phone, subs] of pushSubscriptions.entries()) {
+      ops.push({ replaceOne: { filter: { _id: phone }, replacement: { _id: phone, subs }, upsert: true } });
+    }
+    if (ops.length > 0) {
+      subsCol.bulkWrite(ops).catch(err => console.error('MongoDB async saveSubscriptions error:', err.message));
+    }
   }
 }
 
@@ -367,7 +542,7 @@ function loadGroups() {
   }
 }
 
-function saveGroups() {
+function saveGroupsLocal() {
   try {
     const obj = {};
     for (const [id, g] of groups.entries()) {
@@ -376,6 +551,20 @@ function saveGroups() {
     safeWriteJsonFile(GROUPS_FILE, obj);
   } catch (err) {
     console.error('Failed to save groups to disk:', err);
+  }
+}
+
+function saveGroups() {
+  saveGroupsLocal();
+  if (isMongoConnected && mongoDb) {
+    const groupsCol = mongoDb.collection('groups');
+    const ops = [];
+    for (const [id, g] of groups.entries()) {
+      ops.push({ replaceOne: { filter: { _id: id }, replacement: { _id: id, ...g }, upsert: true } });
+    }
+    if (ops.length > 0) {
+      groupsCol.bulkWrite(ops).catch(err => console.error('MongoDB async saveGroups error:', err.message));
+    }
   }
 }
 
@@ -407,7 +596,7 @@ function loadUsers() {
   }
 }
 
-function saveUsers() {
+function saveUsersLocal() {
   try {
     const obj = {};
     for (const [phone, user] of userStore.entries()) {
@@ -416,6 +605,20 @@ function saveUsers() {
     safeWriteJsonFile(USERS_FILE, obj);
   } catch (err) {
     console.error('Failed to save users to disk:', err);
+  }
+}
+
+function saveUsers() {
+  saveUsersLocal();
+  if (isMongoConnected && mongoDb) {
+    const usersCol = mongoDb.collection('users');
+    const ops = [];
+    for (const [phone, user] of userStore.entries()) {
+      ops.push({ replaceOne: { filter: { _id: phone }, replacement: { _id: phone, ...user }, upsert: true } });
+    }
+    if (ops.length > 0) {
+      usersCol.bulkWrite(ops).catch(err => console.error('MongoDB async saveUsers error:', err.message));
+    }
   }
 }
 
@@ -447,7 +650,7 @@ function loadRooms() {
   }
 }
 
-function saveRooms() {
+function saveRoomsLocal() {
   try {
     const obj = {};
     for (const [code, r] of rooms.entries()) {
@@ -464,6 +667,29 @@ function saveRooms() {
     safeWriteJsonFile(ROOMS_FILE, obj);
   } catch (err) {
     console.error('Failed to save rooms to disk:', err);
+  }
+}
+
+function saveRooms() {
+  saveRoomsLocal();
+  if (isMongoConnected && mongoDb) {
+    const roomsCol = mongoDb.collection('rooms');
+    const ops = [];
+    for (const [code, r] of rooms.entries()) {
+      const persistObj = {
+        code: r.code,
+        matchName: r.matchName,
+        hostPhone: r.hostPhone,
+        groupId: r.groupId || null,
+        planning: r.planning,
+        match: r.match,
+        createdAt: r.createdAt || Date.now()
+      };
+      ops.push({ replaceOne: { filter: { _id: code }, replacement: { _id: code, ...persistObj }, upsert: true } });
+    }
+    if (ops.length > 0) {
+      roomsCol.bulkWrite(ops).catch(err => console.error('MongoDB async saveRooms error:', err.message));
+    }
   }
 }
 
@@ -1335,6 +1561,13 @@ function saveMatchToHistory(room) {
     const filePath = path.join(MATCHES_DIR, `${id}.json`);
     safeWriteJsonFile(filePath, record);
     console.log(`💾 Saved match history: ${filePath}`);
+
+    if (isMongoConnected && mongoDb) {
+      mongoDb.collection('matches')
+        .replaceOne({ _id: id }, { _id: id, ...record }, { upsert: true })
+        .then(() => console.log(`☁️ Synced match ${id} to MongoDB Cloud.`))
+        .catch(err => console.error('MongoDB async saveMatch error:', err.message));
+    }
     return record;
   } catch (err) {
     console.error('Error saving match history:', err);
@@ -3136,8 +3369,9 @@ server.on('error', (err) => {
     console.error('Server error:', err);
   }
 });
-server.listen(PORT, () => {
+server.listen(PORT, async () => {
   console.log(`🏏 CricketHub running in ${process.env.NODE_ENV || 'development'} mode at http://localhost:${PORT}`);
+  await initCloudDatabase();
 });
 
 // ═══════════════════════════════════════════════

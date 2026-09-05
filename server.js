@@ -2064,6 +2064,45 @@ app.get('/api/room/:code', (req, res) => {
   });
 });
 
+// Complete Database Reset Endpoint (Wipes local and MongoDB cloud data)
+app.all('/api/admin/clean-all-data', async (req, res) => {
+  try {
+    userStore.clear();
+    tokenIndex.clear();
+    rooms.clear();
+    groups.clear();
+    pushSubscriptions.clear();
+    saveUsersLocal();
+    saveRoomsLocal();
+    saveGroupsLocal();
+    saveSubscriptionsLocal();
+
+    if (fs.existsSync(MATCHES_DIR)) {
+      const files = fs.readdirSync(MATCHES_DIR).filter(f => f.endsWith('.json'));
+      for (const f of files) {
+        try { fs.unlinkSync(path.join(MATCHES_DIR, f)); } catch (e) {}
+      }
+    }
+
+    if (isMongoConnected && mongoDb) {
+      await Promise.all([
+        mongoDb.collection('users').deleteMany({}),
+        mongoDb.collection('rooms').deleteMany({}),
+        mongoDb.collection('groups').deleteMany({}),
+        mongoDb.collection('matches').deleteMany({}),
+        mongoDb.collection('push_subscriptions').deleteMany({})
+      ]);
+      console.log('🧹 MongoDB Atlas Collections wiped clean!');
+    }
+
+    console.log('🧹 Complete Database Reset executed. 0 users, 0 matches, 0 groups, 0 rooms.');
+    res.json({ success: true, message: 'All database data and cloud collections wiped clean successfully!' });
+  } catch (err) {
+    console.error('Failed to clean database:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.get('/api/history', (req, res) => {
   try {
     const all = getAllMatchesMap();

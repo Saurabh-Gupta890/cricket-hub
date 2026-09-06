@@ -211,7 +211,15 @@ function findPlanningMember(planning, phone) {
   if (!planning || !planning.members || !phone) return null;
   const members = planning.members;
   if (members[phone]) return members[phone];
-  return Object.values(members).find(m => phonesMatch(m.phone, phone)) || null;
+  const byPhone = Object.values(members).find(m => phonesMatch(m.phone, phone));
+  if (byPhone) return byPhone;
+  const myName = state.session?.user?.name;
+  if (myName) {
+    const cleanMyName = myName.trim().toLowerCase();
+    const byName = Object.values(members).find(m => m.name && m.name.trim().toLowerCase() === cleanMyName && cleanMyName !== 'player');
+    if (byName) return byName;
+  }
+  return null;
 }
 window.findPlanningMember = findPlanningMember;
 
@@ -2110,14 +2118,15 @@ function getDeduplicatedPlanningMembers(planning) {
   const unique = [];
   for (const m of raw) {
     if (!m) continue;
-    const exists = unique.find(u => phonesMatch(u.phone, m.phone));
+    const exists = unique.find(u => phonesMatch(u.phone, m.phone) || (u.name && m.name && u.name.trim().toLowerCase() === m.name.trim().toLowerCase() && u.name.trim().toLowerCase() !== 'player'));
     if (exists) {
-      if (!exists.vote && m.vote) exists.vote = m.vote;
-      if (!exists.comment && m.comment) exists.comment = m.comment;
+      if (m.vote !== undefined && m.vote !== null) exists.vote = m.vote;
+      if (m.comment) exists.comment = m.comment;
       if (m.isOnline) exists.isOnline = true;
       if (m.isHost) exists.isHost = true;
-      if (m.avatar && !exists.avatar) exists.avatar = m.avatar;
-      if (m.color && !exists.color) exists.color = m.color;
+      if (m.avatar && (!exists.avatar || exists.avatar === '🏏')) exists.avatar = m.avatar;
+      if (m.name && (!exists.name || exists.name === 'Player')) exists.name = m.name;
+      if (m.color && (!exists.color || exists.color === '#00e5ff')) exists.color = m.color;
     } else {
       unique.push({ ...m });
     }
@@ -2131,7 +2140,7 @@ function renderRsvpStats() {
   const coming = members.filter(m => m.vote === 'coming').length;
   const maybe = members.filter(m => m.vote === 'maybe').length;
   const notComing = members.filter(m => m.vote === 'not_coming').length;
-  const noVote = members.filter(m => m.vote === null).length;
+  const noVote = members.filter(m => !m.vote).length;
   const onlineCount = members.filter(m => m.isOnline).length;
 
   document.getElementById('stat-coming').textContent = coming;
@@ -2185,7 +2194,7 @@ function renderRsvpGrid() {
       : (isHostUser ? 'Host · Offline ⚪' : 'Offline');
 
     return `
-      <div class="rsvp-card vote-${m.vote}${isMe ? ' my-card' : ''}">
+      <div class="rsvp-card vote-${m.vote || 'null'}${isMe ? ' my-card' : ''}">
         <div class="rsvp-card-top">
           <div class="rsvp-avatar player-profile-link" onclick="openPlayerProfile('${escHtml(m.phone || m.name)}')" style="background:${avatarBg};cursor:pointer;overflow:hidden" title="View Profile">${avatarHtml}</div>
           <div class="rsvp-name-wrap player-profile-link" onclick="openPlayerProfile('${escHtml(m.phone || m.name)}')" style="cursor:pointer" title="View Profile">
@@ -2215,17 +2224,18 @@ function renderRsvpGrid() {
 
 function renderMyVote() {
   const myPhone = state.session?.user?.phone;
-  if (!myPhone) return;
-  const me = findPlanningMember(state.room?.planning, myPhone);
-  if (!me) return;
-
-  // Highlight the right vote button
+  // Always clear all selection styles first
   ['coming', 'maybe', 'not-coming'].forEach(v => {
     document.getElementById(`vote-${v}`)?.classList.remove('selected');
   });
+
+  if (!myPhone) return;
+  const me = findPlanningMember(state.room?.planning, myPhone);
+  if (!me || !me.vote) return;
+
   if (me.vote === 'coming') document.getElementById('vote-coming')?.classList.add('selected');
-  if (me.vote === 'maybe') document.getElementById('vote-maybe')?.classList.add('selected');
-  if (me.vote === 'not_coming') document.getElementById('vote-not-coming')?.classList.add('selected');
+  else if (me.vote === 'maybe') document.getElementById('vote-maybe')?.classList.add('selected');
+  else if (me.vote === 'not_coming') document.getElementById('vote-not-coming')?.classList.add('selected');
 
   // Load saved comment
   const commentInput = document.getElementById('vote-comment');
@@ -2314,8 +2324,20 @@ function renderPlanningChat() {
 
 // ── Vote Actions ─────────────────────────────
 window.castVote = function (vote) {
-  const comment = document.getElementById('vote-comment').value.trim();
-  socket.emit('planning:vote', { vote, comment });
+  const comment = document.getElementById('vote-comment')?.value?.trim() || '';
+  ['coming', 'maybe', 'not-coming'].forEach(v => {
+    document.getElementById(`vote-${v}`)?.classList.remove('selected');
+  });
+  if (vote === 'coming') document.getElementById('vote-coming')?.classList.add('selected');
+  else if (vote === 'maybe') document.getElementById('vote-maybe')?.classList.add('selected');
+  else if (vote === 'not_coming') document.getElementById('vote-not-coming')?.classList.add('selected');
+
+  socket.emit('planning:vote', { vote, comment }, (res) => {
+    if (res?.success && res.room) {
+      state.room = res.room;
+      renderPlanningScreen();
+    }
+  });
 };
 
 document.getElementById('btn-save-comment').addEventListener('click', () => {

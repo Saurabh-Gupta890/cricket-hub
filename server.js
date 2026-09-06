@@ -1434,10 +1434,12 @@ function getRoomPublicState(room) {
     
     if (existingKey) {
       const existing = deduplicatedMembers[existingKey];
-      if (!existing.vote && m.vote) existing.vote = m.vote;
-      if (!existing.comment && m.comment) existing.comment = m.comment;
+      if (m.vote !== undefined && m.vote !== null) existing.vote = m.vote;
+      if (m.comment) existing.comment = m.comment;
       if (m.isHost) existing.isHost = true;
-      if (m.avatar && !existing.avatar) existing.avatar = m.avatar;
+      if (m.avatar && (!existing.avatar || existing.avatar === '🏏')) existing.avatar = m.avatar;
+      if (m.name && (!existing.name || existing.name === 'Player')) existing.name = m.name;
+      if (m.color && (!existing.color || existing.color === '#00e5ff')) existing.color = m.color;
     } else {
       const isThisMemberHost = !!(m.isHost || phonesMatch(room.hostPhone, phone));
       const isOnline = isThisMemberHost
@@ -1448,7 +1450,7 @@ function getRoomPublicState(room) {
         ...m,
         phone,
         isHost: isThisMemberHost,
-        isOnline
+        isOnline: isOnline || !!m.isOnline
       };
     }
   }

@@ -64,8 +64,8 @@ async function runTest() {
   const socket1 = io(SERVER_URL, { reconnection: false, transports: ['websocket'] });
   const socket2 = io(SERVER_URL, { reconnection: false, transports: ['websocket'] });
 
-  await new Promise(r => socket1.on('connect', r));
-  await new Promise(r => socket2.on('connect', r));
+  if (!socket1.connected) await new Promise(r => socket1.once('connect', r));
+  if (!socket2.connected) await new Promise(r => socket2.once('connect', r));
 
   socket1.emit('user:register', { token: token1, phone: user1Phone });
   socket2.emit('user:register', { token: token2, phone: user2Phone });

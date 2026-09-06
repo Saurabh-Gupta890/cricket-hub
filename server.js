@@ -510,7 +510,6 @@ async function sendWebPush(targetPhone, payload, excludePhone = null) {
 //  IN-MEMORY & PERSISTENT STORES
 // ═══════════════════════════════════════════════
 const otpStore = new Map();  // phone -> { otp, expiresAt, name, attempts }
-const otpRequestTracker = new Map();  // phone -> { count: number, windowStart: number }
 const userStore = new Map();  // phone -> { phone, name, token, createdAt, color }
 const tokenIndex = new Map();  // token -> phone
 const rooms = new Map();  // roomCode -> room
@@ -1050,37 +1049,6 @@ app.post('/api/auth/request-otp', (req, res) => {
   const cleaned = phone.replace(/\D/g, '');
   if (cleaned.length < 8) return res.status(400).json({ error: 'Please enter a valid 10-digit phone number' });
 
-  // 1. Check account temporary lockout from brute force attempts
-  if (accountLockouts.has(cleaned)) {
-    const unlockTime = accountLockouts.get(cleaned);
-    const remainingMin = Math.ceil((unlockTime - Date.now()) / 60000);
-    if (remainingMin > 0) {
-      return res.status(429).json({
-        error: `Account temporarily locked due to repeated incorrect attempts. Please try again in ${remainingMin} minute(s).`
-      });
-    }
-    accountLockouts.delete(cleaned);
-  }
-
-  // 2. Sliding window request tracker: allow requesting OTP up to 5 times in a go (5 min window)
-  let reqTracker = otpRequestTracker.get(cleaned);
-  if (!reqTracker || Date.now() - reqTracker.windowStart > 5 * 60 * 1000) {
-    reqTracker = { count: 0, windowStart: Date.now() };
-    otpRequestTracker.set(cleaned, reqTracker);
-  }
-
-  if (reqTracker.count >= 5) {
-    const remainingCooldownSec = Math.max(1, Math.ceil((reqTracker.windowStart + 5 * 60 * 1000 - Date.now()) / 1000));
-    return res.status(429).json({
-      error: `You have reached the maximum of 5 OTP requests in a go. Please wait ${Math.ceil(remainingCooldownSec / 60)} minute(s) before requesting again.`,
-      requestLimitReached: true,
-      remainingCooldownSec
-    });
-  }
-
-  reqTracker.count += 1;
-  const requestsRemaining = Math.max(0, 5 - reqTracker.count);
-
   const existingUser = findUserByPhone(cleaned);
 
   // If in login mode and account does not exist
@@ -1112,7 +1080,6 @@ app.post('/api/auth/request-otp', (req, res) => {
   const otp = crypto.randomInt(100000, 1000000).toString();
   const expiresAt = Date.now() + OTP_TTL;
 
-  // Fresh OTP code gets 5 fresh verification attempts
   otpStore.set(cleaned, {
     otp,
     expiresAt,
@@ -1122,17 +1089,14 @@ app.post('/api/auth/request-otp', (req, res) => {
     existingKey: existingUser?.phone
   });
 
-  console.log(`\n🔐 OTP for +${cleaned} (${finalName}) [${mode || 'auth'} | Request ${reqTracker.count}/5]: [ ${otp} ]  — expires in 5 min\n`);
+  console.log(`\n🔐 OTP for +${cleaned} (${finalName}) [${mode || 'auth'}]: [ ${otp} ]  — expires in 5 min\n`);
 
   res.json({
     success: true,
-    devOtp: otp, // Kept in dev environment for smooth local/tunnel testing
+    devOtp: otp,
     isNew: !existingUser,
     name: finalName,
-    maskedPhone: maskPhone(cleaned),
-    requestCount: reqTracker.count,
-    requestsRemaining,
-    maxRequests: 5
+    maskedPhone: maskPhone(cleaned)
   });
 });
 
@@ -1142,19 +1106,6 @@ app.post('/api/auth/verify-otp', (req, res) => {
   if (!phone || !otp) return res.status(400).json({ error: 'Phone and OTP required' });
 
   const cleaned = phone.replace(/\D/g, '');
-
-  // 1. Check account lockout
-  if (accountLockouts.has(cleaned)) {
-    const unlockTime = accountLockouts.get(cleaned);
-    const remainingMin = Math.ceil((unlockTime - Date.now()) / 60000);
-    if (remainingMin > 0) {
-      return res.status(429).json({
-        error: `Account is temporarily locked. Please try again in ${remainingMin} minute(s).`
-      });
-    }
-    accountLockouts.delete(cleaned);
-  }
-
   const record = otpStore.get(cleaned);
 
   if (!record) return res.status(400).json({ error: 'No active OTP requested for this number. Please request an OTP.' });
@@ -1163,28 +1114,14 @@ app.post('/api/auth/verify-otp', (req, res) => {
     return res.status(400).json({ error: 'OTP has expired. Please click Resend OTP for a new code.', expired: true });
   }
 
-  // 2. Brute-force verification defense (5 attempts per OTP code)
   if (record.otp !== otp.trim()) {
-    record.attempts = (record.attempts || 0) + 1;
-    const remaining = 5 - record.attempts;
-    if (record.attempts >= 5) {
-      otpStore.delete(cleaned);
-      return res.status(400).json({
-        error: 'Incorrect OTP entered 5 times. Please click "Resend OTP" to request a new code.',
-        canResend: true,
-        remainingAttempts: 0
-      });
-    }
     return res.status(400).json({
-      error: `Incorrect OTP code. ${remaining} attempt(s) remaining.`,
-      remainingAttempts: remaining
+      error: 'Incorrect OTP code. Please check the code or tap Resend OTP.'
     });
   }
 
   // OTP verified successfully
   otpStore.delete(cleaned);
-  accountLockouts.delete(cleaned);
-  otpRequestTracker.delete(cleaned); // Reset request count on successful login
 
   // Create or update user
   let user = findUserByPhone(cleaned);

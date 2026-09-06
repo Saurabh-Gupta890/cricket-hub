@@ -140,24 +140,6 @@ a {
   flex-direction: column;
 }
 
-html.has-session #screen-auth {
-  display: none !important;
-}
-
-html.has-session #screen-home:not(.screen.active):not(.screen-inactive-forced) {
-  display: flex;
-  flex-direction: column;
-}
-
-html.no-session #screen-auth:not(.screen-inactive-forced) {
-  display: flex;
-  flex-direction: column;
-}
-
-html.no-session #screen-home {
-  display: none !important;
-}
-
 /* ═══════════════════════════════════════════════
    LANDING SCREEN
    ═══════════════════════════════════════════════ */

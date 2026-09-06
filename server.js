@@ -1377,10 +1377,15 @@ function getRoomPublicState(room) {
     match.result = calculateMatchResult(match);
   }
 
-  const onlinePhones = new Set(Object.values(room.sockets || {}));
+  const onlineList = Object.values(room.sockets || {}).filter(Boolean);
+  const isHostOnline = onlineList.some(op => phonesMatch(op, room.hostPhone));
   const planning = JSON.parse(JSON.stringify(room.planning));
   Object.keys(planning.members).forEach(phone => {
-    planning.members[phone].isOnline = onlinePhones.has(phone);
+    const isThisMemberHost = !!(planning.members[phone].isHost || phonesMatch(room.hostPhone, phone));
+    planning.members[phone].isHost = isThisMemberHost;
+    planning.members[phone].isOnline = isThisMemberHost
+      ? isHostOnline
+      : onlineList.some(op => phonesMatch(op, phone));
   });
 
   let groupDetails = null;

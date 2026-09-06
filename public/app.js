@@ -709,10 +709,10 @@ function checkNotificationPermissionBanner() {
     }
   }
 
-  // If Notification API is not available on this browser wrapper
+  // If Notification API is not available on this browser wrapper (e.g. non-PWA iOS)
   if (isIOS && !isStandalone) {
-    textEl.innerHTML = '🍎 <strong>iPhone Setup:</strong> Tap <strong>Share (⬆️) → Add to Home Screen</strong> to enable background push alerts!';
-    actEl.innerHTML = '<button class="btn btn-secondary btn-sm" id="btn-ios-guide" style="white-space:nowrap">How-To 📲</button>';
+    textEl.innerHTML = '🍎 <strong>iPhone Users:</strong> Open in <strong>Safari</strong> → tap <strong>Share (⬆️) → Add to Home Screen</strong> to enable background push alerts!';
+    actEl.innerHTML = '<button class="btn btn-secondary btn-sm" id="btn-ios-guide" style="white-space:nowrap">Safari Guide 📲</button>';
     document.getElementById('btn-ios-guide')?.addEventListener('click', () => {
       document.getElementById('ios-guide-modal').style.display = 'flex';
     });
@@ -1766,10 +1766,15 @@ function renderRsvpGrid() {
   grid.innerHTML = sorted.map(m => {
     const isMe = m.phone === myPhone;
     const vl = voteLabels[m.vote] || voteLabels.null;
-    const isOnline = m.isOnline;
+    const isOnline = !!m.isOnline;
+    const isHostUser = !!(m.isHost || (state.room && phonesMatch(state.room.hostPhone, m.phone)));
 
     const avatarHtml = getAvatarHtml(m.avatar, m.name, m.color, 44);
     const avatarBg = getAvatarBg(m.avatar, m.color);
+
+    const statusText = isOnline
+      ? (isHostUser ? 'Host · Live Now 🟢' : 'Live Now')
+      : (isHostUser ? 'Host · Offline ⚪' : 'Offline');
 
     return `
       <div class="rsvp-card vote-${m.vote}${isMe ? ' my-card' : ''}">
@@ -1778,16 +1783,16 @@ function renderRsvpGrid() {
           <div class="rsvp-name-wrap player-profile-link" onclick="openPlayerProfile('${escHtml(m.phone || m.name)}')" style="cursor:pointer" title="View Profile">
             <div class="rsvp-name">
               ${escHtml(m.name)}${isMe ? ' <span style="color:var(--primary);font-size:0.7rem">(you)</span>' : ''}
+              ${isHostUser ? '<span class="host-chip" style="margin-left:0.35rem">👑 HOST</span>' : ''}
             </div>
             <div class="rsvp-phone">
               <span class="presence-badge ${isOnline ? 'online' : 'offline'}">
                 <span class="presence-dot ${isOnline ? 'online' : 'offline'}"></span>
-                ${isOnline ? 'Live Now' : 'Offline'}
+                ${statusText}
               </span>
             </div>
           </div>
           <div style="display:flex;align-items:center;gap:0.35rem">
-            ${m.isHost ? '<span class="host-chip">HOST</span>' : ''}
             ${!isMe ? `<button class="nudge-btn-mini" onclick="nudgeMember('${m.phone}', '${escHtml(m.name)}')">🔔 Ping</button>` : ''}
           </div>
         </div>

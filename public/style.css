@@ -3866,28 +3866,34 @@ table.sc-table {
 
 @media (max-width: 420px) {
   .app-header {
-    padding: 0 0.4rem;
-    gap: 0.25rem;
+    padding: 0 0.35rem;
+    gap: 0.2rem;
   }
 
   .header-left,
   .header-right {
-    gap: 0.22rem;
+    gap: 0.2rem;
   }
 
   .app-header .btn-hdr-text {
-    display: none;
-    /* Show icons only (←, 👥, 📋) on ultra-narrow screens */
+    display: inline-block !important;
+    font-size: 0.76rem;
+    font-weight: 700;
   }
 
   .app-header .btn-sm {
-    padding: 0.28rem 0.4rem;
-    font-size: 0.72rem;
+    padding: 0.28rem 0.45rem;
+    font-size: 0.74rem;
+    white-space: nowrap;
+  }
+
+  .hdr-logo-text {
+    display: none; /* Hide redundant logo text on narrow screens so Rooms, Planning & Share buttons fit clearly */
   }
 
   .room-badge {
-    font-size: 0.68rem;
-    padding: 0.18rem 0.38rem;
+    font-size: 0.7rem;
+    padding: 0.18rem 0.35rem;
   }
 }
 

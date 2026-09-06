@@ -61,8 +61,8 @@ async function runTest() {
   console.log('✅ Registered WebPush Subscription for User 2');
 
   // 4. Connect WebSockets
-  const socket1 = io(SERVER_URL, { reconnection: false });
-  const socket2 = io(SERVER_URL, { reconnection: false });
+  const socket1 = io(SERVER_URL, { reconnection: false, transports: ['websocket'] });
+  const socket2 = io(SERVER_URL, { reconnection: false, transports: ['websocket'] });
 
   await new Promise(r => socket1.on('connect', r));
   await new Promise(r => socket2.on('connect', r));

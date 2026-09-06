@@ -749,16 +749,46 @@ app.post('/api/push/broadcast', async (req, res) => {
       if (u?.name) senderName = sanitizeText(u.name, 30);
     }
 
+    let resolvedRoomCode = roomCode || null;
+    let resolvedMatchName = matchName || null;
+    let resolvedDate = null;
+    let resolvedTime = null;
+
+    if (resolvedRoomCode && rooms.has(resolvedRoomCode)) {
+      const r = rooms.get(resolvedRoomCode);
+      resolvedMatchName = r.matchName;
+      resolvedDate = r.match?.date || null;
+      resolvedTime = r.match?.time || null;
+    } else if (senderPhone) {
+      // Find most recent active room where sender is host or participant
+      const allRooms = Array.from(rooms.entries()).reverse();
+      for (const [code, r] of allRooms) {
+        if (r && r.status !== 'completed') {
+          const isHost = phonesMatch(r.hostPhone, senderPhone);
+          const isMember = r.planning?.members && Object.keys(r.planning.members).some(p => phonesMatch(p, senderPhone));
+          if (isHost || isMember) {
+            resolvedRoomCode = code;
+            resolvedMatchName = r.matchName;
+            resolvedDate = r.match?.date || null;
+            resolvedTime = r.match?.time || null;
+            break;
+          }
+        }
+      }
+    }
+
     const cleanMessage = sanitizeText(message || `${senderName} is pinging you for a cricket match! Tap to open CricketHub.`, 140);
 
     const alertData = {
       id: Date.now(),
-      title: '⚡ Cricket Match Alert!',
+      title: targetPhone ? '🔔 Direct Squad Ping!' : '⚡ Cricket Match Alert!',
       message: cleanMessage,
       author: senderName,
       senderPhone: senderPhone || null,
-      matchName: sanitizeText(matchName || 'Cricket Match Alert', 50),
-      roomCode: roomCode || null,
+      matchName: sanitizeText(resolvedMatchName || 'Cricket Match Alert', 50),
+      roomCode: resolvedRoomCode || null,
+      date: resolvedDate,
+      time: resolvedTime,
       isDirect: !!targetPhone,
       targetPhone: targetPhone || null,
       timestamp: Date.now()

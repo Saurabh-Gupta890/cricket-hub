@@ -1206,6 +1206,7 @@ document.getElementById('btn-home-broadcast-alert')?.addEventListener('click', a
       body: JSON.stringify({
         token: state.session?.token,
         author: userName,
+        roomCode: state.room?.code || localStorage.getItem('cricket_last_room') || undefined,
         message: msg || `⚡ ${userName} is pinging everyone for a cricket match! Tap to open CricketHub.`
       })
     });
@@ -1227,7 +1228,7 @@ document.getElementById('home-broadcast-msg')?.addEventListener('keydown', (e) =
   if (e.key === 'Enter') document.getElementById('btn-home-broadcast-alert')?.click();
 });
 
-function joinRoomDirect(code, autoVote = null) {
+function joinRoomDirect(code, autoVote = null, forcePlanning = false) {
   if (!code) return;
   const cleanCode = code.trim().toUpperCase();
   if (!state.session?.token) {
@@ -1241,12 +1242,12 @@ function joinRoomDirect(code, autoVote = null) {
     state.room = res.room;
     localStorage.setItem('cricket_last_room', res.room.code);
 
-    // Retain and route to the correct saved match phase
+    // Retain and route to the correct saved match phase (or force planning when viewing from alert/ping)
     const matchStatus = res.room.match?.status || 'planning';
-    if (matchStatus !== 'planning') {
-      enterLobby();
-    } else {
+    if (forcePlanning || matchStatus === 'planning') {
       showPlanningScreen();
+    } else {
+      enterLobby();
     }
 
     if (autoVote) {
@@ -2518,43 +2519,6 @@ function playPingChime() {
   } catch (e) { /* ignore blocked audio */ }
 }
 
-// ── Alert Modal Handlers ─────────────────────
-document.getElementById('btn-alert-rsvp-coming')?.addEventListener('click', () => {
-  const modal = document.getElementById('popup-alert-modal');
-  const alertData = modal._alertData;
-  modal.style.display = 'none';
-
-  if (alertData?.roomCode) {
-    joinRoomDirect(alertData.roomCode, 'coming');
-  } else if (state.room?.code) {
-    socket.emit('planning:vote', { vote: 'coming' });
-    toast('✅ Confirmed: Coming!');
-    showPlanningScreen();
-  }
-});
-
-document.getElementById('btn-alert-view-match')?.addEventListener('click', () => {
-  const modal = document.getElementById('popup-alert-modal');
-  const alertData = modal._alertData;
-  modal.style.display = 'none';
-
-  if (alertData?.roomCode) {
-    joinRoomDirect(alertData.roomCode);
-  } else {
-    showPlanningScreen();
-  }
-});
-
-document.getElementById('btn-dismiss-alert')?.addEventListener('click', () => {
-  document.getElementById('popup-alert-modal').style.display = 'none';
-});
-
-document.getElementById('popup-alert-modal')?.addEventListener('click', (e) => {
-  if (e.target.id === 'popup-alert-modal') {
-    document.getElementById('popup-alert-modal').style.display = 'none';
-  }
-});
-
 // ── Planning Announcements ───────────────────
 document.getElementById('btn-planning-announce').addEventListener('click', () => {
   const input = document.getElementById('planning-announce-input');
@@ -2699,8 +2663,9 @@ document.getElementById('btn-alert-rsvp-coming')?.addEventListener('click', () =
   modal.style.display = 'none';
   if (alertData?.id) seenAlertIds.add(String(alertData.id));
 
-  if (alertData?.roomCode) {
-    joinRoomDirect(alertData.roomCode, 'coming');
+  const targetRoomCode = alertData?.roomCode || state.room?.code || localStorage.getItem('cricket_last_room');
+  if (targetRoomCode) {
+    joinRoomDirect(targetRoomCode, 'coming', true);
   } else if (state.room?.code) {
     socket.emit('planning:vote', { vote: 'coming' });
     toast('✅ Confirmed: Coming!');
@@ -2708,14 +2673,30 @@ document.getElementById('btn-alert-rsvp-coming')?.addEventListener('click', () =
   }
 });
 
-document.getElementById('btn-alert-view-match')?.addEventListener('click', () => {
+document.getElementById('btn-alert-view-match')?.addEventListener('click', async () => {
   const modal = document.getElementById('popup-alert-modal');
   const alertData = modal._alertData;
   modal.style.display = 'none';
   if (alertData?.id) seenAlertIds.add(String(alertData.id));
 
-  if (alertData?.roomCode) {
-    joinRoomDirect(alertData.roomCode);
+  const targetRoomCode = alertData?.roomCode || state.room?.code || localStorage.getItem('cricket_last_room');
+  if (targetRoomCode) {
+    joinRoomDirect(targetRoomCode, null, true);
+  } else if (state.session?.user?.phone) {
+    try {
+      const res = await fetch('/api/user/rooms', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone: state.session.user.phone, token: state.session.token })
+      }).then(r => r.json());
+      if (res?.success && Array.isArray(res.rooms) && res.rooms.length > 0) {
+        joinRoomDirect(res.rooms[0].code, null, true);
+        return;
+      }
+    } catch (e) {
+      console.warn('Failed fetching active room for alert view:', e);
+    }
+    showPlanningScreen();
   } else {
     showPlanningScreen();
   }

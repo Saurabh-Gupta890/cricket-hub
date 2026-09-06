@@ -1,4 +1,4 @@
-const CACHE_NAME = 'crickethub-v29';
+const CACHE_NAME = 'crickethub-v30';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
@@ -103,7 +103,7 @@ self.addEventListener('notificationclick', (event) => {
   const action = event.action;
 
   const targetUrl = notifData.roomCode 
-    ? `/?room=${encodeURIComponent(notifData.roomCode)}${action === 'coming' ? '&vote=coming' : ''}`
+    ? `/?room=${encodeURIComponent(notifData.roomCode)}${action === 'coming' ? '&vote=coming' : '&view=planning'}`
     : '/';
 
   event.waitUntil(
@@ -116,7 +116,8 @@ self.addEventListener('notificationclick', (event) => {
             client.postMessage({
               type: 'OPEN_ROOM',
               roomCode: notifData.roomCode,
-              autoVote: action === 'coming' ? 'coming' : null
+              autoVote: action === 'coming' ? 'coming' : null,
+              forcePlanning: true
             });
           }
           return;

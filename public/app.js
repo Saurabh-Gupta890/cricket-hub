@@ -37,7 +37,7 @@ function setCookieValue(name, val, days = 365) {
   try {
     const maxAge = days * 24 * 3600;
     document.cookie = `${name}=${encodeURIComponent(val)}; Path=/; Max-Age=${maxAge}; SameSite=Lax`;
-  } catch (_) {}
+  } catch (_) { }
 }
 
 const DB_NAME = 'crickethub_app_db';
@@ -66,7 +66,7 @@ async function saveSessionToIndexedDB(data) {
     if (!db) return;
     const tx = db.transaction('session', 'readwrite');
     tx.objectStore('session').put({ id: 'active_session', data });
-  } catch (_) {}
+  } catch (_) { }
 }
 
 async function loadSessionFromIndexedDB() {
@@ -90,7 +90,7 @@ function saveSession(data) {
       setCookieValue('crickethub_token', data.token);
     }
     saveSessionToIndexedDB(data);
-  } catch (_) {}
+  } catch (_) { }
   state.session = data;
 }
 
@@ -127,8 +127,8 @@ function clearSession() {
       if (!db) return;
       const tx = db.transaction('session', 'readwrite');
       tx.objectStore('session').delete('active_session');
-    }).catch(() => {});
-  } catch (_) {}
+    }).catch(() => { });
+  } catch (_) { }
   state.session = null;
 }
 
@@ -146,7 +146,7 @@ function isHost() {
       const savedAuth = JSON.parse(localStorage.getItem('cricket_auth_user') || 'null');
       const savedSession = JSON.parse(localStorage.getItem('cricket_session') || 'null');
       user = savedAuth || savedSession?.user;
-    } catch (_) {}
+    } catch (_) { }
   }
   if (!user) return true; // allow interaction, validated on server
   const myPhone = user.phone;
@@ -344,7 +344,7 @@ async function init() {
         const cleanUrl = window.location.pathname + (urlParams.get('room') ? `?room=${urlParams.get('room')}` : '');
         window.history.replaceState({}, document.title, cleanUrl);
       }
-    } catch (_) {}
+    } catch (_) { }
   }
 
   let saved = loadSession();
@@ -383,7 +383,7 @@ async function init() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ token: saved.token })
       });
-      
+
       if (res.status === 401) {
         console.warn('Session expired on server');
         clearSession();
@@ -408,7 +408,7 @@ async function init() {
   setAuthMode('login');
 }
 
-window.copyAutoLoginLink = function() {
+window.copyAutoLoginLink = function () {
   if (!state.session?.token) return toast('Please log in first to generate your sync link');
   const syncUrl = `${window.location.origin}/?auth_token=${encodeURIComponent(state.session.token)}`;
   if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -715,7 +715,7 @@ let isVerifyingOtp = false;
 async function verifyOtp() {
   if (isVerifyingOtp) return;
   let otp = [0, 1, 2, 3, 4, 5].map(i => document.getElementById(`otp-${i}`)?.value || '').join('').replace(/\D/g, '');
-  
+
   // Smart fallback: if inputs were somehow empty, check state or dev-otp-code banner
   if (otp.length < 6) {
     const devCode = (state.currentDevOtp || document.getElementById('dev-otp-code')?.textContent || '').replace(/\D/g, '').slice(0, 6);
@@ -2475,9 +2475,9 @@ document.getElementById('btn-nudge-all')?.addEventListener('click', () => {
 
 window.nudgeMember = function (targetPhone, name) {
   const cleanTarget = String(targetPhone).replace(/\D/g, '');
-  socket.emit('planning:nudge', { 
-    targetPhone: cleanTarget || targetPhone, 
-    message: `Hey ${name}, are you playing? Please confirm your availability for the match!` 
+  socket.emit('planning:nudge', {
+    targetPhone: cleanTarget || targetPhone,
+    message: `Hey ${name}, are you playing? Please confirm your availability for the match!`
   }, (res) => {
     if (res?.success) {
       toast(`⚡ Push alert delivered to ${name}!`);
@@ -3679,8 +3679,8 @@ function buildScorecardInnings(match, inn, idx, teamName, bowlTeamName, isCurren
 
   const outCount = (inn.batsmen || []).filter(b => b.out).length;
   const battingPlayers = getPlayerList(match, inn.battingTeam);
-  const allBattersDismissed = (battingPlayers.length > 0 && outCount >= battingPlayers.length) || 
-                              (inn.batsmen.length > 0 && outCount >= inn.batsmen.length && inn.currentBatsmen[0] === null && inn.currentBatsmen[1] === null);
+  const allBattersDismissed = (battingPlayers.length > 0 && outCount >= battingPlayers.length) ||
+    (inn.batsmen.length > 0 && outCount >= inn.batsmen.length && inn.currentBatsmen[0] === null && inn.currentBatsmen[1] === null);
 
   const isLastInnings = idx === 1 || idx === 3 || match.status === 'innings2' || match.status === 'super_over_inn2';
 
@@ -3841,8 +3841,8 @@ function renderScoringPanel() {
   const isLastInnings = idx === 1 || idx === 3 || match.status === 'innings2' || match.status === 'super_over_inn2';
   const outCount = (inn.batsmen || []).filter(b => b.out).length;
   const battingPlayers = getPlayerList(match, inn.battingTeam);
-  const allBattersDismissed = (battingPlayers.length > 0 && outCount >= battingPlayers.length) || 
-                              (inn.batsmen.length > 0 && outCount >= inn.batsmen.length && inn.currentBatsmen[0] === null && inn.currentBatsmen[1] === null);
+  const allBattersDismissed = (battingPlayers.length > 0 && outCount >= battingPlayers.length) ||
+    (inn.batsmen.length > 0 && outCount >= inn.batsmen.length && inn.currentBatsmen[0] === null && inn.currentBatsmen[1] === null);
 
   panel.innerHTML = `
     <div class="scoring-live-badge">
@@ -4084,7 +4084,7 @@ window.commitBall = function () {
   if (!match) return;
   const idx = match.currentInnings;
   const inn = match.innings[idx];
-  
+
   if (inn.awaitingNewBatsman) {
     openNextBatsmanModal();
     return toast('⚠️ Please select the next batter first!');
@@ -4207,7 +4207,7 @@ window.openBatsmenModal = function () {
   } else if (players.length > 1 && nonStrikerEl) {
     nonStrikerEl.value = players[1];
   }
-  
+
   const checkSingle = document.getElementById('check-single-batter-initial');
   if (checkSingle) {
     checkSingle.checked = !!inn.isSingleBatter;
@@ -4384,7 +4384,7 @@ window.confirmSingleBatter = function () {
   const match = state.room?.match;
   const idx = match?.currentInnings ?? 0;
   const inn = match?.innings?.[idx];
-  
+
   const nonStrikerIdx = inn?.currentBatsmen?.[1];
   const strikerIdx = inn?.currentBatsmen?.[0];
   const hasSurvivingNonStriker = nonStrikerIdx !== null && inn?.batsmen?.[nonStrikerIdx] && !inn.batsmen[nonStrikerIdx].out;
@@ -4435,8 +4435,8 @@ window.declareAllOut = function () {
 
 window.startRematch = function (resetToSetup = false) {
   if (!isHost()) return toast('⚠️ Only the host can start a rematch');
-  const msg = resetToSetup 
-    ? 'Re-configure teams & overs for the next game in this room?' 
+  const msg = resetToSetup
+    ? 'Re-configure teams & overs for the next game in this room?'
     : 'Start 2nd Match with same teams? This will take you directly to Toss!';
   if (!confirm(msg)) return;
 

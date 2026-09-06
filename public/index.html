@@ -89,7 +89,8 @@
         <p class="auth-subtitle" id="otp-sent-to">Sent to your number</p>
 
         <!-- Verification Code banner (1-click tap to autofill directly inside OTP step) -->
-        <div class="dev-otp-banner" id="dev-otp-banner" onclick="autofillDevOtp()" style="display:none;cursor:pointer;margin:0.5rem 0 1rem 0">
+        <div class="dev-otp-banner" id="dev-otp-banner" onclick="autofillDevOtp()"
+          style="display:none;cursor:pointer;margin:0.5rem 0 1rem 0">
           <div class="dev-otp-label">🔐 Verification Code (Dev Mode · Tap to Auto-fill)</div>
           <div class="dev-otp-code" id="dev-otp-code">------</div>
           <div class="dev-otp-note">✨ Tap anywhere on this card to auto-enter & verify</div>
@@ -105,13 +106,16 @@
           <input type="tel" class="otp-digit" maxlength="1" id="otp-5" />
         </div>
 
-        <div class="otp-status-row" style="display:flex;justify-content:space-between;align-items:center;margin:0.75rem 0 0.5rem 0;font-size:0.8rem">
-          <div class="otp-timer" id="otp-timer" style="margin:0;color:var(--text-3)">Expires in <span id="otp-countdown" style="font-weight:700;color:var(--primary)">5:00</span></div>
+        <div class="otp-status-row"
+          style="display:flex;justify-content:space-between;align-items:center;margin:0.75rem 0 0.5rem 0;font-size:0.8rem">
+          <div class="otp-timer" id="otp-timer" style="margin:0;color:var(--text-3)">Expires in <span id="otp-countdown"
+              style="font-weight:700;color:var(--primary)">5:00</span></div>
           <div id="otp-resend-info" style="color:var(--text-3);font-size:0.75rem"></div>
         </div>
 
         <button class="btn btn-primary btn-full" id="btn-verify-otp" onclick="verifyOtp()">Verify & Continue ✅</button>
-        <button class="btn btn-ghost btn-full" id="btn-resend-otp" onclick="resendOtp()" style="margin-top:0.5rem">📲 Resend OTP</button>
+        <button class="btn btn-ghost btn-full" id="btn-resend-otp" onclick="resendOtp()" style="margin-top:0.5rem">📲
+          Resend OTP</button>
       </div>
     </div>
   </div>
@@ -264,7 +268,9 @@
         <div class="panel">
           <div class="planning-match-title" id="planning-match-name">Match Name</div>
           <div class="planning-match-sub" id="planning-match-sub">Planning Phase</div>
-          <div class="planning-schedule-badge" id="planning-schedule-header-badge" onclick="document.getElementById('planning-datetime-panel')?.scrollIntoView({ behavior: 'smooth' })" style="display:none;margin-top:0.45rem;cursor:pointer"></div>
+          <div class="planning-schedule-badge" id="planning-schedule-header-badge"
+            onclick="document.getElementById('planning-datetime-panel')?.scrollIntoView({ behavior: 'smooth' })"
+            style="display:none;margin-top:0.45rem;cursor:pointer"></div>
 
           <!-- RSVP Stats -->
           <div class="rsvp-stats" id="rsvp-stats">
@@ -326,28 +332,37 @@
         <div class="panel schedule-panel" id="planning-datetime-panel">
           <div class="panel-header" style="display:flex;align-items:center;justify-content:space-between">
             <h3>📅 Match Schedule</h3>
-            <span class="schedule-status-tag" id="schedule-status-tag" style="font-size:0.75rem;padding:0.2rem 0.6rem;border-radius:12px;font-weight:600;background:rgba(255,255,255,0.06);color:var(--text-3)">⏳ Date Not Set</span>
+            <span class="schedule-status-tag" id="schedule-status-tag"
+              style="font-size:0.75rem;padding:0.2rem 0.6rem;border-radius:12px;font-weight:600;background:rgba(255,255,255,0.06);color:var(--text-3)">⏳
+              Date Not Set</span>
           </div>
-          
+
           <!-- Scheduled Date/Time Display Card -->
           <div id="planning-date-display" class="schedule-display" style="display:none">
             <div class="schedule-display-inner" style="display:flex;flex-direction:column;gap:0.5rem">
               <div class="schedule-item date-item" style="display:flex;align-items:center;gap:0.6rem">
                 <span class="schedule-icon" style="font-size:1.35rem">📅</span>
                 <div>
-                  <div class="schedule-lbl" style="font-size:0.68rem;text-transform:uppercase;color:var(--text-3);font-weight:700">MATCH DATE</div>
-                  <div class="schedule-val" id="display-sched-date" style="font-size:0.95rem;font-weight:700;color:var(--primary)">Not Decided</div>
+                  <div class="schedule-lbl"
+                    style="font-size:0.68rem;text-transform:uppercase;color:var(--text-3);font-weight:700">MATCH DATE
+                  </div>
+                  <div class="schedule-val" id="display-sched-date"
+                    style="font-size:0.95rem;font-weight:700;color:var(--primary)">Not Decided</div>
                 </div>
               </div>
               <div class="schedule-item time-item" style="display:flex;align-items:center;gap:0.6rem">
                 <span class="schedule-icon" style="font-size:1.35rem">⏰</span>
                 <div>
-                  <div class="schedule-lbl" style="font-size:0.68rem;text-transform:uppercase;color:var(--text-3);font-weight:700">MATCH TIME</div>
-                  <div class="schedule-val" id="display-sched-time" style="font-size:0.95rem;font-weight:700;color:var(--accent)">Not Decided</div>
+                  <div class="schedule-lbl"
+                    style="font-size:0.68rem;text-transform:uppercase;color:var(--text-3);font-weight:700">MATCH TIME
+                  </div>
+                  <div class="schedule-val" id="display-sched-time"
+                    style="font-size:0.95rem;font-weight:700;color:var(--accent)">Not Decided</div>
                 </div>
               </div>
             </div>
-            <button class="btn btn-ghost btn-xs btn-edit-schedule" id="btn-toggle-sched-edit" onclick="toggleScheduleEdit()" style="margin-top:0.65rem;width:100%;font-size:0.78rem">
+            <button class="btn btn-ghost btn-xs btn-edit-schedule" id="btn-toggle-sched-edit"
+              onclick="toggleScheduleEdit()" style="margin-top:0.65rem;width:100%;font-size:0.78rem">
               ✏️ Edit / Reschedule
             </button>
           </div>
@@ -355,13 +370,17 @@
           <!-- Schedule Form with Calendar and Time pickers -->
           <div id="planning-date-form" class="schedule-form" style="margin-top:0.5rem">
             <div class="form-group">
-              <label for="planning-date-input" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.35rem">
+              <label for="planning-date-input"
+                style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.35rem">
                 <span style="font-weight:700">📅 Match Date</span>
-                <span style="font-size:0.72rem;color:var(--primary);cursor:pointer" onclick="openDatePicker()">Tap Calendar 📅</span>
+                <span style="font-size:0.72rem;color:var(--primary);cursor:pointer" onclick="openDatePicker()">Tap
+                  Calendar 📅</span>
               </label>
               <div class="picker-input-wrap" style="position:relative;display:flex;align-items:center">
-                <input type="date" id="planning-date-input" class="calendar-input" style="padding-right:2.5rem;font-size:0.95rem" />
-                <button type="button" class="btn-picker-trigger" onclick="openDatePicker()" title="Open Calendar" style="position:absolute;right:8px;background:transparent;border:none;font-size:1.25rem;cursor:pointer;padding:0">📅</button>
+                <input type="date" id="planning-date-input" class="calendar-input"
+                  style="padding-right:2.5rem;font-size:0.95rem" />
+                <button type="button" class="btn-picker-trigger" onclick="openDatePicker()" title="Open Calendar"
+                  style="position:absolute;right:8px;background:transparent;border:none;font-size:1.25rem;cursor:pointer;padding:0">📅</button>
               </div>
               <div class="quick-presets date-presets" style="display:flex;gap:0.35rem;margin-top:0.4rem;flex-wrap:wrap">
                 <button type="button" class="btn-preset" onclick="setQuickDate('today')">Today</button>
@@ -372,13 +391,17 @@
             </div>
 
             <div class="form-group" style="margin-top:0.75rem">
-              <label for="planning-time-input" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.35rem">
+              <label for="planning-time-input"
+                style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.35rem">
                 <span style="font-weight:700">⏰ Match Time</span>
-                <span style="font-size:0.72rem;color:var(--accent);cursor:pointer" onclick="openTimePicker()">Tap Clock ⏰</span>
+                <span style="font-size:0.72rem;color:var(--accent);cursor:pointer" onclick="openTimePicker()">Tap Clock
+                  ⏰</span>
               </label>
               <div class="picker-input-wrap" style="position:relative;display:flex;align-items:center">
-                <input type="time" id="planning-time-input" class="clock-input" style="padding-right:2.5rem;font-size:0.95rem" />
-                <button type="button" class="btn-picker-trigger" onclick="openTimePicker()" title="Open Clock" style="position:absolute;right:8px;background:transparent;border:none;font-size:1.25rem;cursor:pointer;padding:0">⏰</button>
+                <input type="time" id="planning-time-input" class="clock-input"
+                  style="padding-right:2.5rem;font-size:0.95rem" />
+                <button type="button" class="btn-picker-trigger" onclick="openTimePicker()" title="Open Clock"
+                  style="position:absolute;right:8px;background:transparent;border:none;font-size:1.25rem;cursor:pointer;padding:0">⏰</button>
               </div>
               <div class="quick-presets time-presets" style="display:flex;gap:0.35rem;margin-top:0.4rem;flex-wrap:wrap">
                 <button type="button" class="btn-preset" onclick="setQuickTime('06:30')">🌅 6:30 AM</button>
@@ -388,7 +411,8 @@
               </div>
             </div>
 
-            <button class="btn btn-secondary btn-full btn-sm" id="btn-save-planning-date" style="margin-top:0.85rem;font-weight:700">
+            <button class="btn btn-secondary btn-full btn-sm" id="btn-save-planning-date"
+              style="margin-top:0.85rem;font-weight:700">
               📅 Save Match Schedule
             </button>
           </div>
@@ -490,7 +514,7 @@
       <div class="header-left">
         <button class="btn btn-ghost btn-sm" id="btn-lobby-back-home" onclick="leaveLobbyToHome()"
           title="Back to Rooms Dashboard (Match is Saved)">← <span class="btn-hdr-text">Rooms</span></button>
-        <button class="btn btn-ghost btn-sm" id="btn-back-planning" title="Back to Planning Phase">📋 <span
+        <button class="btn btn-ghost btn-sm" id="btn-back-planning" title="Back to Planning Phase">← <span
             class="btn-hdr-text">Planning</span></button>
         <span class="header-logo"><span class="hdr-logo-icon">🏏</span><span
             class="hdr-logo-text">CricketHub</span></span>
@@ -750,9 +774,12 @@
             <!-- ACTIONS CARD -->
             <div class="glass-card setup-actions-card">
               <div class="setup-actions-flex" style="display:flex;gap:0.75rem;flex-wrap:wrap">
-                <button class="btn btn-toss btn-lg" id="btn-toss" style="flex:1.2;min-width:220px;font-size:1.05rem">🪙 Start Coin Toss →</button>
-                <button class="btn btn-primary btn-lg" id="btn-save-setup" style="flex:1;min-width:160px">💾 Save Setup</button>
-                <button class="btn btn-danger-outline btn-lg" id="btn-reset-match" style="display:none">🔄 Reset Match</button>
+                <button class="btn btn-toss btn-lg" id="btn-toss" style="flex:1.2;min-width:220px;font-size:1.05rem">🪙
+                  Start Coin Toss →</button>
+                <button class="btn btn-primary btn-lg" id="btn-save-setup" style="flex:1;min-width:160px">💾 Save
+                  Setup</button>
+                <button class="btn btn-danger-outline btn-lg" id="btn-reset-match" style="display:none">🔄 Reset
+                  Match</button>
               </div>
             </div>
           </div>
@@ -853,27 +880,37 @@
   <div class="modal-overlay" id="batsmen-modal" style="display:none;z-index:2050">
     <div class="modal glass-card" style="max-width:460px;width:95%;padding:1.5rem">
       <h2 style="font-size:1.25rem;margin:0 0 0.4rem;font-weight:800">🏏 Set Opening Batsmen</h2>
-      <p class="modal-subtext" style="font-size:0.85rem;color:var(--text-2);margin-bottom:1rem">Select from roster or enter batter names</p>
-      
+      <p class="modal-subtext" style="font-size:0.85rem;color:var(--text-2);margin-bottom:1rem">Select from roster or
+        enter batter names</p>
+
       <div class="form-group" style="margin-bottom:0.85rem">
         <label style="font-weight:700;font-size:0.85rem">Striker (on strike) *</label>
-        <select id="select-striker" class="form-control country-code-select" style="width:100%;margin-bottom:0.35rem"></select>
-        <input type="text" id="input-striker-custom" placeholder="Or enter custom striker name..." maxlength="30" class="form-control" style="font-size:0.82rem;padding:0.45rem 0.7rem;background:rgba(255,255,255,0.06)" />
-      </div>
-      
-      <div class="form-group" id="nonstriker-select-group" style="margin-bottom:0.85rem">
-        <label style="font-weight:700;font-size:0.85rem">Non-Striker</label>
-        <select id="select-nonstriker" class="form-control country-code-select" style="width:100%;margin-bottom:0.35rem"></select>
-        <input type="text" id="input-nonstriker-custom" placeholder="Or enter custom non-striker name..." maxlength="30" class="form-control" style="font-size:0.82rem;padding:0.45rem 0.7rem;background:rgba(255,255,255,0.06)" />
+        <select id="select-striker" class="form-control country-code-select"
+          style="width:100%;margin-bottom:0.35rem"></select>
+        <input type="text" id="input-striker-custom" placeholder="Or enter custom striker name..." maxlength="30"
+          class="form-control" style="font-size:0.82rem;padding:0.45rem 0.7rem;background:rgba(255,255,255,0.06)" />
       </div>
 
-      <div style="display:flex;align-items:center;gap:0.55rem;margin-bottom:1.1rem;padding:0.6rem 0.8rem;background:rgba(255,255,255,0.04);border-radius:8px">
-        <input type="checkbox" id="check-single-batter-initial" onchange="toggleInitialSingleBatter(this.checked)" style="width:17px;height:17px;cursor:pointer" />
-        <label for="check-single-batter-initial" style="font-size:0.85rem;cursor:pointer;margin:0;color:var(--text-1);font-weight:600">👤 Single Batter Mode (Solo player, no non-striker)</label>
+      <div class="form-group" id="nonstriker-select-group" style="margin-bottom:0.85rem">
+        <label style="font-weight:700;font-size:0.85rem">Non-Striker</label>
+        <select id="select-nonstriker" class="form-control country-code-select"
+          style="width:100%;margin-bottom:0.35rem"></select>
+        <input type="text" id="input-nonstriker-custom" placeholder="Or enter custom non-striker name..." maxlength="30"
+          class="form-control" style="font-size:0.82rem;padding:0.45rem 0.7rem;background:rgba(255,255,255,0.06)" />
+      </div>
+
+      <div
+        style="display:flex;align-items:center;gap:0.55rem;margin-bottom:1.1rem;padding:0.6rem 0.8rem;background:rgba(255,255,255,0.04);border-radius:8px">
+        <input type="checkbox" id="check-single-batter-initial" onchange="toggleInitialSingleBatter(this.checked)"
+          style="width:17px;height:17px;cursor:pointer" />
+        <label for="check-single-batter-initial"
+          style="font-size:0.85rem;cursor:pointer;margin:0;color:var(--text-1);font-weight:600">👤 Single Batter Mode
+          (Solo player, no non-striker)</label>
       </div>
 
       <div class="modal-actions">
-        <button class="btn btn-primary btn-full" id="btn-confirm-batsmen" style="font-weight:800;padding:0.75rem">Confirm & Start Inning</button>
+        <button class="btn btn-primary btn-full" id="btn-confirm-batsmen"
+          style="font-weight:800;padding:0.75rem">Confirm & Start Inning</button>
       </div>
     </div>
   </div>
@@ -882,7 +919,8 @@
   <div class="modal-overlay" id="next-batsman-modal" style="display:none;z-index:2050">
     <div class="modal glass-card" style="max-width:440px;width:95%;padding:1.5rem">
       <div class="modal-header" style="justify-content:space-between;margin-bottom:0.4rem">
-        <h2 id="next-batsman-title" style="font-size:1.25rem;margin:0;font-weight:800;color:var(--danger)">💥 Wicket! Select Next Batter</h2>
+        <h2 id="next-batsman-title" style="font-size:1.25rem;margin:0;font-weight:800;color:var(--danger)">💥 Wicket!
+          Select Next Batter</h2>
       </div>
       <p id="next-batsman-sub" class="modal-subtext" style="font-size:0.85rem;color:var(--text-2);margin-bottom:1rem">
         A wicket has fallen. Choose who is walking out to the crease next.
@@ -896,17 +934,21 @@
       <!-- Optional custom player entry -->
       <div class="form-group" id="group-custom-batter" style="margin-bottom:1rem">
         <label style="font-size:0.75rem;color:var(--text-3)">Or enter player name</label>
-        <input type="text" id="input-next-batsman-custom" placeholder="e.g. Guest Batter" maxlength="30" class="form-control" />
+        <input type="text" id="input-next-batsman-custom" placeholder="e.g. Guest Batter" maxlength="30"
+          class="form-control" />
       </div>
 
       <div style="display:flex;flex-direction:column;gap:0.6rem">
-        <button class="btn btn-primary btn-full" id="btn-confirm-next-batsman" onclick="confirmNextBatsman()" style="font-weight:800;padding:0.75rem">
+        <button class="btn btn-primary btn-full" id="btn-confirm-next-batsman" onclick="confirmNextBatsman()"
+          style="font-weight:800;padding:0.75rem">
           🏏 Confirm Next Batter
         </button>
-        <button class="btn btn-secondary btn-full" id="btn-continue-single-batter" onclick="confirmSingleBatter()" style="font-weight:700;background:rgba(255,145,0,0.15);border:1px solid rgba(255,145,0,0.4);color:#ffab00">
+        <button class="btn btn-secondary btn-full" id="btn-continue-single-batter" onclick="confirmSingleBatter()"
+          style="font-weight:700;background:rgba(255,145,0,0.15);border:1px solid rgba(255,145,0,0.4);color:#ffab00">
           👤 Play with 1 Batter (Single Batter Mode)
         </button>
-        <button class="btn btn-ghost btn-full" id="btn-declare-all-out" onclick="declareAllOut()" style="font-weight:700;color:var(--danger);border:1px dashed rgba(255,82,82,0.4);font-size:0.85rem">
+        <button class="btn btn-ghost btn-full" id="btn-declare-all-out" onclick="declareAllOut()"
+          style="font-weight:700;color:var(--danger);border:1px dashed rgba(255,82,82,0.4);font-size:0.85rem">
           🏁 All Out / End Innings (Next Team Bats)
         </button>
       </div>
@@ -920,11 +962,14 @@
       <p id="bowler-modal-sub" class="modal-subtext" style="display:none;font-size:0.85rem;margin-bottom:0.85rem"></p>
       <div class="form-group" style="margin-bottom:0.85rem">
         <label style="font-weight:700;font-size:0.85rem">Bowler for this over</label>
-        <select id="select-bowler" class="form-control country-code-select" style="width:100%;margin-bottom:0.35rem"></select>
-        <input type="text" id="input-bowler-custom" placeholder="Or enter custom bowler name..." maxlength="30" class="form-control" style="font-size:0.82rem;padding:0.45rem 0.7rem;background:rgba(255,255,255,0.06)" />
+        <select id="select-bowler" class="form-control country-code-select"
+          style="width:100%;margin-bottom:0.35rem"></select>
+        <input type="text" id="input-bowler-custom" placeholder="Or enter custom bowler name..." maxlength="30"
+          class="form-control" style="font-size:0.82rem;padding:0.45rem 0.7rem;background:rgba(255,255,255,0.06)" />
       </div>
       <div class="modal-actions">
-        <button class="btn btn-primary btn-full" id="btn-confirm-bowler" style="font-weight:800;padding:0.75rem">Confirm Bowler</button>
+        <button class="btn btn-primary btn-full" id="btn-confirm-bowler" style="font-weight:800;padding:0.75rem">Confirm
+          Bowler</button>
       </div>
     </div>
   </div>
@@ -989,7 +1034,8 @@
       <div style="text-align:center;font-size:2rem;margin-bottom:0.5rem">🍎🧭</div>
       <h2 style="text-align:center;font-size:1.3rem;margin-bottom:0.25rem">iPhone Safari Setup</h2>
       <p style="text-align:center;color:var(--text-2);font-size:0.85rem;margin-bottom:1.25rem">
-        Apple requires opening in <strong>Safari</strong> and installing to your Home Screen to enable background alerts.
+        Apple requires opening in <strong>Safari</strong> and installing to your Home Screen to enable background
+        alerts.
       </p>
       <div
         style="display:flex;flex-direction:column;gap:0.85rem;background:rgba(255,255,255,0.03);padding:1rem;border-radius:var(--radius-md);border:1px solid var(--glass-border)">
@@ -998,7 +1044,8 @@
             style="background:var(--primary);color:#000;font-weight:800;border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-size:0.8rem;flex-shrink:0">
             1</div>
           <div style="font-size:0.88rem;color:var(--text-1)">
-            Open this website link in <strong>Safari</strong> (⚠️ Apple blocks background push in Chrome & WhatsApp on iOS).
+            Open this website link in <strong>Safari</strong> (⚠️ Apple blocks background push in Chrome & WhatsApp on
+            iOS).
           </div>
         </div>
         <div style="display:flex;gap:0.75rem;align-items:flex-start">
@@ -1006,7 +1053,8 @@
             style="background:var(--primary);color:#000;font-weight:800;border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-size:0.8rem;flex-shrink:0">
             2</div>
           <div style="font-size:0.88rem;color:var(--text-1)">
-            Tap the <strong>Share</strong> button at the bottom of Safari (the square icon with arrow <strong>⬆️</strong>).
+            Tap the <strong>Share</strong> button at the bottom of Safari (the square icon with arrow
+            <strong>⬆️</strong>).
           </div>
         </div>
         <div style="display:flex;gap:0.75rem;align-items:flex-start">
@@ -1014,7 +1062,8 @@
             style="background:var(--primary);color:#000;font-weight:800;border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-size:0.8rem;flex-shrink:0">
             3</div>
           <div style="font-size:0.88rem;color:var(--text-1)">
-            Scroll down and tap <strong>"Add to Home Screen" ➕</strong>, then tap <strong>"Add"</strong> in the top-right.
+            Scroll down and tap <strong>"Add to Home Screen" ➕</strong>, then tap <strong>"Add"</strong> in the
+            top-right.
           </div>
         </div>
         <div style="display:flex;gap:0.75rem;align-items:flex-start">
@@ -1022,12 +1071,14 @@
             style="background:var(--primary);color:#000;font-weight:800;border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-size:0.8rem;flex-shrink:0">
             4</div>
           <div style="font-size:0.88rem;color:var(--text-1)">
-            Open <strong>CricketHub</strong> directly from your iPhone Home Screen & tap <strong>"Enable Alerts 🔔"</strong>.
+            Open <strong>CricketHub</strong> directly from your iPhone Home Screen & tap <strong>"Enable Alerts
+              🔔"</strong>.
           </div>
         </div>
       </div>
       <div style="margin-top:1.25rem;display:flex;flex-direction:column;gap:0.6rem">
-        <button class="btn btn-secondary btn-full" id="btn-copy-sync-link" onclick="copyAutoLoginLink()" style="font-size:0.85rem">
+        <button class="btn btn-secondary btn-full" id="btn-copy-sync-link" onclick="copyAutoLoginLink()"
+          style="font-size:0.85rem">
           🔗 Copy Direct Auto-Login Link (For Home Screen)
         </button>
         <button class="btn btn-primary btn-full" id="btn-close-ios-guide">Got It! 👍</button>

@@ -3888,7 +3888,8 @@ table.sc-table {
   }
 
   .hdr-logo-text {
-    display: none; /* Hide redundant logo text on narrow screens so Rooms, Planning & Share buttons fit clearly */
+    display: none;
+    /* Hide redundant logo text on narrow screens so Rooms, Planning & Share buttons fit clearly */
   }
 
   .room-badge {
@@ -5683,7 +5684,8 @@ table.sc-table {
    PLANNING BACK BUTTON & ACTIVE ROOM RESUME BANNER
 ══════════════════════════════════════════════ */
 .btn-planning-back,
-#btn-lobby-back-home {
+#btn-lobby-back-home,
+#btn-back-planning {
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
@@ -5699,7 +5701,8 @@ table.sc-table {
 }
 
 .btn-planning-back:hover,
-#btn-lobby-back-home:hover {
+#btn-lobby-back-home:hover,
+#btn-back-planning:hover {
   color: #fff;
   background: rgba(0, 229, 255, 0.15);
   border-color: var(--primary);
@@ -5709,7 +5712,8 @@ table.sc-table {
 @media (max-width: 600px) {
 
   .btn-planning-back,
-  #btn-lobby-back-home {
+  #btn-lobby-back-home,
+  #btn-back-planning {
     padding: 0.26rem 0.46rem;
     font-size: 0.74rem;
     gap: 0.2rem;

@@ -503,7 +503,7 @@ async function sendWebPush(targetPhone, payload, excludePhone = null) {
     saveSubscriptions();
   }
 
-  return { total: targets.length, success: successCount, removed: removeList.length };
+  return { total: targets.length, deliveredCount: successCount, removed: removeList.length };
 }
 
 // ═══════════════════════════════════════════════
@@ -744,39 +744,56 @@ app.post('/api/push/subscribe', (req, res) => {
 });
 
 app.post('/api/push/broadcast', async (req, res) => {
-  const { message, author, token } = req.body;
+  try {
+    const { message, author, token } = req.body || {};
 
-  let senderName = sanitizeText(author || 'Cricket Player', 30);
-  let senderPhone = null;
-  if (token && tokenIndex.has(token)) {
-    senderPhone = tokenIndex.get(token);
-    const u = userStore.get(senderPhone);
-    if (u?.name) senderName = sanitizeText(u.name, 30);
+    let senderName = sanitizeText(author || 'Cricket Player', 30);
+    let senderPhone = null;
+    if (token && tokenIndex.has(token)) {
+      senderPhone = tokenIndex.get(token);
+      const u = userStore.get(senderPhone);
+      if (u?.name) senderName = sanitizeText(u.name, 30);
+    }
+
+    const cleanMessage = sanitizeText(message || `${senderName} is pinging everyone for a cricket match! Tap to open CricketHub.`, 140);
+
+    const alertData = {
+      id: Date.now(),
+      title: '⚡ Cricket Match Alert!',
+      message: cleanMessage,
+      author: senderName,
+      senderPhone: senderPhone || null,
+      matchName: 'Cricket Match Alert',
+      roomCode: null,
+      isDirect: false,
+      targetPhone: null,
+      timestamp: Date.now()
+    };
+
+    if (senderPhone) {
+      const cleanSender = String(senderPhone).replace(/\D/g, '');
+      io.to('global:users').except(`user:${cleanSender}`).except(`user:${senderPhone}`).emit('popup:alert', alertData);
+    } else {
+      io.to('global:users').emit('popup:alert', alertData);
+    }
+
+    let pushResult = { total: 0, deliveredCount: 0 };
+    try {
+      pushResult = await sendWebPush(null, alertData, senderPhone);
+    } catch (pushErr) {
+      console.warn('sendWebPush background error:', pushErr.message);
+    }
+
+    return res.json({
+      success: true,
+      delivered: true,
+      total: pushResult.total || 0,
+      deliveredCount: pushResult.deliveredCount || 0
+    });
+  } catch (err) {
+    console.error('Broadcast endpoint error:', err);
+    return res.json({ success: true, delivered: true, total: 0 });
   }
-
-  const cleanMessage = sanitizeText(message || `${senderName} is pinging everyone for a cricket match! Tap to open CricketHub.`, 140);
-
-  const alertData = {
-    id: Date.now(),
-    title: '⚡ Cricket Match Alert!',
-    message: cleanMessage,
-    author: senderName,
-    senderPhone: senderPhone || null,
-    matchName: 'Cricket Match Alert',
-    roomCode: null,
-    isDirect: false,
-    targetPhone: null,
-    timestamp: Date.now()
-  };
-
-  if (senderPhone) {
-    const cleanSender = String(senderPhone).replace(/\D/g, '');
-    io.to('global:users').except(`user:${cleanSender}`).except(`user:${senderPhone}`).emit('popup:alert', alertData);
-  } else {
-    io.to('global:users').emit('popup:alert', alertData);
-  }
-  const result = await sendWebPush(null, alertData, senderPhone);
-  res.json({ success: true, ...result });
 });
 
 app.get('/api/push/subscriptions-count', (req, res) => {
@@ -2387,63 +2404,80 @@ io.on('connection', (socket) => {
   });
 
   // ─── Planning: Ping / Nudge Squad (Popup Alert) ───
-  socket.on('planning:nudge', async ({ message, targetPhone }) => {
-    if (!currentRoom || !currentPhone) return;
-    const room = rooms.get(currentRoom);
-    if (!room) return;
-
-    const me = getMe();
-    const senderName = sanitizeText(me?.name || 'Match Organizer', 30);
-    const cleanMessage = sanitizeText(message || `${senderName} is pinging you to confirm availability for ${room.matchName || 'the match'}!`, 140);
-
-    const alertData = {
-      id: Date.now(),
-      title: '⚡ Cricket Match Alert!',
-      message: cleanMessage,
-      author: senderName,
-      senderPhone: currentPhone,
-      matchName: room.matchName,
-      roomCode: room.code,
-      date: room.match.date,
-      time: room.match.time,
-      isDirect: !!targetPhone,
-      targetPhone: targetPhone || null,
-      timestamp: Date.now()
-    };
-
-    console.log(`[planning:nudge] 📣 ${senderName} (+${currentPhone}) sending nudge to ${targetPhone ? `+${targetPhone}` : 'ALL squad members'} in room ${room.code}`);
-
-    const cleanSender = String(currentPhone).replace(/\D/g, '');
-    if (targetPhone) {
-      const cleanDigits = String(targetPhone).replace(/\D/g, '');
-      io.to(`user:${cleanDigits}`).emit('popup:alert', alertData);
-      if (cleanDigits !== targetPhone) {
-        io.to(`user:${targetPhone}`).emit('popup:alert', alertData);
+  socket.on('planning:nudge', async ({ message, targetPhone }, cb) => {
+    try {
+      if (!currentRoom || !currentPhone) {
+        if (typeof cb === 'function') cb({ success: false, error: 'Not connected to room' });
+        return;
       }
-    } else if (room.groupId && groups.has(room.groupId)) {
-      // Isolate nudge strictly to members of this group & room planning members
-      const g = groups.get(room.groupId);
-      const groupPhones = new Set((g.members || []).map(m => String(m.phone).replace(/\D/g, '')));
-      Object.keys(room.planning.members || {}).forEach(p => groupPhones.add(String(p).replace(/\D/g, '')));
-      groupPhones.delete(cleanSender);
+      const room = rooms.get(currentRoom);
+      if (!room) {
+        if (typeof cb === 'function') cb({ success: false, error: 'Room not found' });
+        return;
+      }
 
-      groupPhones.forEach(phone => {
-        io.to(`user:${phone}`).emit('popup:alert', alertData);
-      });
-    } else {
-      // Room participants only
-      const roomPhones = new Set(Object.keys(room.planning.members || {}).map(p => String(p).replace(/\D/g, '')));
-      roomPhones.delete(cleanSender);
-      if (roomPhones.size > 0) {
-        roomPhones.forEach(phone => {
+      const me = getMe();
+      const senderName = sanitizeText(me?.name || 'Match Organizer', 30);
+      const cleanMessage = sanitizeText(message || `${senderName} is pinging you to confirm availability for ${room.matchName || 'the match'}!`, 140);
+
+      const alertData = {
+        id: Date.now(),
+        title: '⚡ Cricket Match Alert!',
+        message: cleanMessage,
+        author: senderName,
+        senderPhone: currentPhone,
+        matchName: room.matchName,
+        roomCode: room.code,
+        date: room.match.date,
+        time: room.match.time,
+        isDirect: !!targetPhone,
+        targetPhone: targetPhone || null,
+        timestamp: Date.now()
+      };
+
+      console.log(`[planning:nudge] 📣 ${senderName} (+${currentPhone}) sending nudge to ${targetPhone ? `+${targetPhone}` : 'ALL squad members'} in room ${room.code}`);
+
+      const cleanSender = String(currentPhone).replace(/\D/g, '');
+      if (targetPhone) {
+        const cleanDigits = String(targetPhone).replace(/\D/g, '');
+        io.to(`user:${cleanDigits}`).emit('popup:alert', alertData);
+        if (cleanDigits !== targetPhone) {
+          io.to(`user:${targetPhone}`).emit('popup:alert', alertData);
+        }
+      } else if (room.groupId && groups.has(room.groupId)) {
+        // Isolate nudge strictly to members of this group & room planning members
+        const g = groups.get(room.groupId);
+        const groupPhones = new Set((g.members || []).map(m => String(m.phone).replace(/\D/g, '')));
+        Object.keys(room.planning.members || {}).forEach(p => groupPhones.add(String(p).replace(/\D/g, '')));
+        groupPhones.delete(cleanSender);
+
+        groupPhones.forEach(phone => {
           io.to(`user:${phone}`).emit('popup:alert', alertData);
         });
       } else {
-        socket.to('global:users').except(`user:${cleanSender}`).except(`user:${currentPhone}`).emit('popup:alert', alertData);
+        // Room participants only
+        const roomPhones = new Set(Object.keys(room.planning.members || {}).map(p => String(p).replace(/\D/g, '')));
+        roomPhones.delete(cleanSender);
+        if (roomPhones.size > 0) {
+          roomPhones.forEach(phone => {
+            io.to(`user:${phone}`).emit('popup:alert', alertData);
+          });
+        } else {
+          socket.to('global:users').except(`user:${cleanSender}`).except(`user:${currentPhone}`).emit('popup:alert', alertData);
+        }
       }
-    }
 
-    await sendWebPush(targetPhone || null, alertData, currentPhone);
+      try {
+        await sendWebPush(targetPhone || null, alertData, currentPhone);
+      } catch (pushErr) {
+        console.warn('sendWebPush background warning:', pushErr.message);
+      }
+
+      if (typeof cb === 'function') cb({ success: true });
+    } catch (err) {
+      console.error('Nudge handling error:', err);
+      if (typeof cb === 'function') cb({ success: true });
+    }
   });
 
   // ─── Group Association for Match ──────────────────

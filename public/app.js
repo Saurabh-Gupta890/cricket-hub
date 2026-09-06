@@ -1206,12 +1206,11 @@ document.getElementById('btn-home-broadcast-alert')?.addEventListener('click', a
         message: msg || `⚡ ${userName} is pinging everyone for a cricket match! Tap to open CricketHub.`
       })
     });
-    const data = await res.json();
-    if (data.success) {
-      toast(`📲 Match alert delivered to ${data.total || 'all'} player device(s)!`);
+    if (data && (data.success || data.delivered)) {
+      toast(`📲 Match alert delivered to squad!`);
       if (input) input.value = '';
     } else {
-      toast('❌ Error: ' + (data.error || 'Failed to send alert'));
+      toast('❌ ' + (data?.error || 'Failed to send alert'));
     }
   } catch (e) {
     toast('❌ Network error: ' + e.message);

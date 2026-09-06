@@ -22,7 +22,10 @@ async function testSquadPersistenceAndManagement() {
   const captainName = 'Virat Kohli';
 
   // Request OTP & verify using received devOtp
-  const otpRes = await postJSON('/api/auth/request-otp', { phone: captainPhone, name: captainName, mode: 'signup' });
+  let otpRes = await postJSON('/api/auth/request-otp', { phone: captainPhone, name: captainName, mode: 'login' });
+  if (otpRes.error && otpRes.error.includes('Sign Up')) {
+    otpRes = await postJSON('/api/auth/request-otp', { phone: captainPhone, name: captainName, mode: 'signup' });
+  }
   const authRes = await postJSON('/api/auth/verify-otp', {
     phone: captainPhone,
     otp: otpRes.devOtp,

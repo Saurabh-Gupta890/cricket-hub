@@ -1937,6 +1937,81 @@ function formatMatchSchedule(dateStr, timeStr) {
   return formatted;
 }
 
+window.openDatePicker = function () {
+  const input = document.getElementById('planning-date-input');
+  if (!input) return;
+  try {
+    if (typeof input.showPicker === 'function') {
+      input.showPicker();
+    } else {
+      input.focus();
+    }
+  } catch (_) {
+    input.focus();
+  }
+};
+
+window.openTimePicker = function () {
+  const input = document.getElementById('planning-time-input');
+  if (!input) return;
+  try {
+    if (typeof input.showPicker === 'function') {
+      input.showPicker();
+    } else {
+      input.focus();
+    }
+  } catch (_) {
+    input.focus();
+  }
+};
+
+window.setQuickDate = function (preset) {
+  const input = document.getElementById('planning-date-input');
+  if (!input) return;
+  const now = new Date();
+  let target = new Date();
+
+  if (preset === 'today') {
+    target = now;
+  } else if (preset === 'tomorrow') {
+    target.setDate(now.getDate() + 1);
+  } else if (preset === 'saturday') {
+    const day = now.getDay();
+    const diff = (6 - day + 7) % 7 || 7;
+    target.setDate(now.getDate() + diff);
+  } else if (preset === 'sunday') {
+    const day = now.getDay();
+    const diff = (7 - day) % 7 || 7;
+    target.setDate(now.getDate() + diff);
+  }
+
+  const y = target.getFullYear();
+  const m = String(target.getMonth() + 1).padStart(2, '0');
+  const d = String(target.getDate()).padStart(2, '0');
+  input.value = `${y}-${m}-${d}`;
+  toast(`📅 Selected date: ${target.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' })}`);
+};
+
+window.setQuickTime = function (timeStr) {
+  const input = document.getElementById('planning-time-input');
+  if (!input) return;
+  input.value = timeStr;
+  const [h, m] = timeStr.split(':');
+  const hour = parseInt(h);
+  const ampm = hour >= 12 ? 'PM' : 'AM';
+  const hour12 = hour % 12 || 12;
+  toast(`⏰ Selected time: ${hour12}:${m} ${ampm}`);
+};
+
+let scheduleEditOpen = false;
+window.toggleScheduleEdit = function () {
+  scheduleEditOpen = !scheduleEditOpen;
+  const formEl = document.getElementById('planning-date-form');
+  const editBtn = document.getElementById('btn-toggle-sched-edit');
+  if (formEl) formEl.style.display = scheduleEditOpen ? 'block' : 'none';
+  if (editBtn) editBtn.textContent = scheduleEditOpen ? '▲ Hide Schedule Editor' : '✏️ Edit / Reschedule';
+};
+
 function renderPlanningSchedule() {
   const match = state.room?.match;
   if (!match) return;
@@ -1945,28 +2020,84 @@ function renderPlanningSchedule() {
   const timeInput = document.getElementById('planning-time-input');
   const displayEl = document.getElementById('planning-date-display');
   const formEl = document.getElementById('planning-date-form');
+  const statusTag = document.getElementById('schedule-status-tag');
+  const headerBadge = document.getElementById('planning-schedule-header-badge');
+  const dateValEl = document.getElementById('display-sched-date');
+  const timeValEl = document.getElementById('display-sched-time');
 
   if (dateInput && match.date && dateInput !== document.activeElement) dateInput.value = match.date;
   if (timeInput && match.time && timeInput !== document.activeElement) timeInput.value = match.time;
 
+  const hasDate = !!match.date;
+  const hasTime = !!match.time;
   const formatted = formatMatchSchedule(match.date, match.time);
-  if (displayEl) {
-    if (formatted) {
-      displayEl.style.display = 'block';
-      displayEl.innerHTML = `<strong>Match Scheduled:</strong><br>${escHtml(formatted)}`;
+
+  // Status tag
+  if (statusTag) {
+    if (hasDate && hasTime) {
+      statusTag.innerHTML = '🟢 Scheduled';
+      statusTag.style.background = 'rgba(16,185,129,0.15)';
+      statusTag.style.color = 'var(--success)';
+      statusTag.style.border = '1px solid rgba(16,185,129,0.3)';
+    } else if (hasDate || hasTime) {
+      statusTag.innerHTML = '🟡 Partially Set';
+      statusTag.style.background = 'rgba(251,191,36,0.15)';
+      statusTag.style.color = 'var(--warning)';
+      statusTag.style.border = '1px solid rgba(251,191,36,0.3)';
     } else {
-      displayEl.style.display = 'none';
+      statusTag.innerHTML = '⏳ Date Not Set';
+      statusTag.style.background = 'rgba(255,255,255,0.06)';
+      statusTag.style.color = 'var(--text-3)';
+      statusTag.style.border = '1px solid rgba(255,255,255,0.1)';
     }
   }
 
-  // Non-hosts see only display if set
-  const host = isHost();
-  if (formEl) {
-    formEl.style.display = host ? 'block' : 'none';
+  // Header badge on mobile
+  if (headerBadge) {
+    if (formatted) {
+      headerBadge.style.display = 'inline-flex';
+      headerBadge.innerHTML = `<span style="display:flex;align-items:center;gap:0.4rem;padding:0.25rem 0.65rem;border-radius:99px;background:rgba(0,229,255,0.12);border:1px solid rgba(0,229,255,0.3);color:var(--primary);font-size:0.78rem;font-weight:700">${escHtml(formatted)}</span>`;
+    } else {
+      headerBadge.style.display = 'none';
+    }
   }
-  if (!host && !formatted && displayEl) {
-    displayEl.style.display = 'block';
-    displayEl.innerHTML = `<span style="color:var(--text-3);font-style:italic">Date not decided yet</span>`;
+
+  if (hasDate || hasTime) {
+    if (displayEl) displayEl.style.display = 'block';
+    if (dateValEl) {
+      if (match.date) {
+        try {
+          const parts = match.date.split('-');
+          const d = new Date(parts[0], parts[1] - 1, parts[2]);
+          dateValEl.textContent = d.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+        } catch (_) {
+          dateValEl.textContent = match.date;
+        }
+      } else {
+        dateValEl.textContent = 'Date not specified';
+      }
+    }
+    if (timeValEl) {
+      if (match.time) {
+        try {
+          const [h, m] = match.time.split(':');
+          const hour = parseInt(h);
+          const ampm = hour >= 12 ? 'PM' : 'AM';
+          const hour12 = hour % 12 || 12;
+          timeValEl.textContent = `${hour12}:${m} ${ampm}`;
+        } catch (_) {
+          timeValEl.textContent = match.time;
+        }
+      } else {
+        timeValEl.textContent = 'Time not specified';
+      }
+    }
+    if (formEl && !scheduleEditOpen) {
+      formEl.style.display = 'none';
+    }
+  } else {
+    if (displayEl) displayEl.style.display = 'none';
+    if (formEl) formEl.style.display = 'block';
   }
 }
 

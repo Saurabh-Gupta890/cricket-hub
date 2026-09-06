@@ -263,7 +263,8 @@
 
         <div class="panel">
           <div class="planning-match-title" id="planning-match-name">Match Name</div>
-          <div class="planning-match-sub">Planning Phase</div>
+          <div class="planning-match-sub" id="planning-match-sub">Planning Phase</div>
+          <div class="planning-schedule-badge" id="planning-schedule-header-badge" onclick="document.getElementById('planning-datetime-panel')?.scrollIntoView({ behavior: 'smooth' })" style="display:none;margin-top:0.45rem;cursor:pointer"></div>
 
           <!-- RSVP Stats -->
           <div class="rsvp-stats" id="rsvp-stats">
@@ -322,21 +323,72 @@
         </div>
 
         <!-- Match Date & Time / Calendar Picker -->
-        <div class="panel" id="planning-datetime-panel">
-          <div class="panel-header">
+        <div class="panel schedule-panel" id="planning-datetime-panel">
+          <div class="panel-header" style="display:flex;align-items:center;justify-content:space-between">
             <h3>📅 Match Schedule</h3>
+            <span class="schedule-status-tag" id="schedule-status-tag" style="font-size:0.75rem;padding:0.2rem 0.6rem;border-radius:12px;font-weight:600;background:rgba(255,255,255,0.06);color:var(--text-3)">⏳ Date Not Set</span>
           </div>
-          <div id="planning-date-display" class="schedule-display" style="display:none"></div>
-          <div id="planning-date-form" class="schedule-form">
+          
+          <!-- Scheduled Date/Time Display Card -->
+          <div id="planning-date-display" class="schedule-display" style="display:none">
+            <div class="schedule-display-inner" style="display:flex;flex-direction:column;gap:0.5rem">
+              <div class="schedule-item date-item" style="display:flex;align-items:center;gap:0.6rem">
+                <span class="schedule-icon" style="font-size:1.35rem">📅</span>
+                <div>
+                  <div class="schedule-lbl" style="font-size:0.68rem;text-transform:uppercase;color:var(--text-3);font-weight:700">MATCH DATE</div>
+                  <div class="schedule-val" id="display-sched-date" style="font-size:0.95rem;font-weight:700;color:var(--primary)">Not Decided</div>
+                </div>
+              </div>
+              <div class="schedule-item time-item" style="display:flex;align-items:center;gap:0.6rem">
+                <span class="schedule-icon" style="font-size:1.35rem">⏰</span>
+                <div>
+                  <div class="schedule-lbl" style="font-size:0.68rem;text-transform:uppercase;color:var(--text-3);font-weight:700">MATCH TIME</div>
+                  <div class="schedule-val" id="display-sched-time" style="font-size:0.95rem;font-weight:700;color:var(--accent)">Not Decided</div>
+                </div>
+              </div>
+            </div>
+            <button class="btn btn-ghost btn-xs btn-edit-schedule" id="btn-toggle-sched-edit" onclick="toggleScheduleEdit()" style="margin-top:0.65rem;width:100%;font-size:0.78rem">
+              ✏️ Edit / Reschedule
+            </button>
+          </div>
+
+          <!-- Schedule Form with Calendar and Time pickers -->
+          <div id="planning-date-form" class="schedule-form" style="margin-top:0.5rem">
             <div class="form-group">
-              <label>Match Date</label>
-              <input type="date" id="planning-date-input" />
+              <label for="planning-date-input" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.35rem">
+                <span style="font-weight:700">📅 Match Date</span>
+                <span style="font-size:0.72rem;color:var(--primary);cursor:pointer" onclick="openDatePicker()">Tap Calendar 📅</span>
+              </label>
+              <div class="picker-input-wrap" style="position:relative;display:flex;align-items:center">
+                <input type="date" id="planning-date-input" class="calendar-input" style="padding-right:2.5rem;font-size:0.95rem" />
+                <button type="button" class="btn-picker-trigger" onclick="openDatePicker()" title="Open Calendar" style="position:absolute;right:8px;background:transparent;border:none;font-size:1.25rem;cursor:pointer;padding:0">📅</button>
+              </div>
+              <div class="quick-presets date-presets" style="display:flex;gap:0.35rem;margin-top:0.4rem;flex-wrap:wrap">
+                <button type="button" class="btn-preset" onclick="setQuickDate('today')">Today</button>
+                <button type="button" class="btn-preset" onclick="setQuickDate('tomorrow')">Tomorrow</button>
+                <button type="button" class="btn-preset" onclick="setQuickDate('saturday')">Sat</button>
+                <button type="button" class="btn-preset" onclick="setQuickDate('sunday')">Sun</button>
+              </div>
             </div>
-            <div class="form-group" style="margin-top:0.4rem">
-              <label>Match Time</label>
-              <input type="time" id="planning-time-input" />
+
+            <div class="form-group" style="margin-top:0.75rem">
+              <label for="planning-time-input" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.35rem">
+                <span style="font-weight:700">⏰ Match Time</span>
+                <span style="font-size:0.72rem;color:var(--accent);cursor:pointer" onclick="openTimePicker()">Tap Clock ⏰</span>
+              </label>
+              <div class="picker-input-wrap" style="position:relative;display:flex;align-items:center">
+                <input type="time" id="planning-time-input" class="clock-input" style="padding-right:2.5rem;font-size:0.95rem" />
+                <button type="button" class="btn-picker-trigger" onclick="openTimePicker()" title="Open Clock" style="position:absolute;right:8px;background:transparent;border:none;font-size:1.25rem;cursor:pointer;padding:0">⏰</button>
+              </div>
+              <div class="quick-presets time-presets" style="display:flex;gap:0.35rem;margin-top:0.4rem;flex-wrap:wrap">
+                <button type="button" class="btn-preset" onclick="setQuickTime('06:30')">🌅 6:30 AM</button>
+                <button type="button" class="btn-preset" onclick="setQuickTime('16:00')">☀️ 4:00 PM</button>
+                <button type="button" class="btn-preset" onclick="setQuickTime('18:00')">🌆 6:00 PM</button>
+                <button type="button" class="btn-preset" onclick="setQuickTime('20:00')">🌙 8:00 PM</button>
+              </div>
             </div>
-            <button class="btn btn-secondary btn-full btn-sm" id="btn-save-planning-date" style="margin-top:0.6rem">
+
+            <button class="btn btn-secondary btn-full btn-sm" id="btn-save-planning-date" style="margin-top:0.85rem;font-weight:700">
               📅 Save Match Schedule
             </button>
           </div>

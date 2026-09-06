@@ -16,7 +16,24 @@
   <link
     href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Rajdhani:wght@400;500;600;700&display=swap"
     rel="stylesheet" />
-  <link rel="stylesheet" href="style.css?v=2.9.20" />
+  <link rel="stylesheet" href="style.css?v=2.9.21" />
+  <script>
+    (function() {
+      try {
+        var s = localStorage.getItem('crickethub_session') || localStorage.getItem('cricket_session');
+        var match = document.cookie.match(/crickethub_token=([^;]+)/);
+        var urlParams = new URLSearchParams(window.location.search);
+        var tokenFromUrl = urlParams.get('auth_token');
+        if (s || match || tokenFromUrl) {
+          document.documentElement.classList.add('has-session');
+        } else {
+          document.documentElement.classList.add('no-session');
+        }
+      } catch(e) {
+        document.documentElement.classList.add('no-session');
+      }
+    })();
+  </script>
 </head>
 
 <body>
@@ -24,7 +41,7 @@
   <!-- ════════════════════════════════════════════
      SCREEN 1 — AUTH (Phone + OTP)
 ════════════════════════════════════════════ -->
-  <div id="screen-auth" class="screen active">
+  <div id="screen-auth" class="screen">
     <div class="landing-bg">
       <div class="bg-orb orb1"></div>
       <div class="bg-orb orb2"></div>
@@ -974,7 +991,10 @@
           </div>
         </div>
       </div>
-      <div style="margin-top:1.25rem;text-align:center">
+      <div style="margin-top:1.25rem;display:flex;flex-direction:column;gap:0.6rem">
+        <button class="btn btn-secondary btn-full" id="btn-copy-sync-link" onclick="copyAutoLoginLink()" style="font-size:0.85rem">
+          🔗 Copy Direct Auto-Login Link (For Home Screen)
+        </button>
         <button class="btn btn-primary btn-full" id="btn-close-ios-guide">Got It! 👍</button>
       </div>
     </div>
@@ -1330,7 +1350,7 @@
   <div id="toast" class="toast"></div>
 
   <script src="/socket.io/socket.io.js"></script>
-  <script src="app.js?v=2.9.20"></script>
+  <script src="app.js?v=2.9.21"></script>
 </body>
 
 </html>

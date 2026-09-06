@@ -23,13 +23,73 @@ const state = {
   tossWinner: null,
 };
 
-// ── Session Persistence ────────────────────────
+// ── Session Persistence (LocalStorage + Cookies + IndexedDB) ────
 const SESSION_KEY = 'crickethub_session';
+
+function getCookieValue(name) {
+  try {
+    const match = document.cookie.match(new RegExp('(^|;\\s*)' + name + '=([^;]*)'));
+    return match ? decodeURIComponent(match[2]) : null;
+  } catch (_) { return null; }
+}
+
+function setCookieValue(name, val, days = 365) {
+  try {
+    const maxAge = days * 24 * 3600;
+    document.cookie = `${name}=${encodeURIComponent(val)}; Path=/; Max-Age=${maxAge}; SameSite=Lax`;
+  } catch (_) {}
+}
+
+const DB_NAME = 'crickethub_app_db';
+const DB_VERSION = 1;
+
+function getIDB() {
+  return new Promise((resolve) => {
+    if (!window.indexedDB) return resolve(null);
+    try {
+      const req = indexedDB.open(DB_NAME, DB_VERSION);
+      req.onupgradeneeded = () => {
+        const db = req.result;
+        if (!db.objectStoreNames.contains('session')) {
+          db.createObjectStore('session', { keyPath: 'id' });
+        }
+      };
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => resolve(null);
+    } catch (_) { resolve(null); }
+  });
+}
+
+async function saveSessionToIndexedDB(data) {
+  try {
+    const db = await getIDB();
+    if (!db) return;
+    const tx = db.transaction('session', 'readwrite');
+    tx.objectStore('session').put({ id: 'active_session', data });
+  } catch (_) {}
+}
+
+async function loadSessionFromIndexedDB() {
+  try {
+    const db = await getIDB();
+    if (!db) return null;
+    return new Promise((resolve) => {
+      const tx = db.transaction('session', 'readonly');
+      const req = tx.objectStore('session').get('active_session');
+      req.onsuccess = () => resolve(req.result?.data || null);
+      req.onerror = () => resolve(null);
+    });
+  } catch (_) { return null; }
+}
 
 function saveSession(data) {
   try {
     localStorage.setItem(SESSION_KEY, JSON.stringify(data));
     localStorage.setItem('cricket_session', JSON.stringify(data));
+    if (data?.token) {
+      setCookieValue('crickethub_token', data.token);
+    }
+    saveSessionToIndexedDB(data);
   } catch (_) {}
   state.session = data;
 }
@@ -39,21 +99,36 @@ function loadSession() {
     const raw = localStorage.getItem(SESSION_KEY) || localStorage.getItem('cricket_session');
     if (raw) {
       const parsed = JSON.parse(raw);
-      if (parsed && (parsed.token || parsed.user)) return parsed;
+      if (parsed && (parsed.token || parsed.user)) {
+        if (parsed.token && !parsed.user) parsed.user = { name: 'Player', phone: 'Player' };
+        return parsed;
+      }
     }
     const authUser = localStorage.getItem('cricket_auth_user');
     if (authUser) {
       const u = JSON.parse(authUser);
       if (u && (u.token || u.phone)) return { token: u.token, user: u };
     }
+    const cookieToken = getCookieValue('crickethub_token');
+    if (cookieToken) {
+      return { token: cookieToken, user: { name: 'Player', phone: 'Player' } };
+    }
     return null;
   } catch { return null; }
 }
 
 function clearSession() {
-  localStorage.removeItem(SESSION_KEY);
-  localStorage.removeItem('cricket_session');
-  localStorage.removeItem('cricket_auth_user');
+  try {
+    localStorage.removeItem(SESSION_KEY);
+    localStorage.removeItem('cricket_session');
+    localStorage.removeItem('cricket_auth_user');
+    document.cookie = 'crickethub_token=; Path=/; Max-Age=0; SameSite=Lax';
+    getIDB().then(db => {
+      if (!db) return;
+      const tx = db.transaction('session', 'readwrite');
+      tx.objectStore('session').delete('active_session');
+    }).catch(() => {});
+  } catch (_) {}
   state.session = null;
 }
 
@@ -233,14 +308,38 @@ document.addEventListener('visibilitychange', () => {
 
 // Instant session restoration and background validation on reload
 async function init() {
-  const saved = loadSession();
+  const urlParams = new URLSearchParams(window.location.search);
+  const tokenFromUrl = urlParams.get('auth_token');
+
+  // Handle URL auth token transfer (e.g. from Safari -> Add to Home Screen sync link)
+  if (tokenFromUrl) {
+    try {
+      const res = await fetch('/api/auth/me', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: tokenFromUrl })
+      });
+      const data = await res.json();
+      if (data.success && data.user) {
+        saveSession({ token: tokenFromUrl, user: data.user });
+        const cleanUrl = window.location.pathname + (urlParams.get('room') ? `?room=${urlParams.get('room')}` : '');
+        window.history.replaceState({}, document.title, cleanUrl);
+      }
+    } catch (_) {}
+  }
+
+  let saved = loadSession();
+  if (!saved || !saved.token) {
+    saved = await loadSessionFromIndexedDB();
+    if (saved && saved.token) saveSession(saved);
+  }
+
   if (saved?.token) {
     // 1. Instantly activate saved session to prevent any flash of login screen
     state.session = saved;
     registerSocketUser();
 
     // Check if opened via URL query ?room=CRK-XXXX or last visited room
-    const urlParams = new URLSearchParams(window.location.search);
     const roomFromUrl = urlParams.get('room');
     const lastRoom = roomFromUrl || localStorage.getItem('cricket_last_room');
 
@@ -249,7 +348,6 @@ async function init() {
     } else {
       showHomeScreen();
       if (lastRoom) {
-        // Pre-fetch last room state in background
         socket.emit('room:join', { token: saved.token, code: lastRoom }, (res) => {
           if (res?.success && res.room) {
             state.room = res.room;
@@ -282,7 +380,6 @@ async function init() {
         renderHomeScreen();
       }
     } catch (err) {
-      // Offline / network delay: smoothly continue in cached session!
       console.log('Running in cached session mode');
     }
     return;
@@ -291,6 +388,20 @@ async function init() {
   showScreen('screen-auth');
   setAuthMode('login');
 }
+
+window.copyAutoLoginLink = function() {
+  if (!state.session?.token) return toast('Please log in first to generate your sync link');
+  const syncUrl = `${window.location.origin}/?auth_token=${encodeURIComponent(state.session.token)}`;
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(syncUrl).then(() => {
+      toast('✅ Auto-login link copied! Open in Safari and Add to Home Screen to sync instantly.');
+    }).catch(() => {
+      prompt('Copy your Auto-Login Link:', syncUrl);
+    });
+  } else {
+    prompt('Copy your Auto-Login Link:', syncUrl);
+  }
+};
 
 let currentAuthMode = 'login'; // 'login' | 'signup'
 

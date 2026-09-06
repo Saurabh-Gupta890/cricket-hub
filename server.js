@@ -1175,6 +1175,9 @@ app.post('/api/auth/verify-otp', (req, res) => {
   tokenIndex.set(token, cleaned);
   saveUsers();
 
+  // Set persistent cookie for iOS Safari & PWA standalone sync
+  res.setHeader('Set-Cookie', `crickethub_token=${token}; Path=/; Max-Age=${365 * 24 * 3600}; SameSite=Lax`);
+
   res.json({
     success: true,
     token,
@@ -1190,7 +1193,9 @@ app.post('/api/auth/verify-otp', (req, res) => {
 
 // Validate session token
 app.post('/api/auth/me', (req, res) => {
-  const { token } = req.body;
+  const cookieMatch = req.headers.cookie && req.headers.cookie.match(/(^|;\s*)crickethub_token=([^;]*)/);
+  const cookieToken = cookieMatch ? decodeURIComponent(cookieMatch[2]) : null;
+  const token = req.body?.token || req.headers['authorization']?.replace('Bearer ', '') || cookieToken;
   if (!token) return res.status(401).json({ error: 'No token' });
 
   const user = findUserByToken(token);

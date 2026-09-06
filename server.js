@@ -426,13 +426,10 @@ loadSubscriptions();
 function getSubscriptionsForPhone(targetPhone, excludePhone = null) {
   const seenEndpoints = new Set();
   const targets = [];
-  const cleanExclude = excludePhone ? String(excludePhone).replace(/\D/g, '') : null;
-  const last10Exclude = cleanExclude ? cleanExclude.slice(-10) : null;
 
   function isExcluded(phone) {
-    if (!cleanExclude) return false;
-    const cleanP = String(phone).replace(/\D/g, '');
-    return cleanP === cleanExclude || (last10Exclude && last10Exclude.length >= 6 && cleanP.endsWith(last10Exclude)) || (cleanP.length >= 6 && cleanExclude.endsWith(cleanP.slice(-10)));
+    if (!excludePhone) return false;
+    return phonesMatch(phone, excludePhone);
   }
 
   function addSub(phone, sub) {
@@ -452,12 +449,9 @@ function getSubscriptionsForPhone(targetPhone, excludePhone = null) {
     return targets;
   }
 
-  const cleanTarget = String(targetPhone).replace(/\D/g, '');
-  const last10 = cleanTarget.slice(-10);
   for (const [phone, subs] of pushSubscriptions.entries()) {
     if (isExcluded(phone)) continue;
-    const cleanP = String(phone).replace(/\D/g, '');
-    if (cleanP === cleanTarget || (last10.length >= 6 && cleanP.endsWith(last10)) || (cleanP.length >= 6 && cleanTarget.endsWith(cleanP.slice(-10)))) {
+    if (phonesMatch(phone, targetPhone)) {
       for (const sub of subs) addSub(phone, sub);
     }
   }
@@ -745,7 +739,7 @@ app.post('/api/push/subscribe', (req, res) => {
 
 app.post('/api/push/broadcast', async (req, res) => {
   try {
-    const { message, author, token } = req.body || {};
+    const { message, author, token, targetPhone, roomCode, matchName } = req.body || {};
 
     let senderName = sanitizeText(author || 'Cricket Player', 30);
     let senderPhone = null;
@@ -755,7 +749,7 @@ app.post('/api/push/broadcast', async (req, res) => {
       if (u?.name) senderName = sanitizeText(u.name, 30);
     }
 
-    const cleanMessage = sanitizeText(message || `${senderName} is pinging everyone for a cricket match! Tap to open CricketHub.`, 140);
+    const cleanMessage = sanitizeText(message || `${senderName} is pinging you for a cricket match! Tap to open CricketHub.`, 140);
 
     const alertData = {
       id: Date.now(),
@@ -763,14 +757,18 @@ app.post('/api/push/broadcast', async (req, res) => {
       message: cleanMessage,
       author: senderName,
       senderPhone: senderPhone || null,
-      matchName: 'Cricket Match Alert',
-      roomCode: null,
-      isDirect: false,
-      targetPhone: null,
+      matchName: sanitizeText(matchName || 'Cricket Match Alert', 50),
+      roomCode: roomCode || null,
+      isDirect: !!targetPhone,
+      targetPhone: targetPhone || null,
       timestamp: Date.now()
     };
 
-    if (senderPhone) {
+    if (targetPhone) {
+      const cleanTarget = String(targetPhone).replace(/\D/g, '');
+      io.to(`user:${cleanTarget}`).emit('popup:alert', alertData);
+      if (cleanTarget !== targetPhone) io.to(`user:${targetPhone}`).emit('popup:alert', alertData);
+    } else if (senderPhone) {
       const cleanSender = String(senderPhone).replace(/\D/g, '');
       io.to('global:users').except(`user:${cleanSender}`).except(`user:${senderPhone}`).emit('popup:alert', alertData);
     } else {
@@ -779,7 +777,7 @@ app.post('/api/push/broadcast', async (req, res) => {
 
     let pushResult = { total: 0, deliveredCount: 0 };
     try {
-      pushResult = await sendWebPush(null, alertData, senderPhone);
+      pushResult = await sendWebPush(targetPhone || null, alertData, senderPhone);
     } catch (pushErr) {
       console.warn('sendWebPush background error:', pushErr.message);
     }

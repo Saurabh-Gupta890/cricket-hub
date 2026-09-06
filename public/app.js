@@ -782,6 +782,9 @@ async function verifyOtp() {
     saveSession({ token: data.token, user: data.user });
     toast(`🏏 Welcome, ${data.user.name}!`);
     showHomeScreen();
+    if ('Notification' in window && Notification.permission === 'granted') {
+      subscribePushNotifications();
+    }
   } catch (err) {
     console.error('Error verifying OTP:', err);
     toast('❌ Network error during verification.');
@@ -1206,8 +1209,9 @@ document.getElementById('btn-home-broadcast-alert')?.addEventListener('click', a
         message: msg || `⚡ ${userName} is pinging everyone for a cricket match! Tap to open CricketHub.`
       })
     });
+    const data = await res.json();
     if (data && (data.success || data.delivered)) {
-      toast(`📲 Match alert delivered to squad!`);
+      toast(`📲 Match alert delivered to squad (${data.total || 0} push notifications dispatched)!`);
       if (input) input.value = '';
     } else {
       toast('❌ ' + (data?.error || 'Failed to send alert'));
@@ -2459,15 +2463,27 @@ document.getElementById('btn-search-gmaps')?.addEventListener('click', () => {
 // ── Host Squad Ping / Nudge ──────────────────
 document.getElementById('btn-nudge-all')?.addEventListener('click', () => {
   const customMsg = document.getElementById('nudge-custom-msg')?.value.trim();
-  socket.emit('planning:nudge', { message: customMsg || undefined });
-  toast('🔔 Ping alert sent to all squad members!');
+  socket.emit('planning:nudge', { message: customMsg || undefined }, (res) => {
+    if (res?.success) {
+      toast('⚡ Squad alert & lockscreen push notifications dispatched!');
+    }
+  });
+  toast('🔔 Sending alert to all squad members...');
   const input = document.getElementById('nudge-custom-msg');
   if (input) input.value = '';
 });
 
 window.nudgeMember = function (targetPhone, name) {
-  socket.emit('planning:nudge', { targetPhone, message: `Hey ${name}, are you playing? Please confirm your RSVP!` });
-  toast(`🔔 Pinged ${name}!`);
+  const cleanTarget = String(targetPhone).replace(/\D/g, '');
+  socket.emit('planning:nudge', { 
+    targetPhone: cleanTarget || targetPhone, 
+    message: `Hey ${name}, are you playing? Please confirm your availability for the match!` 
+  }, (res) => {
+    if (res?.success) {
+      toast(`⚡ Push alert delivered to ${name}!`);
+    }
+  });
+  toast(`🔔 Pinging ${name}...`);
 };
 
 // ── Audio Ping Chime (Web Audio API) ──────────

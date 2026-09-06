@@ -1,4 +1,4 @@
-const CACHE_NAME = 'crickethub-v28';
+const CACHE_NAME = 'crickethub-v29';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
@@ -25,7 +25,7 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
-  // Do not intercept non-GET or Socket.IO or API calls
+  // Do not intercept non-GET, Socket.IO, or API calls
   if (
     event.request.method !== 'GET' ||
     url.pathname.startsWith('/socket.io/') ||
@@ -52,5 +52,80 @@ self.addEventListener('fetch', (event) => {
           }
         });
       })
+  );
+});
+
+// ═══════════════════════════════════════════════
+//  W3C OS-LEVEL WEB PUSH NOTIFICATIONS (IDLE / LOCKSCREEN)
+// ═══════════════════════════════════════════════
+
+self.addEventListener('push', (event) => {
+  let data = {};
+  if (event.data) {
+    try {
+      data = event.data.json();
+    } catch (e) {
+      data = { message: event.data.text() };
+    }
+  }
+
+  const title = data.title || '⚡ Cricket Match Alert!';
+  const message = data.message || (data.matchName ? `${data.author || 'Host'} pinged for match ${data.matchName}!` : 'Cricket match update!');
+  
+  const options = {
+    body: message,
+    icon: '/favicon.ico',
+    badge: '/favicon.ico',
+    tag: 'crickethub-alert-' + (data.roomCode || data.id || Date.now()),
+    renotify: true,
+    requireInteraction: true,
+    vibrate: [200, 100, 200, 100, 200],
+    data: {
+      url: '/',
+      roomCode: data.roomCode || null,
+      autoVote: data.autoVote || null,
+      ...data
+    },
+    actions: [
+      { action: 'open', title: '🏏 View Match' },
+      { action: 'coming', title: '✅ I\'m Coming!' }
+    ]
+  };
+
+  event.waitUntil(
+    self.registration.showNotification(title, options)
+  );
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const notifData = event.notification.data || {};
+  const action = event.action;
+
+  const targetUrl = notifData.roomCode 
+    ? `/?room=${encodeURIComponent(notifData.roomCode)}${action === 'coming' ? '&vote=coming' : ''}`
+    : '/';
+
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+      // If a window is already open, focus it and notify client
+      for (const client of clientList) {
+        if ('focus' in client) {
+          client.focus();
+          if (notifData.roomCode) {
+            client.postMessage({
+              type: 'OPEN_ROOM',
+              roomCode: notifData.roomCode,
+              autoVote: action === 'coming' ? 'coming' : null
+            });
+          }
+          return;
+        }
+      }
+      // If no window open, open new window
+      if (clients.openWindow) {
+        return clients.openWindow(targetUrl);
+      }
+    })
   );
 });

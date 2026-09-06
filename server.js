@@ -745,11 +745,6 @@ app.post('/api/push/subscribe', (req, res) => {
 
 app.post('/api/push/broadcast', async (req, res) => {
   const { message, author, token } = req.body;
-  const ip = req.ip || req.connection.remoteAddress || 'unknown';
-
-  if (isRateLimited(`broadcast_ip:${ip}`, 5, 60 * 1000)) {
-    return res.status(429).json({ error: 'Please wait before sending another broadcast alert' });
-  }
 
   let senderName = sanitizeText(author || 'Cricket Player', 30);
   let senderPhone = null;
@@ -2283,11 +2278,6 @@ io.on('connection', (socket) => {
     if (!currentRoom || !currentPhone) return;
     const room = rooms.get(currentRoom);
     if (!room) return;
-
-    // Rate limit squad alerts to 1 per 10s per user
-    if (isRateLimited(`nudge:${currentPhone}`, 3, 30 * 1000)) {
-      return socket.emit('planning:error', { message: 'Please wait a few seconds before sending another squad alert.' });
-    }
 
     const me = getMe();
     const senderName = sanitizeText(me?.name || 'Match Organizer', 30);

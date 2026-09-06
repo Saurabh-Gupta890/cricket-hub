@@ -531,7 +531,7 @@ async function sendOtp() {
 
     const infoEl = document.getElementById('otp-resend-info');
     if (infoEl) {
-      infoEl.textContent = `OTP Request ${data.requestCount || 1}/5 · ${data.requestsRemaining !== undefined ? data.requestsRemaining + ' remaining in this session' : ''}`;
+      infoEl.textContent = '';
     }
 
     // Switch to OTP step
@@ -540,7 +540,8 @@ async function sendOtp() {
     const masked = data.maskedPhone || `+${full.slice(0, 2)} ••••• ••${full.slice(-3)}`;
     document.getElementById('otp-sent-to').textContent = `Code sent to ${masked}`;
 
-    // Store active dev OTP in state
+    // Store active phone and dev OTP in state
+    state.lastRequestedPhone = full;
     if (data.devOtp) {
       state.currentDevOtp = String(data.devOtp).replace(/\D/g, '').slice(0, 6);
       for (let i = 0; i < 6; i++) {
@@ -737,7 +738,8 @@ async function verifyOtp() {
   } else if (cleanPhone.startsWith('0') && cleanPhone.length === 11) {
     cleanPhone = cleanPhone.slice(1);
   }
-  const full = cc + cleanPhone;
+  const fallbackFull = cc + cleanPhone;
+  const full = state.lastRequestedPhone || fallbackFull;
 
   const btn = document.getElementById('btn-verify-otp');
   if (btn) {

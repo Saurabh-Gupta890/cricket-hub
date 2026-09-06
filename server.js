@@ -1039,11 +1039,19 @@ function findUserByPhone(phoneDigits) {
 function findOtpRecord(phoneDigits) {
   if (!phoneDigits) return null;
   const cleaned = String(phoneDigits).replace(/\D/g, '');
+  
+  // Clean up any expired OTPs
+  const now = Date.now();
+  for (const [k, rec] of Array.from(otpStore.entries())) {
+    if (rec && rec.expiresAt && rec.expiresAt < now) {
+      otpStore.delete(k);
+    }
+  }
+
   if (otpStore.has(cleaned)) return { key: cleaned, record: otpStore.get(cleaned) };
-  const last10 = cleaned.slice(-10);
+  
   for (const [key, rec] of otpStore.entries()) {
-    const kClean = String(key).replace(/\D/g, '');
-    if (kClean === cleaned || (last10.length >= 7 && (kClean.endsWith(last10) || cleaned.endsWith(kClean.slice(-10))))) {
+    if (phonesMatch(key, cleaned)) {
       return { key, record: rec };
     }
   }
@@ -1112,6 +1120,13 @@ app.post('/api/auth/request-otp', (req, res) => {
   const otp = crypto.randomInt(100000, 1000000).toString();
   const expiresAt = Date.now() + OTP_TTL;
 
+  // Clear any existing OTP records for this phone number and variants
+  for (const [k, _] of Array.from(otpStore.entries())) {
+    if (phonesMatch(k, cleaned)) {
+      otpStore.delete(k);
+    }
+  }
+
   otpStore.set(cleaned, {
     otp,
     expiresAt,
@@ -1138,6 +1153,7 @@ app.post('/api/auth/verify-otp', (req, res) => {
   if (!phone || !otp) return res.status(400).json({ error: 'Phone and OTP required' });
 
   const cleaned = phone.replace(/\D/g, '');
+  const cleanOtp = String(otp).trim().replace(/\D/g, '').slice(0, 6);
   const otpMatch = findOtpRecord(phone);
 
   if (!otpMatch) return res.status(400).json({ error: 'No active OTP requested for this number. Please tap "Resend OTP" or "Send OTP".' });
@@ -1148,14 +1164,18 @@ app.post('/api/auth/verify-otp', (req, res) => {
     return res.status(400).json({ error: 'OTP has expired. Please click Resend OTP for a new code.', expired: true });
   }
 
-  if (record.otp !== otp.trim()) {
+  if (record.otp !== cleanOtp) {
     return res.status(400).json({
       error: 'Incorrect OTP code. Please check the code or tap Resend OTP.'
     });
   }
 
-  // OTP verified successfully
-  otpStore.delete(recordKey);
+  // OTP verified successfully - purge all matching OTP keys
+  for (const [k, _] of Array.from(otpStore.entries())) {
+    if (phonesMatch(k, cleaned) || k === recordKey) {
+      otpStore.delete(k);
+    }
+  }
 
   // Create or update user
   let user = findUserByPhone(cleaned) || findUserByPhone(recordKey);

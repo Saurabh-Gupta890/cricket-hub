@@ -2052,6 +2052,56 @@ app.get('/api/room/:code', (req, res) => {
   });
 });
 
+app.post('/api/user/rooms', (req, res) => {
+  try {
+    const { phone, token } = req.body || {};
+    let userPhone = phone;
+    if (token && tokenIndex.has(token)) {
+      userPhone = tokenIndex.get(token);
+    }
+    if (!userPhone) {
+      return res.json({ success: true, rooms: [] });
+    }
+
+    const userRooms = [];
+    for (const [code, r] of rooms.entries()) {
+      if (!r) continue;
+      const isHost = phonesMatch(r.hostPhone, userPhone);
+      let isMember = false;
+      if (r.planning && r.planning.members) {
+        for (const mPhone of Object.keys(r.planning.members)) {
+          if (phonesMatch(mPhone, userPhone)) {
+            isMember = true;
+            break;
+          }
+        }
+      }
+
+      if (isHost || isMember) {
+        userRooms.push({
+          code: r.code,
+          matchName: r.matchName || 'Cricket Match',
+          hostPhone: r.hostPhone,
+          isHost: isHost,
+          createdAt: r.createdAt || Date.now(),
+          status: r.match?.status || 'planning',
+          memberCount: Object.keys(r.planning?.members || {}).length,
+          venue: r.match?.location?.text || '',
+          matchDate: r.match?.date || '',
+          matchTime: r.match?.time || '',
+          overs: r.match?.overs || 20
+        });
+      }
+    }
+
+    userRooms.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+    return res.json({ success: true, rooms: userRooms });
+  } catch (err) {
+    console.error('Error fetching user rooms:', err);
+    return res.json({ success: false, error: err.message, rooms: [] });
+  }
+});
+
 // Complete Database Reset Endpoint (Wipes local and MongoDB cloud data)
 app.all('/api/admin/clean-all-data', async (req, res) => {
   try {

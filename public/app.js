@@ -152,17 +152,12 @@ function isHost() {
   const myPhone = user.phone;
   const hostPhone = state.room?.hostPhone;
   if (!hostPhone) return true;
-  if (hostPhone && myPhone && hostPhone === myPhone) return true;
-  if (hostPhone && myPhone) {
-    const d1 = String(myPhone).replace(/\D/g, '');
-    const d2 = String(hostPhone).replace(/\D/g, '');
-    if (d1 && d2 && (d1 === d2 || d1.endsWith(d2) || d2.endsWith(d1) || d1.endsWith(d2.slice(-10)) || d2.endsWith(d1.slice(-10)))) return true;
-  }
+  if (phonesMatch(hostPhone, myPhone)) return true;
+
   const members = state.room?.planning?.members || {};
-  if (myPhone && members[myPhone]?.isHost) return true;
   for (const m of Object.values(members)) {
     if (m?.isHost) {
-      if (m.phone && myPhone && (m.phone === myPhone || String(m.phone).replace(/\D/g,'') === String(myPhone).replace(/\D/g,''))) return true;
+      if (phonesMatch(m.phone, myPhone)) return true;
       if (m.name && user.name && m.name.toLowerCase().trim() === user.name.toLowerCase().trim()) return true;
     }
   }
@@ -195,6 +190,30 @@ function fmtPhone(phone) {
   // Show last 4 digits only for privacy in cards
   return '••••' + String(phone).slice(-4);
 }
+
+function phonesMatch(p1, p2) {
+  if (!p1 || !p2) return false;
+  if (p1 === p2) return true;
+  const d1 = String(p1).replace(/\D/g, '');
+  const d2 = String(p2).replace(/\D/g, '');
+  if (!d1 || !d2) return false;
+  if (d1 === d2) return true;
+  if (d1.endsWith(d2) || d2.endsWith(d1)) return true;
+  const minLen = Math.min(d1.length, d2.length, 10);
+  if (minLen >= 6) {
+    return d1.slice(-minLen) === d2.slice(-minLen);
+  }
+  return false;
+}
+window.phonesMatch = phonesMatch;
+
+function findPlanningMember(planning, phone) {
+  if (!planning || !planning.members || !phone) return null;
+  const members = planning.members;
+  if (members[phone]) return members[phone];
+  return Object.values(members).find(m => phonesMatch(m.phone, phone)) || null;
+}
+window.findPlanningMember = findPlanningMember;
 
 function formatOvers(balls) {
   return `${Math.floor(balls / 6)}.${balls % 6}`;
@@ -994,43 +1013,88 @@ function showHomeScreen() {
   registerSocketUser();
   checkNotificationPermissionBanner();
 
-  // Active saved room resume banner
-  const activeBanner = document.getElementById('home-active-room-banner');
-  if (activeBanner) {
-    const savedRoom = state.room;
-    const lastRoomCode = localStorage.getItem('cricket_last_room');
-    if (savedRoom && savedRoom.code) {
-      activeBanner.style.display = 'flex';
-      const nameEl = document.getElementById('home-active-room-name');
-      const codeEl = document.getElementById('home-active-room-code');
-      const subEl = document.getElementById('home-active-room-sub');
-      const badgeEl = activeBanner.querySelector('.active-room-status-badge');
-      const matchStatus = savedRoom.match?.status || 'planning';
+  // Active saved room resume banner & cross-device sync
+  renderHomeActiveRooms();
+}
 
-      if (nameEl) nameEl.textContent = savedRoom.matchName || 'Match Planning';
-      if (codeEl) codeEl.textContent = savedRoom.code;
-      if (badgeEl) {
-        badgeEl.textContent = matchStatus === 'planning' ? 'Planning In Progress (Saved)' : (matchStatus === 'setup' ? 'Match Setup (Saved)' : 'Live Match Active');
+async function renderHomeActiveRooms() {
+  const activeBanner = document.getElementById('home-active-room-banner');
+  if (!activeBanner) return;
+
+  const user = state.session?.user;
+  let serverRooms = [];
+
+  if (user?.phone) {
+    try {
+      const res = await fetch('/api/user/rooms', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone: user.phone, token: state.session?.token })
+      }).then(r => r.json());
+      if (res && res.success && Array.isArray(res.rooms)) {
+        serverRooms = res.rooms;
       }
-      if (subEl) {
-        const memberCount = Object.keys(savedRoom.planning?.members || {}).length;
-        subEl.textContent = matchStatus === 'planning'
-          ? `Planning in progress • ${memberCount} squad members registered`
-          : (matchStatus === 'setup' ? 'Match configuration in progress' : 'Live match scoring in progress');
-      }
-    } else if (lastRoomCode) {
-      activeBanner.style.display = 'flex';
-      const nameEl = document.getElementById('home-active-room-name');
-      const codeEl = document.getElementById('home-active-room-code');
-      const subEl = document.getElementById('home-active-room-sub');
-      if (nameEl) nameEl.textContent = 'Recent Match';
-      if (codeEl) codeEl.textContent = lastRoomCode;
-      if (subEl) subEl.textContent = 'Saved on this device • Click to rejoin and sync';
-    } else {
-      activeBanner.style.display = 'none';
+    } catch (e) {
+      console.warn('Failed to fetch user rooms:', e);
     }
   }
+
+  const savedRoom = state.room;
+  const lastRoomCode = localStorage.getItem('cricket_last_room');
+
+  if (serverRooms.length > 0) {
+    const primaryRoom = serverRooms[0];
+    localStorage.setItem('cricket_last_room', primaryRoom.code);
+    activeBanner.style.display = 'flex';
+    const nameEl = document.getElementById('home-active-room-name');
+    const codeEl = document.getElementById('home-active-room-code');
+    const subEl = document.getElementById('home-active-room-sub');
+    const badgeEl = activeBanner.querySelector('.active-room-status-badge');
+    const matchStatus = primaryRoom.status || 'planning';
+
+    if (nameEl) nameEl.textContent = primaryRoom.matchName || 'Cricket Match';
+    if (codeEl) codeEl.textContent = primaryRoom.code;
+    if (badgeEl) {
+      const roleText = primaryRoom.isHost ? '👑 HOST' : '👥 SQUAD';
+      badgeEl.innerHTML = `${roleText} · ${matchStatus === 'planning' ? 'Planning In Progress' : (matchStatus === 'setup' ? 'Match Setup' : 'Live Match Active')}`;
+    }
+    if (subEl) {
+      subEl.textContent = matchStatus === 'planning'
+        ? `Planning in progress • ${primaryRoom.memberCount || 1} squad members registered`
+        : (matchStatus === 'setup' ? 'Match configuration in progress' : 'Live match scoring in progress');
+    }
+  } else if (savedRoom && savedRoom.code) {
+    activeBanner.style.display = 'flex';
+    const nameEl = document.getElementById('home-active-room-name');
+    const codeEl = document.getElementById('home-active-room-code');
+    const subEl = document.getElementById('home-active-room-sub');
+    const badgeEl = activeBanner.querySelector('.active-room-status-badge');
+    const matchStatus = savedRoom.match?.status || 'planning';
+
+    if (nameEl) nameEl.textContent = savedRoom.matchName || 'Match Planning';
+    if (codeEl) codeEl.textContent = savedRoom.code;
+    if (badgeEl) {
+      badgeEl.textContent = matchStatus === 'planning' ? 'Planning In Progress (Saved)' : (matchStatus === 'setup' ? 'Match Setup (Saved)' : 'Live Match Active');
+    }
+    if (subEl) {
+      const memberCount = Object.keys(savedRoom.planning?.members || {}).length;
+      subEl.textContent = matchStatus === 'planning'
+        ? `Planning in progress • ${memberCount} squad members registered`
+        : (matchStatus === 'setup' ? 'Match configuration in progress' : 'Live match scoring in progress');
+    }
+  } else if (lastRoomCode) {
+    activeBanner.style.display = 'flex';
+    const nameEl = document.getElementById('home-active-room-name');
+    const codeEl = document.getElementById('home-active-room-code');
+    const subEl = document.getElementById('home-active-room-sub');
+    if (nameEl) nameEl.textContent = 'Recent Match';
+    if (codeEl) codeEl.textContent = lastRoomCode;
+    if (subEl) subEl.textContent = 'Saved on this device • Click to rejoin and sync';
+  } else {
+    activeBanner.style.display = 'none';
+  }
 }
+window.renderHomeActiveRooms = renderHomeActiveRooms;
 
 window.leavePlanningToHome = function () {
   showHomeScreen();
@@ -1043,12 +1107,13 @@ window.leaveLobbyToHome = function () {
 };
 
 window.resumeActiveRoom = function () {
+  const codeEl = document.getElementById('home-active-room-code');
+  const targetCode = codeEl?.textContent?.trim() || state.room?.code || localStorage.getItem('cricket_last_room');
+  if (targetCode && targetCode !== 'CRK-XXXX') {
+    joinRoomDirect(targetCode);
+    return;
+  }
   if (!state.room || !state.room.code) {
-    const lastCode = localStorage.getItem('cricket_last_room');
-    if (lastCode) {
-      joinRoomDirect(lastCode);
-      return;
-    }
     toast('No active match room found');
     return;
   }
@@ -1926,6 +1991,7 @@ function renderRsvpGrid() {
   const members = Object.values(state.room?.planning?.members || {});
   const myPhone = state.session?.user?.phone;
   const grid = document.getElementById('rsvp-grid');
+  if (!grid) return;
   const host = isHost();
 
   if (members.length === 0) {
@@ -1948,7 +2014,7 @@ function renderRsvpGrid() {
   };
 
   grid.innerHTML = sorted.map(m => {
-    const isMe = m.phone === myPhone;
+    const isMe = phonesMatch(m.phone, myPhone);
     const vl = voteLabels[m.vote] || voteLabels.null;
     const isOnline = !!m.isOnline;
     const isHostUser = !!(m.isHost || (state.room && phonesMatch(state.room.hostPhone, m.phone)));
@@ -1991,7 +2057,8 @@ function renderRsvpGrid() {
 
 function renderMyVote() {
   const myPhone = state.session?.user?.phone;
-  const me = state.room?.planning?.members?.[myPhone];
+  if (!myPhone) return;
+  const me = findPlanningMember(state.room?.planning, myPhone);
   if (!me) return;
 
   // Highlight the right vote button

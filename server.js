@@ -1066,6 +1066,13 @@ function findUserByToken(token) {
   return null;
 }
 
+function findPhoneByToken(token) {
+  if (!token) return null;
+  if (tokenIndex.has(token)) return tokenIndex.get(token);
+  const u = findUserByToken(token);
+  return u?.phone || null;
+}
+
 // Request OTP for Login or Signup
 app.post('/api/auth/request-otp', (req, res) => {
   const { phone, name, mode } = req.body;
@@ -2040,7 +2047,8 @@ app.get('/api/room/:code', (req, res) => {
     exists: true,
     matchName: room.matchName,
     memberCount: Object.keys(room.planning.members).length,
-    stats: getPlanningStats(room)
+    stats: getPlanningStats(room),
+    room: getRoomPublicState(room)
   });
 });
 
@@ -2148,7 +2156,7 @@ io.on('connection', (socket) => {
   // Recent alerts memory (phone/global -> alert)
   // ─── User Register / Connection Identification ────
   socket.on('user:register', ({ token, phone }) => {
-    let verifiedPhone = token ? tokenIndex.get(token) : null;
+    let verifiedPhone = findPhoneByToken(token);
     if (!verifiedPhone && phone) {
       const cleanP = String(phone).replace(/\D/g, '');
       if (userStore.has(cleanP)) {
@@ -2170,8 +2178,8 @@ io.on('connection', (socket) => {
   });
 
   // ─── Room: Create ────────────────────────────────
-  socket.on('room:create', ({ token, matchName, creatorPhone }, cb) => {
-    let phone = token ? tokenIndex.get(token) : null;
+  socket.on('room:create', ({ token, matchName, overs, teamAName, teamBName, groupId, creatorPhone }, cb) => {
+    let phone = findPhoneByToken(token);
     if (!phone && creatorPhone) {
       const cleanP = String(creatorPhone).replace(/\D/g, '');
       if (userStore.has(cleanP)) phone = cleanP;
@@ -2228,7 +2236,7 @@ io.on('connection', (socket) => {
 
   // ─── Room: Join ──────────────────────────────────
   socket.on('room:join', ({ token, code, phone: joinPhone }, cb) => {
-    let phone = token ? tokenIndex.get(token) : null;
+    let phone = findPhoneByToken(token);
     if (!phone && joinPhone) {
       const cleanP = String(joinPhone).replace(/\D/g, '');
       if (userStore.has(cleanP)) phone = cleanP;
@@ -2274,7 +2282,7 @@ io.on('connection', (socket) => {
   });
 
   // ─── Planning: Vote ──────────────────────────────
-  socket.on('planning:vote', ({ vote, comment }) => {
+  socket.on('planning:vote', ({ vote, comment }, cb) => {
     if (!currentRoom || !currentPhone) return;
     const room = rooms.get(currentRoom);
     if (!room) return;
@@ -2291,6 +2299,7 @@ io.on('connection', (socket) => {
 
     saveRooms();
     io.to(currentRoom).emit('planning:update', getRoomPublicState(room));
+    if (typeof cb === 'function') cb({ success: true, room: getRoomPublicState(room) });
   });
 
   // ─── Planning: Match Date & Time ──────────────────
@@ -2417,8 +2426,8 @@ io.on('connection', (socket) => {
     if (typeof cb === 'function') cb({ groups: userGroups });
   });
 
-  // ─── Match Setup (Host Only) ─────────────────────
-  socket.on('match:setup', (data = {}) => {
+  // ─── Match: Setup (Overs, Teams, Players) ────────
+  socket.on('match:setup', (data = {}, cb) => {
     const { overs, location, date, time } = data;
     if (!currentRoom || !currentPhone) return;
     const room = rooms.get(currentRoom);
@@ -2471,6 +2480,7 @@ io.on('connection', (socket) => {
     saveRooms();
     io.to(currentRoom).emit('state:update', getRoomPublicState(room));
     io.to(currentRoom).emit('planning:update', getRoomPublicState(room));
+    if (typeof cb === 'function') cb({ success: true, room: getRoomPublicState(room) });
   });
 
   socket.on('match:startToss', () => {
@@ -2482,7 +2492,7 @@ io.on('connection', (socket) => {
     io.to(currentRoom).emit('state:update', getRoomPublicState(room));
   });
 
-  socket.on('match:toss', ({ winner, choice, decision }) => {
+  socket.on('match:toss', ({ winner, choice, decision }, cb) => {
     if (!currentRoom || !currentPhone) return;
     const room = rooms.get(currentRoom);
     if (!room || !phonesMatch(room.hostPhone, currentPhone)) return;
@@ -2502,6 +2512,7 @@ io.on('connection', (socket) => {
     }
     saveRooms();
     io.to(currentRoom).emit('state:update', getRoomPublicState(room));
+    if (typeof cb === 'function') cb({ success: true, room: getRoomPublicState(room) });
   });
 
   // ─── Super Over Shootout (Host Only on Tied Match) ──

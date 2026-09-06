@@ -450,10 +450,10 @@ async function resendOtp() {
 
     const infoEl = document.getElementById('otp-resend-info');
     if (infoEl) {
-      infoEl.textContent = `OTP Request ${data.requestCount || 1}/5 · ${data.requestsRemaining !== undefined ? data.requestsRemaining + ' remaining in this session' : ''}`;
+      infoEl.textContent = 'Code expires in 5 minutes';
     }
 
-    toast(`📲 New OTP requested! (Request ${data.requestCount}/5)`);
+    toast('📲 New OTP code sent!');
     clearOtpCountdown();
     startOtpCountdown(5 * 60);
     document.getElementById('otp-0')?.focus();

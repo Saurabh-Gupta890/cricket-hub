@@ -1036,6 +1036,20 @@ function findUserByPhone(phoneDigits) {
   return null;
 }
 
+function findOtpRecord(phoneDigits) {
+  if (!phoneDigits) return null;
+  const cleaned = String(phoneDigits).replace(/\D/g, '');
+  if (otpStore.has(cleaned)) return { key: cleaned, record: otpStore.get(cleaned) };
+  const last10 = cleaned.slice(-10);
+  for (const [key, rec] of otpStore.entries()) {
+    const kClean = String(key).replace(/\D/g, '');
+    if (kClean === cleaned || (last10.length >= 7 && (kClean.endsWith(last10) || cleaned.endsWith(kClean.slice(-10))))) {
+      return { key, record: rec };
+    }
+  }
+  return null;
+}
+
 // Request OTP for Login or Signup
 app.post('/api/auth/request-otp', (req, res) => {
   const { phone, name, mode } = req.body;
@@ -1101,11 +1115,13 @@ app.post('/api/auth/verify-otp', (req, res) => {
   if (!phone || !otp) return res.status(400).json({ error: 'Phone and OTP required' });
 
   const cleaned = phone.replace(/\D/g, '');
-  const record = otpStore.get(cleaned);
+  const otpMatch = findOtpRecord(phone);
 
-  if (!record) return res.status(400).json({ error: 'No active OTP requested for this number. Please request an OTP.' });
+  if (!otpMatch) return res.status(400).json({ error: 'No active OTP requested for this number. Please tap "Resend OTP" or "Send OTP".' });
+  
+  const { key: recordKey, record } = otpMatch;
   if (Date.now() > record.expiresAt) {
-    otpStore.delete(cleaned);
+    otpStore.delete(recordKey);
     return res.status(400).json({ error: 'OTP has expired. Please click Resend OTP for a new code.', expired: true });
   }
 
@@ -1116,10 +1132,10 @@ app.post('/api/auth/verify-otp', (req, res) => {
   }
 
   // OTP verified successfully
-  otpStore.delete(cleaned);
+  otpStore.delete(recordKey);
 
   // Create or update user
-  let user = findUserByPhone(cleaned);
+  let user = findUserByPhone(cleaned) || findUserByPhone(recordKey);
   const userKey = user?.phone || cleaned;
   const token = crypto.randomBytes(32).toString('hex');
 

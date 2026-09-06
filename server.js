@@ -978,7 +978,8 @@ app.post('/api/groups/:id/add-member', (req, res) => {
   // Auto-sync into all active rooms linked to this squad
   for (const [code, room] of rooms.entries()) {
     if (room.groupId === group.id && room.planning?.members) {
-      if (!room.planning.members[cleanPhone]) {
+      const existingKey = Object.keys(room.planning.members).find(k => phonesMatch(k, cleanPhone) || phonesMatch(room.planning.members[k]?.phone, cleanPhone));
+      if (!existingKey) {
         room.planning.members[cleanPhone] = {
           phone: cleanPhone,
           name: memberData.name,
@@ -989,9 +990,9 @@ app.post('/api/groups/:id/add-member', (req, res) => {
           votedAt: null
         };
       } else {
-        room.planning.members[cleanPhone].name = memberData.name;
-        room.planning.members[cleanPhone].avatar = memberData.avatar;
-        room.planning.members[cleanPhone].color = memberData.color;
+        room.planning.members[existingKey].name = memberData.name;
+        room.planning.members[existingKey].avatar = memberData.avatar;
+        room.planning.members[existingKey].color = memberData.color;
       }
       io.to(code).emit('planning:update', getRoomPublicState(room));
       io.to(code).emit('state:update', getRoomPublicState(room));
@@ -1275,12 +1276,14 @@ function generateRoomCode() {
 
 function createRoom(matchName, hostPhone) {
   const code = generateRoomCode();
-  const hostUser = userStore.get(hostPhone);
+  const cleanHostPhone = String(hostPhone || '').replace(/\D/g, '');
+  const hostUser = findUserByPhone(hostPhone) || (cleanHostPhone ? findUserByPhone(cleanHostPhone) : null) || userStore.get(hostPhone);
+  const canonicalHostPhone = cleanHostPhone || hostPhone;
   const room = {
     code,
     matchName,
     createdAt: Date.now(),
-    hostPhone,
+    hostPhone: canonicalHostPhone,
     // Planning / RSVP state
     planning: {
       members: {},  // phone -> { phone, name, color, vote, comment, joinedAt }
@@ -1308,11 +1311,12 @@ function createRoom(matchName, hostPhone) {
   };
 
   // Add host to planning members
-  if (hostUser) {
-    room.planning.members[hostPhone] = {
-      phone: hostPhone,
-      name: hostUser.name,
-      color: hostUser.color,
+  if (canonicalHostPhone) {
+    room.planning.members[canonicalHostPhone] = {
+      phone: canonicalHostPhone,
+      name: hostUser?.name || 'Host',
+      color: hostUser?.color || '#00e5ff',
+      avatar: hostUser?.avatar || '🏏',
       vote: null,        // 'coming' | 'not_coming' | 'maybe'
       comment: '',
       isHost: true,
@@ -1371,6 +1375,7 @@ function scheduleRoomExpiry(code) {
 }
 
 function getRoomPublicState(room) {
+  if (!room) return null;
   // Strip internal history stacks from public state to keep payload small
   const match = JSON.parse(JSON.stringify(room.match));
   match.innings.forEach(inn => {
@@ -1389,14 +1394,41 @@ function getRoomPublicState(room) {
 
   const onlineList = Object.values(room.sockets || {}).filter(Boolean);
   const isHostOnline = onlineList.some(op => phonesMatch(op, room.hostPhone));
-  const planning = JSON.parse(JSON.stringify(room.planning));
-  Object.keys(planning.members).forEach(phone => {
-    const isThisMemberHost = !!(planning.members[phone].isHost || phonesMatch(room.hostPhone, phone));
-    planning.members[phone].isHost = isThisMemberHost;
-    planning.members[phone].isOnline = isThisMemberHost
-      ? isHostOnline
-      : onlineList.some(op => phonesMatch(op, phone));
-  });
+  
+  // Deduplicate and consolidate planning members
+  const rawMembers = room.planning?.members || {};
+  const deduplicatedMembers = {};
+  
+  for (const [key, m] of Object.entries(rawMembers)) {
+    if (!m) continue;
+    const phone = m.phone || key;
+    const existingKey = Object.keys(deduplicatedMembers).find(k => phonesMatch(k, phone) || phonesMatch(deduplicatedMembers[k].phone, phone));
+    
+    if (existingKey) {
+      const existing = deduplicatedMembers[existingKey];
+      if (!existing.vote && m.vote) existing.vote = m.vote;
+      if (!existing.comment && m.comment) existing.comment = m.comment;
+      if (m.isHost) existing.isHost = true;
+      if (m.avatar && !existing.avatar) existing.avatar = m.avatar;
+    } else {
+      const isThisMemberHost = !!(m.isHost || phonesMatch(room.hostPhone, phone));
+      const isOnline = isThisMemberHost
+        ? isHostOnline
+        : onlineList.some(op => phonesMatch(op, phone));
+      
+      deduplicatedMembers[key] = {
+        ...m,
+        phone,
+        isHost: isThisMemberHost,
+        isOnline
+      };
+    }
+  }
+
+  const planning = {
+    ...room.planning,
+    members: deduplicatedMembers
+  };
 
   let groupDetails = null;
   if (room.groupId && groups.has(room.groupId)) {
@@ -1423,13 +1455,23 @@ function getRoomPublicState(room) {
 }
 
 function getPlanningStats(room) {
-  const members = Object.values(room.planning.members);
+  const rawMembers = Object.values(room.planning?.members || {});
+  const unique = [];
+  for (const m of rawMembers) {
+    if (!m) continue;
+    const exists = unique.find(u => phonesMatch(u.phone, m.phone));
+    if (!exists) {
+      unique.push({ ...m });
+    } else if (!exists.vote && m.vote) {
+      exists.vote = m.vote;
+    }
+  }
   return {
-    total: members.length,
-    coming: members.filter(m => m.vote === 'coming').length,
-    notComing: members.filter(m => m.vote === 'not_coming').length,
-    maybe: members.filter(m => m.vote === 'maybe').length,
-    noVote: members.filter(m => m.vote === null).length
+    total: unique.length,
+    coming: unique.filter(m => m.vote === 'coming').length,
+    notComing: unique.filter(m => m.vote === 'not_coming').length,
+    maybe: unique.filter(m => m.vote === 'maybe').length,
+    noVote: unique.filter(m => m.vote === null).length
   };
 }
 
@@ -2292,8 +2334,10 @@ io.on('connection', (socket) => {
       room.groupName = primaryGroup.name;
       if (Array.isArray(primaryGroup.members)) {
         primaryGroup.members.forEach(gm => {
-          const clean = String(gm.phone).replace(/\D/g, '');
-          if (!room.planning.members[clean]) {
+          const clean = String(gm.phone || '').replace(/\D/g, '');
+          if (!clean) return;
+          const existingKey = Object.keys(room.planning.members).find(k => phonesMatch(k, clean) || phonesMatch(room.planning.members[k]?.phone, clean));
+          if (!existingKey) {
             room.planning.members[clean] = {
               phone: clean,
               name: gm.name,
@@ -2303,6 +2347,10 @@ io.on('connection', (socket) => {
               vote: null,
               votedAt: null
             };
+          } else {
+            if (gm.name && !room.planning.members[existingKey].name) {
+              room.planning.members[existingKey].name = gm.name;
+            }
           }
         });
       }
@@ -2310,6 +2358,8 @@ io.on('connection', (socket) => {
 
     socket.join(room.code);
     socket.join(`user:${phone}`);
+    const cleanDigits = String(phone).replace(/\D/g, '');
+    if (cleanDigits && cleanDigits !== phone) socket.join(`user:${cleanDigits}`);
     socket.join('global:users');
 
     saveRooms();
@@ -2341,22 +2391,34 @@ io.on('connection', (socket) => {
     currentRoom = room.code;
     room.sockets[socket.id] = phone;
 
-    const user = userStore.get(phone);
-    // Add to planning members if not already there
-    if (!room.planning.members[phone]) {
-      room.planning.members[phone] = {
-        phone,
+    const user = findUserByPhone(phone);
+    const cleanPhone = String(phone).replace(/\D/g, '');
+    const canonicalPhone = cleanPhone || phone;
+
+    // Check if member already exists in room.planning.members (by exact key or phonesMatch)
+    const existingKey = Object.keys(room.planning.members).find(k => phonesMatch(k, phone) || phonesMatch(room.planning.members[k]?.phone, phone));
+
+    if (existingKey) {
+      if (user?.name) room.planning.members[existingKey].name = user.name;
+      if (user?.color) room.planning.members[existingKey].color = user.color;
+      if (user?.avatar) room.planning.members[existingKey].avatar = user.avatar;
+      if (phonesMatch(room.hostPhone, phone)) room.planning.members[existingKey].isHost = true;
+    } else {
+      room.planning.members[canonicalPhone] = {
+        phone: canonicalPhone,
         name: user?.name || 'Player',
         color: user?.color || '#00e5ff',
+        avatar: user?.avatar || '🏏',
         vote: null,
         comment: '',
-        isHost: false,
+        isHost: phonesMatch(room.hostPhone, phone),
         joinedAt: Date.now()
       };
     }
 
     socket.join(room.code);
     socket.join(`user:${phone}`);
+    if (cleanPhone && cleanPhone !== phone) socket.join(`user:${cleanPhone}`);
     socket.join('global:users');
     saveRooms();
     socket.to(room.code).emit('planning:update', getRoomPublicState(room));
@@ -2374,15 +2436,37 @@ io.on('connection', (socket) => {
     const room = rooms.get(currentRoom);
     if (!room) return;
 
-    const member = room.planning.members[currentPhone];
-    if (!member) return;
+    let memberKey = Object.keys(room.planning.members).find(k => phonesMatch(k, currentPhone) || phonesMatch(room.planning.members[k]?.phone, currentPhone));
+    if (!memberKey) {
+      const cleanPhone = String(currentPhone).replace(/\D/g, '') || currentPhone;
+      const user = findUserByPhone(currentPhone);
+      room.planning.members[cleanPhone] = {
+        phone: cleanPhone,
+        name: user?.name || 'Player',
+        color: user?.color || '#00e5ff',
+        avatar: user?.avatar || '🏏',
+        vote: null,
+        comment: '',
+        isHost: phonesMatch(room.hostPhone, currentPhone),
+        joinedAt: Date.now()
+      };
+      memberKey = cleanPhone;
+    }
 
+    const member = room.planning.members[memberKey];
     if (vote !== undefined && ['coming', 'not_coming', 'maybe', null].includes(vote)) {
       member.vote = vote;
     }
     if (comment !== undefined) {
       member.comment = sanitizeText(comment, 80);
     }
+
+    // Clean up any stale duplicate keys for this same user phone
+    Object.keys(room.planning.members).forEach(k => {
+      if (k !== memberKey && (phonesMatch(k, currentPhone) || phonesMatch(room.planning.members[k]?.phone, currentPhone))) {
+        delete room.planning.members[k];
+      }
+    });
 
     saveRooms();
     io.to(currentRoom).emit('planning:update', getRoomPublicState(room));
@@ -2500,8 +2584,10 @@ io.on('connection', (socket) => {
         // Auto-add group members into room planning squad if not already present
         if (Array.isArray(g.members)) {
           g.members.forEach(gm => {
-            const clean = String(gm.phone).replace(/\D/g, '');
-            if (!room.planning.members[clean]) {
+            const clean = String(gm.phone || '').replace(/\D/g, '');
+            if (!clean) return;
+            const existingKey = Object.keys(room.planning.members).find(k => phonesMatch(k, clean) || phonesMatch(room.planning.members[k]?.phone, clean));
+            if (!existingKey) {
               room.planning.members[clean] = {
                 phone: clean,
                 name: gm.name,

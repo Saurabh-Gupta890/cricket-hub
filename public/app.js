@@ -2100,8 +2100,29 @@ function renderPlanningSchedule() {
   }
 }
 
+function getDeduplicatedPlanningMembers(planning) {
+  const raw = Object.values(planning?.members || {});
+  const unique = [];
+  for (const m of raw) {
+    if (!m) continue;
+    const exists = unique.find(u => phonesMatch(u.phone, m.phone));
+    if (exists) {
+      if (!exists.vote && m.vote) exists.vote = m.vote;
+      if (!exists.comment && m.comment) exists.comment = m.comment;
+      if (m.isOnline) exists.isOnline = true;
+      if (m.isHost) exists.isHost = true;
+      if (m.avatar && !exists.avatar) exists.avatar = m.avatar;
+      if (m.color && !exists.color) exists.color = m.color;
+    } else {
+      unique.push({ ...m });
+    }
+  }
+  return unique;
+}
+window.getDeduplicatedPlanningMembers = getDeduplicatedPlanningMembers;
+
 function renderRsvpStats() {
-  const members = Object.values(state.room?.planning?.members || {});
+  const members = getDeduplicatedPlanningMembers(state.room?.planning);
   const coming = members.filter(m => m.vote === 'coming').length;
   const maybe = members.filter(m => m.vote === 'maybe').length;
   const notComing = members.filter(m => m.vote === 'not_coming').length;
@@ -2120,7 +2141,7 @@ function renderRsvpStats() {
 }
 
 function renderRsvpGrid() {
-  const members = Object.values(state.room?.planning?.members || {});
+  const members = getDeduplicatedPlanningMembers(state.room?.planning);
   const myPhone = state.session?.user?.phone;
   const grid = document.getElementById('rsvp-grid');
   if (!grid) return;

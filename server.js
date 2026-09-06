@@ -1050,6 +1050,22 @@ function findOtpRecord(phoneDigits) {
   return null;
 }
 
+function findUserByToken(token) {
+  if (!token) return null;
+  if (tokenIndex.has(token)) {
+    const phone = tokenIndex.get(token);
+    const u = userStore.get(phone) || findUserByPhone(phone);
+    if (u) return u;
+  }
+  for (const [phoneKey, u] of userStore.entries()) {
+    if (u && u.token === token) {
+      tokenIndex.set(token, u.phone || phoneKey);
+      return u;
+    }
+  }
+  return null;
+}
+
 // Request OTP for Login or Signup
 app.post('/api/auth/request-otp', (req, res) => {
   const { phone, name, mode } = req.body;
@@ -1177,11 +1193,8 @@ app.post('/api/auth/me', (req, res) => {
   const { token } = req.body;
   if (!token) return res.status(401).json({ error: 'No token' });
 
-  const phone = tokenIndex.get(token);
-  if (!phone) return res.status(401).json({ error: 'Invalid or expired session' });
-
-  const user = userStore.get(phone);
-  if (!user) return res.status(401).json({ error: 'User not found' });
+  const user = findUserByToken(token);
+  if (!user) return res.status(401).json({ error: 'Invalid or expired session' });
 
   user.createdAt = user.createdAt || Date.now();
   res.json({

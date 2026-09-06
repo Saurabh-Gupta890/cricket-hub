@@ -27,19 +27,33 @@ const state = {
 const SESSION_KEY = 'crickethub_session';
 
 function saveSession(data) {
-  localStorage.setItem(SESSION_KEY, JSON.stringify(data));
+  try {
+    localStorage.setItem(SESSION_KEY, JSON.stringify(data));
+    localStorage.setItem('cricket_session', JSON.stringify(data));
+  } catch (_) {}
   state.session = data;
 }
 
 function loadSession() {
   try {
-    const raw = localStorage.getItem(SESSION_KEY);
-    return raw ? JSON.parse(raw) : null;
+    const raw = localStorage.getItem(SESSION_KEY) || localStorage.getItem('cricket_session');
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed && (parsed.token || parsed.user)) return parsed;
+    }
+    const authUser = localStorage.getItem('cricket_auth_user');
+    if (authUser) {
+      const u = JSON.parse(authUser);
+      if (u && (u.token || u.phone)) return { token: u.token, user: u };
+    }
+    return null;
   } catch { return null; }
 }
 
 function clearSession() {
   localStorage.removeItem(SESSION_KEY);
+  localStorage.removeItem('cricket_session');
+  localStorage.removeItem('cricket_auth_user');
   state.session = null;
 }
 
@@ -217,36 +231,65 @@ document.addEventListener('visibilitychange', () => {
   }
 });
 
-// Try to restore session on load
+// Instant session restoration and background validation on reload
 async function init() {
   const saved = loadSession();
   if (saved?.token) {
+    // 1. Instantly activate saved session to prevent any flash of login screen
+    state.session = saved;
+    registerSocketUser();
+
+    // Check if opened via URL query ?room=CRK-XXXX or last visited room
+    const urlParams = new URLSearchParams(window.location.search);
+    const roomFromUrl = urlParams.get('room');
+    const lastRoom = roomFromUrl || localStorage.getItem('cricket_last_room');
+
+    if (roomFromUrl) {
+      joinRoomDirect(roomFromUrl);
+    } else {
+      showHomeScreen();
+      if (lastRoom) {
+        // Pre-fetch last room state in background
+        socket.emit('room:join', { token: saved.token, code: lastRoom }, (res) => {
+          if (res?.success && res.room) {
+            state.room = res.room;
+            renderAll();
+          }
+        });
+      }
+    }
+
+    // 2. Validate and refresh user data in background with server
     try {
       const res = await fetch('/api/auth/me', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ token: saved.token })
       });
-      const data = await res.json();
-      if (data.success) {
-        state.session = { token: saved.token, user: data.user };
-        saveSession(state.session);
-        registerSocketUser();
-
-        // Check if opened via URL query ?room=CRK-XXXX
-        const urlParams = new URLSearchParams(window.location.search);
-        const roomFromUrl = urlParams.get('room');
-        if (roomFromUrl) {
-          joinRoomDirect(roomFromUrl);
-          return;
-        }
-
-        showHomeScreen();
+      
+      if (res.status === 401) {
+        console.warn('Session expired on server');
+        clearSession();
+        showScreen('screen-auth');
+        setAuthMode('login');
         return;
       }
-    } catch { /* network error, stay on auth */ }
+
+      const data = await res.json();
+      if (data.success && data.user) {
+        state.session.user = data.user;
+        saveSession(state.session);
+        renderHomeScreen();
+      }
+    } catch (err) {
+      // Offline / network delay: smoothly continue in cached session!
+      console.log('Running in cached session mode');
+    }
+    return;
   }
+
   showScreen('screen-auth');
+  setAuthMode('login');
 }
 
 let currentAuthMode = 'login'; // 'login' | 'signup'

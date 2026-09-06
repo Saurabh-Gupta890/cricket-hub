@@ -20,8 +20,8 @@ const io = new Server(server, {
     origin: ALLOWED_ORIGINS,
     methods: ['GET', 'POST']
   },
-  pingTimeout: 30000,
-  pingInterval: 15000,
+  pingTimeout: 60000,
+  pingInterval: 25000,
   maxHttpBufferSize: 5e6 // 5MB max payload
 });
 

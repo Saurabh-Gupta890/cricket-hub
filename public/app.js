@@ -3,7 +3,14 @@
    Auth + Planning + Match Scoring
    ═══════════════════════════════════════════════ */
 
-const socket = io();
+const socket = io({
+  reconnection: true,
+  reconnectionAttempts: Infinity,
+  reconnectionDelay: 500,
+  reconnectionDelayMax: 2000,
+  timeout: 20000,
+  transports: ['websocket', 'polling']
+});
 
 // ── App State ──────────────────────────────────
 const state = {
@@ -183,7 +190,30 @@ function registerSocketUser() {
 socket.on('connect', () => {
   registerSocketUser();
   if (state.room?.code && state.session?.token) {
-    socket.emit('room:join', { token: state.session.token, code: state.room.code }, () => { });
+    socket.emit('room:join', { token: state.session.token, code: state.room.code }, (res) => {
+      if (res?.success && res.room) {
+        state.room = res.room;
+        renderAll();
+      }
+    });
+  }
+});
+
+// Proactive silent reconnection and sync on tab switch / wake from sleep
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') {
+    if (!socket.connected) {
+      socket.connect();
+    }
+    registerSocketUser();
+    if (state.room?.code && state.session?.token) {
+      socket.emit('room:join', { token: state.session.token, code: state.room.code }, (res) => {
+        if (res?.success && res.room) {
+          state.room = res.room;
+          renderAll();
+        }
+      });
+    }
   }
 });
 
@@ -4374,8 +4404,7 @@ socket.on('room:expired', () => {
   setTimeout(() => { state.room = null; showHomeScreen(); }, 3000);
 });
 
-socket.on('disconnect', () => toast('⚠️ Disconnected. Reconnecting…'));
-socket.on('connect', () => { if (state.session) toast('✅ Reconnected!'); });
+// Silent auto-reconnect handled in background without popping toasts on every tab switch
 
 // ══════════════════════════════════════════════
 //  LOBBY CHAT

@@ -1339,7 +1339,7 @@ function getRoomPublicState(room) {
     groupName: room.groupName || (groupDetails ? groupDetails.name : null),
     group: groupDetails,
     planning,
-    onlineCount: onlinePhones.size,
+    onlineCount: onlineList.length,
     match
   };
 }

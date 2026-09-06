@@ -1141,62 +1141,6 @@ window.resumeActiveRoom = function () {
   }
 };
 
-let pendingLeaveRoomCode = null;
-
-window.confirmLeaveCurrentRoom = function (code = null) {
-  const codeEl = document.getElementById('home-active-room-code');
-  const targetCode = (code || state.room?.code || codeEl?.textContent?.trim() || localStorage.getItem('cricket_last_room') || '').toUpperCase();
-  if (!targetCode || targetCode === 'CRK-XXXX') {
-    toast('No joined match room to leave');
-    return;
-  }
-  pendingLeaveRoomCode = targetCode;
-  const modal = document.getElementById('confirm-leave-room-modal');
-  const badge = document.getElementById('confirm-leave-room-code-badge');
-  const desc = document.getElementById('confirm-leave-room-desc');
-  if (badge) badge.textContent = targetCode;
-  if (desc) {
-    const rName = state.room?.matchName || 'this match';
-    desc.textContent = `You will leave ${rName} (${targetCode}) and be removed from squad availability. You can rejoin anytime with code ${targetCode}.`;
-  }
-  if (modal) modal.style.display = 'flex';
-};
-
-window.executeLeaveRoom = async function () {
-  const code = pendingLeaveRoomCode || state.room?.code || localStorage.getItem('cricket_last_room');
-  const modal = document.getElementById('confirm-leave-room-modal');
-  if (modal) modal.style.display = 'none';
-
-  if (!code) return;
-
-  const targetCode = code.trim().toUpperCase();
-
-  // 1. Socket emit leave
-  socket.emit('room:leave', { code: targetCode, token: state.session?.token });
-
-  // 2. REST API backup
-  try {
-    await fetch('/api/rooms/leave', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ code: targetCode, token: state.session?.token, phone: state.session?.user?.phone })
-    });
-  } catch (e) {
-    console.warn('REST leave room backup warning:', e);
-  }
-
-  // 3. Clear local session room tracking
-  localStorage.removeItem('cricket_last_room');
-  if (state.room && state.room.code && state.room.code.toUpperCase() === targetCode) {
-    state.room = null;
-  }
-
-  // 4. Return to home and update banner
-  showHomeScreen();
-  renderHomeActiveRooms();
-  toast(`🚪 You left match room ${targetCode}`);
-};
-
 window.logoutUser = function () {
   clearOtpCountdown();
   clearSession();

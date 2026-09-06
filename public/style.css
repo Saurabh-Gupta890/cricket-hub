@@ -5734,19 +5734,6 @@ table.sc-table {
   }
 }
 
-.btn-hdr-leave {
-  color: var(--danger) !important;
-  border: 1px solid rgba(239, 68, 68, 0.32) !important;
-  background: rgba(239, 68, 68, 0.08) !important;
-  transition: all 0.2s ease;
-}
-
-.btn-hdr-leave:hover {
-  background: rgba(239, 68, 68, 0.22) !important;
-  border-color: var(--danger) !important;
-  color: #fff !important;
-}
-
 .active-room-banner {
   margin-bottom: 1.25rem;
   padding: 1rem 1.25rem;

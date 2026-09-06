@@ -2211,6 +2211,52 @@ app.post('/api/user/rooms', (req, res) => {
   }
 });
 
+app.post('/api/rooms/leave', (req, res) => {
+  try {
+    const { code, token, phone: userPhone } = req.body || {};
+    let phone = userPhone;
+    if (token && tokenIndex.has(token)) {
+      phone = tokenIndex.get(token);
+    }
+    const targetRoomCode = (code || '').toUpperCase();
+    if (!targetRoomCode) return res.status(400).json({ success: false, error: 'Room code required' });
+
+    const room = rooms.get(targetRoomCode);
+    if (!room) return res.json({ success: true, message: 'Room not found' });
+
+    if (phone) {
+      // Remove member from planning.members
+      Object.keys(room.planning?.members || {}).forEach(k => {
+        if (phonesMatch(k, phone) || phonesMatch(room.planning.members[k]?.phone, phone)) {
+          delete room.planning.members[k];
+        }
+      });
+      // Remove from team rosters if match is in planning phase
+      if (room.match?.status === 'planning' || room.match?.status === 'setup') {
+        const u = findUserByPhone(phone);
+        const name = u?.name?.toLowerCase();
+        ['team1', 'team2'].forEach(tKey => {
+          if (room.match.teams?.[tKey]?.players) {
+            room.match.teams[tKey].players = room.match.teams[tKey].players.filter(p => {
+              const pStr = typeof p === 'string' ? p : (p?.name || '');
+              return !(phonesMatch(p?.phone, phone) || (name && pStr.toLowerCase() === name));
+            });
+          }
+        });
+      }
+    }
+
+    saveRooms();
+    io.to(targetRoomCode).emit('planning:update', getRoomPublicState(room));
+    io.to(targetRoomCode).emit('state:update', getRoomPublicState(room));
+
+    return res.json({ success: true, message: 'Left room successfully' });
+  } catch (e) {
+    console.error('Leave room error:', e);
+    return res.status(500).json({ success: false, error: e.message });
+  }
+});
+
 // Complete Database Reset Endpoint (Wipes local and MongoDB cloud data)
 app.all('/api/admin/clean-all-data', async (req, res) => {
   try {
@@ -2457,6 +2503,53 @@ io.on('connection', (socket) => {
       cb({ success: true, room: getRoomPublicState(room) });
     } else {
       socket.emit('room:joined', getRoomPublicState(room));
+    }
+  });
+
+  // ─── Room: Leave ──────────────────────────────────
+  socket.on('room:leave', ({ code, token }, cb) => {
+    let phone = findPhoneByToken(token) || currentPhone;
+    const targetRoomCode = (code || currentRoom || '').toUpperCase();
+    if (!targetRoomCode) return typeof cb === 'function' && cb({ success: false, error: 'Room code required' });
+
+    const room = rooms.get(targetRoomCode);
+    if (!room) return typeof cb === 'function' && cb({ success: true, message: 'Room not found' });
+
+    if (phone) {
+      // Remove member from planning.members
+      Object.keys(room.planning?.members || {}).forEach(k => {
+        if (phonesMatch(k, phone) || phonesMatch(room.planning.members[k]?.phone, phone)) {
+          delete room.planning.members[k];
+        }
+      });
+      // Remove from team rosters if in planning/setup
+      if (room.match?.status === 'planning' || room.match?.status === 'setup') {
+        const u = findUserByPhone(phone);
+        const name = u?.name?.toLowerCase();
+        ['team1', 'team2'].forEach(tKey => {
+          if (room.match.teams?.[tKey]?.players) {
+            room.match.teams[tKey].players = room.match.teams[tKey].players.filter(p => {
+              const pStr = typeof p === 'string' ? p : (p?.name || '');
+              return !(phonesMatch(p?.phone, phone) || (name && pStr.toLowerCase() === name));
+            });
+          }
+        });
+      }
+    }
+
+    delete room.sockets[socket.id];
+    socket.leave(targetRoomCode);
+    if (currentRoom === targetRoomCode) {
+      currentRoom = null;
+    }
+
+    saveRooms();
+    io.to(targetRoomCode).emit('planning:update', getRoomPublicState(room));
+    io.to(targetRoomCode).emit('state:update', getRoomPublicState(room));
+
+    console.log(`[room:leave] User (+${phone}) left room ${targetRoomCode}`);
+    if (typeof cb === 'function') {
+      cb({ success: true, message: 'Left room successfully' });
     }
   });
 

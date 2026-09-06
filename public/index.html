@@ -164,10 +164,16 @@
           <div class="active-room-sub" id="home-active-room-sub">All RSVPs and planning details are safely preserved.
           </div>
         </div>
-        <button class="btn btn-primary btn-sm" id="btn-resume-active-room" onclick="resumeActiveRoom()"
-          style="white-space:nowrap;padding:0.65rem 1.25rem;font-weight:700">
-          🏏 Return to Match →
-        </button>
+        <div class="active-room-actions" style="display:flex;gap:0.45rem;align-items:center;flex-wrap:wrap">
+          <button class="btn btn-primary btn-sm" id="btn-resume-active-room" onclick="resumeActiveRoom()"
+            style="white-space:nowrap;padding:0.65rem 1.15rem;font-weight:700">
+            🏏 Return to Match →
+          </button>
+          <button class="btn btn-ghost btn-sm" id="btn-home-leave-room" onclick="confirmLeaveCurrentRoom()"
+            title="Leave this match room" style="color:var(--danger);border:1px solid rgba(239,68,68,0.35)">
+            🚪 Leave
+          </button>
+        </div>
       </div>
 
       <!-- Home Quick Broadcast Alert Card -->
@@ -256,6 +262,9 @@
             class="btn-hdr-text">Players</span></button>
         <button class="btn btn-ghost btn-sm" id="btn-copy-planning-code">📋 <span
             class="btn-hdr-text">Share</span></button>
+        <button class="btn btn-ghost btn-sm btn-hdr-leave" id="btn-planning-leave" onclick="confirmLeaveCurrentRoom()"
+            title="Leave this match room" style="color:var(--danger);border-color:rgba(239,68,68,0.3)">🚪 <span
+            class="btn-hdr-text">Leave</span></button>
         <div class="user-badge" id="planning-user-badge" title="View My Profile" style="cursor:pointer"></div>
       </div>
     </header>
@@ -473,6 +482,11 @@
             <button class="btn btn-icon" id="btn-planning-announce">📢</button>
           </div>
         </div>
+
+        <button class="btn btn-ghost btn-sm btn-full" id="btn-planning-side-leave" onclick="confirmLeaveCurrentRoom()"
+          style="color:var(--danger);border:1px solid rgba(239,68,68,0.3);margin-top:0.35rem;padding:0.6rem">
+          🚪 Leave This Match Room
+        </button>
       </aside>
 
       <!-- ── MAIN: Player RSVP Cards ── -->
@@ -524,6 +538,9 @@
         <button class="btn btn-ghost btn-sm" id="btn-lobby-players-dir">👥 <span
             class="btn-hdr-text">Players</span></button>
         <button class="btn btn-ghost btn-sm" id="btn-copy-code">📋 <span class="btn-hdr-text">Share</span></button>
+        <button class="btn btn-ghost btn-sm btn-hdr-leave" id="btn-lobby-leave" onclick="confirmLeaveCurrentRoom()"
+            title="Leave this match room" style="color:var(--danger);border-color:rgba(239,68,68,0.3)">🚪 <span
+            class="btn-hdr-text">Leave</span></button>
         <div class="user-badge" id="user-badge" title="View My Profile" style="cursor:pointer"></div>
       </div>
     </header>
@@ -1024,6 +1041,22 @@
           <button class="btn btn-secondary" style="flex:1" id="btn-alert-view-match">👀 Just View</button>
           <button class="btn btn-ghost" style="flex:1" id="btn-dismiss-alert">Dismiss</button>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Confirm Leave Room Modal -->
+  <div class="modal-overlay" id="confirm-leave-room-modal" style="display:none">
+    <div class="modal glass-card" style="max-width:380px;text-align:center">
+      <div style="font-size:2.4rem;margin-bottom:0.5rem">🚪🏏</div>
+      <h2 style="font-size:1.3rem;margin-bottom:0.35rem">Leave Match Room?</h2>
+      <div id="confirm-leave-room-code-badge" style="display:inline-block;padding:0.2rem 0.65rem;border-radius:999px;background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.4);color:var(--danger);font-size:0.75rem;font-weight:700;margin-bottom:0.75rem">CRK-XXXX</div>
+      <p style="color:var(--text-2);font-size:0.86rem;line-height:1.4;margin-bottom:1.25rem" id="confirm-leave-room-desc">
+        You will be removed from squad availability for this match. You can rejoin anytime with the room code.
+      </p>
+      <div style="display:flex;flex-direction:column;gap:0.5rem">
+        <button class="btn btn-danger btn-full" id="btn-modal-confirm-leave" onclick="executeLeaveRoom()" style="background:#ef4444;border-color:#ef4444;color:#fff;font-weight:700">🚪 Yes, Leave Room</button>
+        <button class="btn btn-ghost btn-full" onclick="document.getElementById('confirm-leave-room-modal').style.display='none'">Cancel</button>
       </div>
     </div>
   </div>

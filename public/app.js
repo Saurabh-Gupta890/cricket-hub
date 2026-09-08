@@ -979,11 +979,13 @@ async function triggerPushNotification(alertData) {
   const title = alertData.title || '⚡ Cricket Match Alert!';
   const bodyText = `${alertData.message || 'Squad match alert'}${alertData.matchName ? '\nMatch: ' + alertData.matchName : ''}${sched ? ' (' + sched + ')' : ''}`;
 
+  const isQuiet = !!(alertData.isQuiet || state.room?.quietAlerts);
   const options = {
     body: bodyText,
     icon: '/favicon.ico',
     badge: '/favicon.ico',
-    vibrate: [200, 100, 200, 100, 200],
+    silent: isQuiet,
+    vibrate: isQuiet ? [] : [200, 100, 200, 100, 200],
     tag: 'match-alert-' + (alertData.roomCode || alertData.id || Date.now()),
     data: {
       roomCode: alertData.roomCode || null,
@@ -1301,6 +1303,7 @@ function renderPlanningScreen() {
   renderPlanningAnnouncements();
   renderPlanningLocation();
   renderPlanningChat();
+  updateQuietAlertsUI();
 
   // Host proceed button
   const hostUser = isHost();
@@ -2211,6 +2214,7 @@ function renderRsvpGrid() {
           </div>
           <div style="display:flex;align-items:center;gap:0.35rem">
             ${!isMe ? `<button class="nudge-btn-mini" onclick="nudgeMember('${m.phone}', '${escHtml(m.name)}')">🔔 Ping</button>` : ''}
+            ${host && !isMe && !isHostUser ? `<button class="kick-btn-mini" onclick="removeMemberFromRoom('${m.phone}', '${escHtml(m.name)}')" title="Remove player from room">🚫 Remove</button>` : ''}
           </div>
         </div>
         <div class="rsvp-vote-badge ${vl.cls}">
@@ -2509,6 +2513,64 @@ window.nudgeMember = function (targetPhone, name) {
   toast(`🔔 Pinging ${name}...`);
 };
 
+// ── Quiet Alerts for All (Host Toggle) ────────
+function updateQuietAlertsUI() {
+  const toggleBtn = document.getElementById('btn-toggle-quiet-alerts');
+  const badge = document.getElementById('quiet-alerts-status-badge');
+  const isQuiet = !!state.room?.quietAlerts;
+  const host = isHost();
+
+  if (toggleBtn) {
+    toggleBtn.style.display = host ? 'block' : 'none';
+    if (isQuiet) {
+      toggleBtn.innerHTML = '🔕 Quiet Alerts for All: <strong style="color:var(--warning)">ON</strong>';
+      toggleBtn.classList.add('btn-quiet-active');
+    } else {
+      toggleBtn.innerHTML = '🔔 Quiet Alerts for All: <strong>OFF</strong>';
+      toggleBtn.classList.remove('btn-quiet-active');
+    }
+  }
+
+  if (badge) {
+    badge.style.display = isQuiet ? 'inline-block' : 'none';
+  }
+}
+
+function toggleQuietAlerts() {
+  if (!state.room || !isHost()) return;
+  const current = !!state.room.quietAlerts;
+  const next = !current;
+  socket.emit('room:setQuietAlerts', { enabled: next }, (res) => {
+    if (res && res.success) {
+      state.room.quietAlerts = res.quietAlerts;
+      updateQuietAlertsUI();
+      toast(next ? '🔕 Quiet alerts enabled for all' : '🔔 Loud alerts restored for all');
+    } else {
+      toast(res?.error || 'Failed to update alert setting', 'error');
+    }
+  });
+}
+
+document.getElementById('btn-toggle-quiet-alerts')?.addEventListener('click', toggleQuietAlerts);
+
+// ── Remove Player from Room (Host Action) ─────
+window.removeMemberFromRoom = function (targetPhone, targetName) {
+  if (!isHost()) {
+    toast('Only the match host can remove players', 'error');
+    return;
+  }
+  if (!confirm(`Are you sure you want to remove ${targetName || 'this player'} from the room?`)) {
+    return;
+  }
+  socket.emit('room:removePlayer', { targetPhone }, (res) => {
+    if (res && res.success) {
+      toast(`🚫 Removed ${targetName || 'player'} from room`, 'info');
+    } else {
+      toast(res?.error || 'Failed to remove player', 'error');
+    }
+  });
+};
+
 // ── Audio Ping Chime (Web Audio API) ──────────
 function playPingChime() {
   try {
@@ -2628,20 +2690,24 @@ socket.on('popup:alert', (data) => {
 
   // 4. If the user is ALREADY active inside this specific match room, do not interrupt them with a modal (just play chime and subtle toast) unless it is a direct ping
   const isCurrentlyInThisRoom = state.room && state.room.code && data.roomCode && (state.room.code.toUpperCase() === data.roomCode.toUpperCase());
+  const isQuiet = !!(data.isQuiet || (state.room && state.room.code === data.roomCode && state.room.quietAlerts));
+
   if (isCurrentlyInThisRoom && !data.isDirect) {
     seenAlertIds.add(alertIdStr);
-    playPingChime();
+    if (!isQuiet) playPingChime();
     toast(`⚡ ${data.author || 'Organizer'}: ${data.message || 'Squad Ping'}`);
     return;
   }
 
   seenAlertIds.add(alertIdStr);
 
-  // 5. Play chime audio
-  playPingChime();
+  // 5. Play chime audio (if not quiet)
+  if (!isQuiet) {
+    playPingChime();
+  }
 
-  // 6. Hardware vibration
-  if (navigator.vibrate) {
+  // 6. Hardware vibration (if not quiet)
+  if (!isQuiet && navigator.vibrate) {
     try { navigator.vibrate([200, 100, 200, 100, 200]); } catch (e) { }
   }
 
@@ -2831,6 +2897,8 @@ function renderPlayers() {
   const { room } = state;
   if (!room) return;
   const members = Object.values(room.planning?.members || {});
+  const host = isHost();
+  const myPhone = state.session?.user?.phone;
 
   const list = document.getElementById('players-list');
   const countBadge = document.getElementById('player-count');
@@ -2840,14 +2908,20 @@ function renderPlayers() {
   list.innerHTML = members.map(m => {
     const avatarHtml = getAvatarHtml(m.avatar, m.name, m.color, 36);
     const avatarBg = getAvatarBg(m.avatar, m.color);
+    const isMe = phonesMatch(m.phone, myPhone);
+    const isHostUser = !!(m.isHost || (room && phonesMatch(room.hostPhone, m.phone)));
 
     return `
-      <div class="player-item player-profile-link" onclick="openPlayerProfile('${escHtml(m.phone || m.name)}')" style="cursor:pointer" title="View Profile">
-        <div class="player-avatar" style="background:${avatarBg};overflow:hidden">${avatarHtml}</div>
-        <span class="player-name">${escHtml(m.name)}</span>
-        ${m.isHost ? '<span class="player-host">HOST</span>' : ''}
-        <span class="player-status">${m.vote === 'coming' ? '✅' : m.vote === 'maybe' ? '🤔' : m.vote === 'not_coming' ? '❌' : '⏳'
-      }</span>
+      <div class="player-item" style="display:flex;align-items:center;justify-content:space-between;gap:0.5rem;padding:0.4rem 0.6rem">
+        <div class="player-profile-link" onclick="openPlayerProfile('${escHtml(m.phone || m.name)}')" style="display:flex;align-items:center;gap:0.6rem;flex:1;min-width:0;cursor:pointer" title="View Profile">
+          <div class="player-avatar" style="background:${avatarBg};overflow:hidden">${avatarHtml}</div>
+          <span class="player-name">${escHtml(m.name)}</span>
+          ${isHostUser ? '<span class="player-host">HOST</span>' : ''}
+          <span class="player-status">${m.vote === 'coming' ? '✅' : m.vote === 'maybe' ? '🤔' : m.vote === 'not_coming' ? '❌' : '⏳'}</span>
+        </div>
+        ${host && !isMe && !isHostUser ? `
+          <button class="kick-btn-mini" onclick="event.stopPropagation(); removeMemberFromRoom('${m.phone}', '${escHtml(m.name)}')" title="Remove player from room">🚫 Remove</button>
+        ` : ''}
       </div>
     `;
   }).join('');
@@ -4795,6 +4869,16 @@ socket.on('score:error', ({ message }) => {
 socket.on('room:expired', () => {
   toast('⚠️ Room expired (24h limit). Returning home…');
   setTimeout(() => { state.room = null; showHomeScreen(); }, 3000);
+});
+
+socket.on('room:kicked', (data) => {
+  if (state.room && (!data?.roomCode || state.room.code === data.roomCode)) {
+    toast(data?.message || 'You were removed from the room by the host', 'warning');
+    localStorage.removeItem('cricket_last_room');
+    sessionStorage.removeItem('cricket_last_room');
+    state.room = null;
+    showHomeScreen();
+  }
 });
 
 // Silent auto-reconnect handled in background without popping toasts on every tab switch

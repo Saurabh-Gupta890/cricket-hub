@@ -420,17 +420,23 @@
 
         <!-- Alert Squad Panel (Ping Members) -->
         <div class="panel host-ping-panel" id="host-ping-panel">
-          <div class="panel-header">
+          <div class="panel-header" style="display:flex;justify-content:space-between;align-items:center">
             <h3>🔔 Ping Squad</h3>
+            <span id="quiet-alerts-status-badge" class="badge badge-subtle" style="font-size:0.75rem;display:none;background:rgba(255,215,64,0.15);color:var(--warning);border:1px solid rgba(255,215,64,0.4)">🔕 Quiet Alerts ON</span>
           </div>
           <p class="panel-subtext">Send an instant alert to all squad members to confirm their availability.</p>
           <div class="form-group" style="margin-top:0.4rem">
             <input type="text" id="nudge-custom-msg" placeholder="Optional message (e.g. need final count by 8pm)..."
               maxlength="120" />
           </div>
-          <button class="btn btn-warning btn-full btn-sm" id="btn-nudge-all" style="margin-top:0.4rem">
-            ⚡ Send Alert to Squad
-          </button>
+          <div style="display:flex;flex-direction:column;gap:0.45rem;margin-top:0.4rem">
+            <button class="btn btn-warning btn-full btn-sm" id="btn-nudge-all">
+              ⚡ Send Alert to Squad
+            </button>
+            <button class="btn btn-secondary btn-full btn-sm" id="btn-toggle-quiet-alerts" style="display:none">
+              🔕 Quiet Alerts for All: OFF
+            </button>
+          </div>
         </div>
 
         <!-- Match Venue & Google Maps Location Panel -->

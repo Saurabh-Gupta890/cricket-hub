@@ -4921,6 +4921,34 @@ table.sc-table {
   transform: translateY(-1px);
 }
 
+/* Individual member remove button (Host action) */
+.kick-btn-mini {
+  background: rgba(255, 82, 82, 0.1);
+  border: 1px solid rgba(255, 82, 82, 0.35);
+  color: #ff5252;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.2rem 0.5rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.kick-btn-mini:hover {
+  background: rgba(255, 82, 82, 0.25);
+  border-color: rgba(255, 82, 82, 0.6);
+  transform: translateY(-1px);
+}
+
+.btn-quiet-active {
+  background: rgba(255, 215, 64, 0.16) !important;
+  border-color: rgba(255, 215, 64, 0.55) !important;
+  color: var(--warning) !important;
+}
+
 /* Schedule display & presets */
 .schedule-display {
   background: linear-gradient(135deg, rgba(124, 77, 255, 0.12), rgba(0, 229, 255, 0.08));

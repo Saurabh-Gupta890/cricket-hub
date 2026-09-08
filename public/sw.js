@@ -72,14 +72,16 @@ self.addEventListener('push', (event) => {
   const title = data.title || '⚡ Cricket Match Alert!';
   const message = data.message || (data.matchName ? `${data.author || 'Host'} pinged for match ${data.matchName}!` : 'Cricket match update!');
   
+  const isQuiet = !!data.isQuiet;
   const options = {
     body: message,
     icon: '/favicon.ico',
     badge: '/favicon.ico',
     tag: 'crickethub-alert-' + (data.roomCode || data.id || Date.now()),
-    renotify: true,
-    requireInteraction: true,
-    vibrate: [200, 100, 200, 100, 200],
+    renotify: !isQuiet,
+    requireInteraction: !isQuiet,
+    silent: isQuiet,
+    vibrate: isQuiet ? [] : [200, 100, 200, 100, 200],
     data: {
       url: '/',
       roomCode: data.roomCode || null,

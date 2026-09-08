@@ -779,6 +779,11 @@ app.post('/api/push/broadcast', async (req, res) => {
 
     const cleanMessage = sanitizeText(message || `${senderName} is pinging you for a cricket match! Tap to open CricketHub.`, 140);
 
+    let isQuietAlert = false;
+    if (resolvedRoomCode && rooms.has(resolvedRoomCode)) {
+      isQuietAlert = !!rooms.get(resolvedRoomCode)?.quietAlerts;
+    }
+
     const alertData = {
       id: Date.now(),
       title: targetPhone ? '🔔 Direct Squad Ping!' : '⚡ Cricket Match Alert!',
@@ -791,6 +796,7 @@ app.post('/api/push/broadcast', async (req, res) => {
       time: resolvedTime,
       isDirect: !!targetPhone,
       targetPhone: targetPhone || null,
+      isQuiet: isQuietAlert,
       timestamp: Date.now()
     };
 
@@ -1312,6 +1318,7 @@ function createRoom(matchName, hostPhone) {
     matchName,
     createdAt: Date.now(),
     hostPhone: canonicalHostPhone,
+    quietAlerts: false,
     // Planning / RSVP state
     planning: {
       members: {},  // phone -> { phone, name, color, vote, comment, joinedAt }
@@ -1475,6 +1482,7 @@ function getRoomPublicState(room) {
     code: room.code,
     matchName: room.matchName,
     hostPhone: room.hostPhone,
+    quietAlerts: !!room.quietAlerts,
     groupId: room.groupId || null,
     groupName: room.groupName || (groupDetails ? groupDetails.name : null),
     group: groupDetails,
@@ -2546,6 +2554,7 @@ io.on('connection', (socket) => {
         time: room.match.time,
         isDirect: !!targetPhone,
         targetPhone: targetPhone || null,
+        isQuiet: !!room.quietAlerts,
         timestamp: Date.now()
       };
 
@@ -2591,6 +2600,130 @@ io.on('connection', (socket) => {
     } catch (err) {
       console.error('Nudge handling error:', err);
       if (typeof cb === 'function') cb({ success: true });
+    }
+  });
+
+  // ─── Room: Quiet Alerts for All (Host Toggle) ────
+  socket.on('room:setQuietAlerts', ({ enabled }, cb) => {
+    try {
+      if (!currentRoom || !currentPhone) {
+        if (typeof cb === 'function') cb({ success: false, error: 'Not connected to room' });
+        return;
+      }
+      const room = rooms.get(currentRoom);
+      if (!room) {
+        if (typeof cb === 'function') cb({ success: false, error: 'Room not found' });
+        return;
+      }
+      if (!phonesMatch(room.hostPhone, currentPhone)) {
+        if (typeof cb === 'function') cb({ success: false, error: 'Only the match host can change quiet alerts setting' });
+        return;
+      }
+
+      room.quietAlerts = !!enabled;
+      saveRooms();
+      io.to(currentRoom).emit('state:update', getRoomPublicState(room));
+      io.to(currentRoom).emit('planning:update', getRoomPublicState(room));
+      console.log(`[room:setQuietAlerts] 🔕 Host +${currentPhone} set quietAlerts=${room.quietAlerts} for room ${room.code}`);
+      if (typeof cb === 'function') cb({ success: true, quietAlerts: room.quietAlerts });
+    } catch (err) {
+      console.error('room:setQuietAlerts error:', err);
+      if (typeof cb === 'function') cb({ success: false, error: err.message });
+    }
+  });
+
+  // ─── Room: Remove / Kick Player (Host Action) ─────
+  socket.on('room:removePlayer', ({ targetPhone }, cb) => {
+    try {
+      if (!currentRoom || !currentPhone) {
+        if (typeof cb === 'function') cb({ success: false, error: 'Not connected to room' });
+        return;
+      }
+      const room = rooms.get(currentRoom);
+      if (!room) {
+        if (typeof cb === 'function') cb({ success: false, error: 'Room not found' });
+        return;
+      }
+      if (!phonesMatch(room.hostPhone, currentPhone)) {
+        if (typeof cb === 'function') cb({ success: false, error: 'Only the match host can remove players' });
+        return;
+      }
+      if (phonesMatch(room.hostPhone, targetPhone)) {
+        if (typeof cb === 'function') cb({ success: false, error: 'Host cannot be removed from room' });
+        return;
+      }
+
+      const cleanTarget = String(targetPhone || '').replace(/\D/g, '');
+      let removedName = 'Player';
+
+      // 1. Remove from planning members
+      if (room.planning && room.planning.members) {
+        for (const [key, m] of Object.entries(room.planning.members)) {
+          if (phonesMatch(key, targetPhone) || phonesMatch(m?.phone, targetPhone)) {
+            if (m?.name) removedName = m.name;
+            delete room.planning.members[key];
+          }
+        }
+      }
+
+      // 2. Remove from team roster lists if present
+      if (room.match && room.match.teams) {
+        ['team1', 'team2'].forEach(tKey => {
+          if (Array.isArray(room.match.teams[tKey]?.players)) {
+            room.match.teams[tKey].players = room.match.teams[tKey].players.filter(p => {
+              if (typeof p === 'string') {
+                return !phonesMatch(p, targetPhone) && p.toLowerCase() !== removedName.toLowerCase();
+              }
+              if (p && typeof p === 'object') {
+                return !phonesMatch(p.phone, targetPhone) && p.name !== removedName;
+              }
+              return true;
+            });
+          }
+        });
+      }
+
+      // 3. Find target sockets and kick them
+      const targetSockets = [];
+      for (const [sId, sPhone] of Object.entries(room.sockets || {})) {
+        if (phonesMatch(sPhone, targetPhone)) {
+          targetSockets.push(sId);
+          delete room.sockets[sId];
+        }
+      }
+
+      // Notify target user
+      const kickData = {
+        roomCode: room.code,
+        matchName: room.matchName,
+        message: 'You were removed from the room by the host.'
+      };
+      
+      if (cleanTarget) {
+        io.to(`user:${cleanTarget}`).emit('room:kicked', kickData);
+      }
+      if (cleanTarget !== targetPhone) {
+        io.to(`user:${targetPhone}`).emit('room:kicked', kickData);
+      }
+
+      targetSockets.forEach(sId => {
+        const s = io.sockets.sockets.get(sId);
+        if (s) {
+          s.emit('room:kicked', kickData);
+          s.leave(room.code);
+        }
+      });
+
+      saveRooms();
+      io.to(currentRoom).emit('state:update', getRoomPublicState(room));
+      io.to(currentRoom).emit('planning:update', getRoomPublicState(room));
+
+      console.log(`[room:removePlayer] 🚫 Host +${currentPhone} removed player ${removedName} (+${targetPhone}) from room ${room.code}`);
+
+      if (typeof cb === 'function') cb({ success: true, removed: targetPhone, name: removedName });
+    } catch (err) {
+      console.error('room:removePlayer error:', err);
+      if (typeof cb === 'function') cb({ success: false, error: err.message });
     }
   });
 

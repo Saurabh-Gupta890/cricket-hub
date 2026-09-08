@@ -2557,8 +2557,8 @@ io.on('connection', (socket) => {
         if (typeof cb === 'function') cb({ success: false, error: 'Room not found' });
         return;
       }
-      if (!phonesMatch(room.hostPhone, currentPhone)) {
-        if (typeof cb === 'function') cb({ success: false, error: 'Only the match host can send alerts or ping players' });
+      if (!targetPhone && !phonesMatch(room.hostPhone, currentPhone)) {
+        if (typeof cb === 'function') cb({ success: false, error: 'Only the match host can send whole squad alerts' });
         return;
       }
       if (room.quietAlerts) {
@@ -2566,7 +2566,7 @@ io.on('connection', (socket) => {
           cb({
             success: false,
             quiet: true,
-            error: '🔕 Quiet Alerts is ON. Alerts and notifications are paused so players are not disturbed.'
+            error: '🔕 Quiet Alerts is ON. Alerts and pings are disabled for all users.'
           });
         }
         return;

@@ -2217,6 +2217,8 @@ function renderRsvpGrid() {
       ? (isHostUser ? 'Host · Live Now 🟢' : 'Live Now')
       : (isHostUser ? 'Host · Offline ⚪' : 'Offline');
 
+    const isQuiet = !!state.room?.quietAlerts;
+
     return `
       <div class="rsvp-card vote-${m.vote || 'null'}${isMe ? ' my-card' : ''}">
         <div class="rsvp-card-top">
@@ -2236,10 +2238,17 @@ function renderRsvpGrid() {
         </div>
         ${host && !isMe ? `
           <div class="rsvp-card-actions">
-            <button class="nudge-btn-mini" onclick="nudgeMember('${m.phone}', '${escHtml(m.name)}')" title="Ping player">
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
-              <span>Ping</span>
-            </button>
+            ${isQuiet ? `
+              <button class="nudge-btn-mini btn-ping-disabled" onclick="toast('🔕 Quiet Alerts is ON. Turn it OFF to ping players.', 'warning')" title="Quiet Alerts is ON (Pings paused)" style="opacity:0.5;cursor:not-allowed;border-style:dashed">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+                <span>Muted</span>
+              </button>
+            ` : `
+              <button class="nudge-btn-mini" onclick="nudgeMember('${m.phone}', '${escHtml(m.name)}')" title="Ping player">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+                <span>Ping</span>
+              </button>
+            `}
             ${!isHostUser ? `
               <button class="kick-btn-mini" onclick="removeMemberFromRoom('${m.phone}', '${escHtml(m.name)}')" title="Remove player from room">
                 <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
@@ -2589,6 +2598,7 @@ window.nudgeMember = function (targetPhone, name) {
 function updateQuietAlertsUI() {
   const toggleBtn = document.getElementById('btn-toggle-quiet-alerts');
   const badge = document.getElementById('quiet-alerts-status-badge');
+  const nudgeAllBtn = document.getElementById('btn-nudge-all');
   const isQuiet = !!state.room?.quietAlerts;
   const host = isHost();
 
@@ -2600,6 +2610,16 @@ function updateQuietAlertsUI() {
     } else {
       toggleBtn.innerHTML = '🔔 Quiet Alerts for All: <strong>OFF (Alerts Active)</strong>';
       toggleBtn.classList.remove('btn-quiet-active');
+    }
+  }
+
+  if (nudgeAllBtn) {
+    if (isQuiet) {
+      nudgeAllBtn.innerHTML = '⚡ Send Alert to Squad <span style="font-size:0.75rem;opacity:0.8">(Paused)</span>';
+      nudgeAllBtn.style.opacity = '0.65';
+    } else {
+      nudgeAllBtn.innerHTML = '⚡ Send Alert to Squad';
+      nudgeAllBtn.style.opacity = '1';
     }
   }
 

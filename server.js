@@ -784,6 +784,15 @@ app.post('/api/push/broadcast', async (req, res) => {
       isQuietAlert = !!rooms.get(resolvedRoomCode)?.quietAlerts;
     }
 
+    if (isQuietAlert) {
+      return res.json({
+        success: true,
+        delivered: false,
+        quiet: true,
+        message: '🔕 Quiet Alerts is active. Notifications and alerts are paused so players are not disturbed.'
+      });
+    }
+
     const alertData = {
       id: Date.now(),
       title: targetPhone ? '🔔 Direct Squad Ping!' : '⚡ Cricket Match Alert!',
@@ -2550,6 +2559,16 @@ io.on('connection', (socket) => {
       }
       if (!phonesMatch(room.hostPhone, currentPhone)) {
         if (typeof cb === 'function') cb({ success: false, error: 'Only the match host can send alerts or ping players' });
+        return;
+      }
+      if (room.quietAlerts) {
+        if (typeof cb === 'function') {
+          cb({
+            success: false,
+            quiet: true,
+            error: '🔕 Quiet Alerts is ON. Alerts and notifications are paused so players are not disturbed.'
+          });
+        }
         return;
       }
 

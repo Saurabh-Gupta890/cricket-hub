@@ -2545,6 +2545,10 @@ document.getElementById('btn-nudge-all')?.addEventListener('click', () => {
     toast('Only the match host can send squad alerts', 'error');
     return;
   }
+  if (state.room?.quietAlerts) {
+    toast('🔕 Quiet Alerts is ON. Turn it OFF to send alerts to players.', 'warning');
+    return;
+  }
   const customMsg = document.getElementById('nudge-custom-msg')?.value.trim();
   socket.emit('planning:nudge', { message: customMsg || undefined }, (res) => {
     if (res?.success) {
@@ -2561,6 +2565,10 @@ document.getElementById('btn-nudge-all')?.addEventListener('click', () => {
 window.nudgeMember = function (targetPhone, name) {
   if (!isHost()) {
     toast('Only the match host can ping players', 'error');
+    return;
+  }
+  if (state.room?.quietAlerts) {
+    toast('🔕 Quiet Alerts is ON. Turn it OFF to ping players.', 'warning');
     return;
   }
   const cleanTarget = String(targetPhone).replace(/\D/g, '');
@@ -2587,16 +2595,17 @@ function updateQuietAlertsUI() {
   if (toggleBtn) {
     toggleBtn.style.display = host ? 'block' : 'none';
     if (isQuiet) {
-      toggleBtn.innerHTML = '🔕 Quiet Alerts for All: <strong style="color:var(--warning)">ON</strong>';
+      toggleBtn.innerHTML = '🔕 Quiet Alerts for All: <strong style="color:var(--warning)">ON (Alerts Paused)</strong>';
       toggleBtn.classList.add('btn-quiet-active');
     } else {
-      toggleBtn.innerHTML = '🔔 Quiet Alerts for All: <strong>OFF</strong>';
+      toggleBtn.innerHTML = '🔔 Quiet Alerts for All: <strong>OFF (Alerts Active)</strong>';
       toggleBtn.classList.remove('btn-quiet-active');
     }
   }
 
   if (badge) {
     badge.style.display = isQuiet ? 'inline-block' : 'none';
+    badge.textContent = '🔕 Quiet Mode: Alerts Paused';
   }
 }
 
@@ -2608,7 +2617,7 @@ function toggleQuietAlerts() {
     if (res && res.success) {
       state.room.quietAlerts = res.quietAlerts;
       updateQuietAlertsUI();
-      toast(next ? '🔕 Quiet alerts enabled for all' : '🔔 Loud alerts restored for all');
+      toast(next ? '🔕 Quiet Alerts enabled (Alerts & notifications paused)' : '🔔 Normal Alerts restored (Alerts & notifications active)');
     } else {
       toast(res?.error || 'Failed to update alert setting', 'error');
     }

@@ -2537,6 +2537,10 @@ io.on('connection', (socket) => {
         if (typeof cb === 'function') cb({ success: false, error: 'Room not found' });
         return;
       }
+      if (!phonesMatch(room.hostPhone, currentPhone)) {
+        if (typeof cb === 'function') cb({ success: false, error: 'Only the match host can send alerts or ping players' });
+        return;
+      }
 
       const me = getMe();
       const senderName = sanitizeText(me?.name || 'Match Organizer', 30);
@@ -3724,6 +3728,69 @@ io.on('connection', (socket) => {
     if (room.match.chat.length > 200) room.match.chat.shift();
     saveRooms();
     io.to(currentRoom).emit('chat:message', msg);
+  });
+
+  // ─── Delete Announcement (Host only) ─────────────
+  socket.on('announcement:delete', ({ id }, cb) => {
+    try {
+      if (!currentRoom || !currentPhone) {
+        if (typeof cb === 'function') cb({ success: false, error: 'Not connected to room' });
+        return;
+      }
+      const room = rooms.get(currentRoom);
+      if (!room) {
+        if (typeof cb === 'function') cb({ success: false, error: 'Room not found' });
+        return;
+      }
+      if (!phonesMatch(room.hostPhone, currentPhone)) {
+        if (typeof cb === 'function') cb({ success: false, error: 'Only the match host can delete announcements' });
+        return;
+      }
+
+      if (Array.isArray(room.match.announcements)) {
+        room.match.announcements = room.match.announcements.filter(a => String(a.id) !== String(id) && String(a.timestamp) !== String(id));
+        saveRooms();
+        io.to(currentRoom).emit('state:update', getRoomPublicState(room));
+        io.to(currentRoom).emit('planning:update', getRoomPublicState(room));
+      }
+      console.log(`[announcement:delete] 🗑️ Host +${currentPhone} deleted announcement ${id} in room ${room.code}`);
+      if (typeof cb === 'function') cb({ success: true, id });
+    } catch (err) {
+      console.error('announcement:delete error:', err);
+      if (typeof cb === 'function') cb({ success: false, error: err.message });
+    }
+  });
+
+  // ─── Delete Chat Message (Host only) ──────────────
+  socket.on('chat:delete', ({ id }, cb) => {
+    try {
+      if (!currentRoom || !currentPhone) {
+        if (typeof cb === 'function') cb({ success: false, error: 'Not connected to room' });
+        return;
+      }
+      const room = rooms.get(currentRoom);
+      if (!room) {
+        if (typeof cb === 'function') cb({ success: false, error: 'Room not found' });
+        return;
+      }
+      if (!phonesMatch(room.hostPhone, currentPhone)) {
+        if (typeof cb === 'function') cb({ success: false, error: 'Only the match host can delete chat messages' });
+        return;
+      }
+
+      if (Array.isArray(room.match.chat)) {
+        room.match.chat = room.match.chat.filter(m => String(m.id) !== String(id) && String(m.timestamp) !== String(id));
+        saveRooms();
+        io.to(currentRoom).emit('chat:delete', { id });
+        io.to(currentRoom).emit('state:update', getRoomPublicState(room));
+        io.to(currentRoom).emit('planning:update', getRoomPublicState(room));
+      }
+      console.log(`[chat:delete] 🗑️ Host +${currentPhone} deleted chat message ${id} in room ${room.code}`);
+      if (typeof cb === 'function') cb({ success: true, id });
+    } catch (err) {
+      console.error('chat:delete error:', err);
+      if (typeof cb === 'function') cb({ success: false, error: err.message });
+    }
   });
 
   // ─── Disconnect ──────────────────────────────────

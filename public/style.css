@@ -4949,6 +4949,30 @@ table.sc-table {
   color: var(--warning) !important;
 }
 
+/* Host delete button for chat and announcements */
+.btn-delete-mini {
+  background: rgba(255, 82, 82, 0.12);
+  border: 1px solid rgba(255, 82, 82, 0.3);
+  color: #ff5252;
+  font-size: 0.72rem;
+  padding: 0.18rem 0.42rem;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  opacity: 0.85;
+}
+
+.btn-delete-mini:hover {
+  background: rgba(255, 82, 82, 0.3);
+  border-color: rgba(255, 82, 82, 0.7);
+  opacity: 1;
+  transform: scale(1.08);
+}
+
 /* Schedule display & presets */
 .schedule-display {
   background: linear-gradient(135deg, rgba(124, 77, 255, 0.12), rgba(0, 229, 255, 0.08));

@@ -1310,7 +1310,7 @@ function renderPlanningScreen() {
   const proceedBtn = document.getElementById('btn-proceed-setup');
   if (proceedBtn) proceedBtn.style.display = hostUser ? 'block' : 'none';
   const pingPanel = document.getElementById('host-ping-panel');
-  if (pingPanel) pingPanel.style.display = 'block'; // Any squad member can alert the squad
+  if (pingPanel) pingPanel.style.display = hostUser ? 'block' : 'none'; // Only host can send squad alerts
 
   // Non-host: show "View Scoreboard" when match is beyond planning
   let viewBtn = document.getElementById('btn-view-scoreboard');
@@ -2213,7 +2213,7 @@ function renderRsvpGrid() {
             </div>
           </div>
           <div style="display:flex;align-items:center;gap:0.35rem">
-            ${!isMe ? `<button class="nudge-btn-mini" onclick="nudgeMember('${m.phone}', '${escHtml(m.name)}')">🔔 Ping</button>` : ''}
+            ${host && !isMe ? `<button class="nudge-btn-mini" onclick="nudgeMember('${m.phone}', '${escHtml(m.name)}')">🔔 Ping</button>` : ''}
             ${host && !isMe && !isHostUser ? `<button class="kick-btn-mini" onclick="removeMemberFromRoom('${m.phone}', '${escHtml(m.name)}')" title="Remove player from room">🚫 Remove</button>` : ''}
           </div>
         </div>
@@ -2251,14 +2251,19 @@ function renderMyVote() {
 function renderPlanningAnnouncements() {
   const anns = state.room?.match?.announcements || [];
   const el = document.getElementById('planning-announcements');
+  if (!el) return;
   if (anns.length === 0) {
     el.innerHTML = '<div class="empty-state">No announcements yet</div>';
     return;
   }
+  const host = isHost();
   el.innerHTML = anns.map(a => `
-    <div class="announcement-item">
-      <div class="ann-text">📢 ${escHtml(a.text)}</div>
-      <div class="ann-meta">${escHtml(a.author)} · ${fmtTime(a.timestamp)}</div>
+    <div class="announcement-item" style="display:flex;align-items:center;justify-content:space-between;gap:0.5rem">
+      <div style="flex:1;min-width:0">
+        <div class="ann-text">📢 ${escHtml(a.text)}</div>
+        <div class="ann-meta">${escHtml(a.author)} · ${fmtTime(a.timestamp)}</div>
+      </div>
+      ${host ? `<button class="btn-delete-mini" onclick="deleteAnnouncement('${a.id || a.timestamp}')" title="Delete announcement">🗑️</button>` : ''}
     </div>
   `).join('');
 }
@@ -2314,11 +2319,15 @@ function renderPlanningChat() {
     container.innerHTML = '<div class="chat-welcome">Chat with the squad 🏏</div>';
     return;
   }
+  const host = isHost();
   container.innerHTML = chat.map(msg => `
-    <div class="chat-msg">
-      <div class="chat-msg-header">
-        <span class="chat-author" style="color:${msg.color || '#fff'}">${escHtml(msg.author || 'Player')}</span>
-        <span class="chat-time">${fmtTime(msg.timestamp || msg.time)}</span>
+    <div class="chat-msg" data-msg-id="${msg.id || msg.timestamp}">
+      <div class="chat-msg-header" style="display:flex;justify-content:space-between;align-items:center">
+        <div style="display:flex;align-items:center;gap:0.35rem">
+          <span class="chat-author" style="color:${msg.color || '#fff'}">${escHtml(msg.author || 'Player')}</span>
+          <span class="chat-time">${fmtTime(msg.timestamp || msg.time)}</span>
+        </div>
+        ${host ? `<button class="btn-delete-mini" onclick="deleteChatMessage('${msg.id || msg.timestamp}')" title="Delete message">🗑️</button>` : ''}
       </div>
       <div class="chat-text">${escHtml(msg.text || '')}</div>
     </div>
@@ -2489,10 +2498,16 @@ document.getElementById('btn-search-gmaps')?.addEventListener('click', () => {
 
 // ── Host Squad Ping / Nudge ──────────────────
 document.getElementById('btn-nudge-all')?.addEventListener('click', () => {
+  if (!isHost()) {
+    toast('Only the match host can send squad alerts', 'error');
+    return;
+  }
   const customMsg = document.getElementById('nudge-custom-msg')?.value.trim();
   socket.emit('planning:nudge', { message: customMsg || undefined }, (res) => {
     if (res?.success) {
       toast('⚡ Squad alert & lockscreen push notifications dispatched!');
+    } else if (res?.error) {
+      toast(res.error, 'error');
     }
   });
   toast('🔔 Sending alert to all squad members...');
@@ -2501,6 +2516,10 @@ document.getElementById('btn-nudge-all')?.addEventListener('click', () => {
 });
 
 window.nudgeMember = function (targetPhone, name) {
+  if (!isHost()) {
+    toast('Only the match host can ping players', 'error');
+    return;
+  }
   const cleanTarget = String(targetPhone).replace(/\D/g, '');
   socket.emit('planning:nudge', {
     targetPhone: cleanTarget || targetPhone,
@@ -2508,6 +2527,8 @@ window.nudgeMember = function (targetPhone, name) {
   }, (res) => {
     if (res?.success) {
       toast(`⚡ Push alert delivered to ${name}!`);
+    } else if (res?.error) {
+      toast(res.error, 'error');
     }
   });
   toast(`🔔 Pinging ${name}...`);
@@ -2571,7 +2592,36 @@ window.removeMemberFromRoom = function (targetPhone, targetName) {
   });
 };
 
-// ── Audio Ping Chime (Web Audio API) ──────────
+// ── Delete Announcement & Chat (Host only) ────
+window.deleteAnnouncement = function (id) {
+  if (!isHost()) {
+    toast('Only the match host can delete announcements', 'error');
+    return;
+  }
+  if (!confirm('Are you sure you want to delete this announcement?')) return;
+  socket.emit('announcement:delete', { id }, (res) => {
+    if (res && res.success) {
+      toast('🗑️ Announcement deleted');
+    } else {
+      toast(res?.error || 'Failed to delete announcement', 'error');
+    }
+  });
+};
+
+window.deleteChatMessage = function (id) {
+  if (!isHost()) {
+    toast('Only the match host can delete chat messages', 'error');
+    return;
+  }
+  if (!confirm('Are you sure you want to delete this chat message?')) return;
+  socket.emit('chat:delete', { id }, (res) => {
+    if (res && res.success) {
+      toast('🗑️ Chat message deleted');
+    } else {
+      toast(res?.error || 'Failed to delete message', 'error');
+    }
+  });
+};
 function playPingChime() {
   try {
     const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -2630,24 +2680,18 @@ function sendPlanningChat() {
   input.value = '';
 }
 
-// ── Planning Chat receive ────────────────────
+// ── Planning & Lobby Chat receive ────────────
 socket.on('chat:message', (msg) => {
-  // Append to whichever chat container is active
-  ['planning-chat-messages', 'chat-messages'].forEach(id => {
-    const container = document.getElementById(id);
-    if (!container) return;
-    const div = document.createElement('div');
-    div.className = 'chat-msg';
-    div.innerHTML = `
-      <div class="chat-msg-header">
-        <span class="chat-author" style="color:${msg.color}">${escHtml(msg.author)}</span>
-        <span class="chat-time">${fmtTime(msg.timestamp || msg.time)}</span>
-      </div>
-      <div class="chat-text">${escHtml(msg.text)}</div>
-    `;
-    container.appendChild(div);
-    container.scrollTop = container.scrollHeight;
-  });
+  renderPlanningChat();
+  renderLobbyChat();
+});
+
+socket.on('chat:delete', ({ id }) => {
+  if (state.room?.match?.chat) {
+    state.room.match.chat = state.room.match.chat.filter(m => String(m.id) !== String(id) && String(m.timestamp) !== String(id));
+  }
+  renderPlanningChat();
+  renderLobbyChat();
 });
 
 // ══════════════════════════════════════════════
@@ -2882,6 +2926,7 @@ document.querySelectorAll('.tab').forEach(tab => {
 function renderAll() {
   renderPlayers();
   renderAnnouncements();
+  renderLobbyChat();
   renderBanner();
   renderTeamTags('team1');
   renderTeamTags('team2');
@@ -2936,12 +2981,40 @@ function renderAnnouncements() {
     list.innerHTML = '<div class="empty-state">No announcements yet</div>';
     return;
   }
+  const host = isHost();
   list.innerHTML = anns.map(a => `
-    <div class="announcement-item">
-      <div class="ann-text">📢 ${escHtml(a.text)}</div>
-      <div class="ann-meta">${escHtml(a.author)} · ${fmtTime(a.timestamp)}</div>
+    <div class="announcement-item" style="display:flex;align-items:center;justify-content:space-between;gap:0.5rem">
+      <div style="flex:1;min-width:0">
+        <div class="ann-text">📢 ${escHtml(a.text)}</div>
+        <div class="ann-meta">${escHtml(a.author)} · ${fmtTime(a.timestamp)}</div>
+      </div>
+      ${host ? `<button class="btn-delete-mini" onclick="deleteAnnouncement('${a.id || a.timestamp}')" title="Delete announcement">🗑️</button>` : ''}
     </div>
   `).join('');
+}
+
+function renderLobbyChat() {
+  const chat = state.room?.match?.chat || [];
+  const container = document.getElementById('chat-messages');
+  if (!container) return;
+  if (chat.length === 0) {
+    container.innerHTML = '<div class="chat-welcome">Chat with players 🏏</div>';
+    return;
+  }
+  const host = isHost();
+  container.innerHTML = chat.map(msg => `
+    <div class="chat-msg" data-msg-id="${msg.id || msg.timestamp}">
+      <div class="chat-msg-header" style="display:flex;justify-content:space-between;align-items:center">
+        <div style="display:flex;align-items:center;gap:0.35rem">
+          <span class="chat-author" style="color:${msg.color || '#fff'}">${escHtml(msg.author || 'Player')}</span>
+          <span class="chat-time">${fmtTime(msg.timestamp || msg.time)}</span>
+        </div>
+        ${host ? `<button class="btn-delete-mini" onclick="deleteChatMessage('${msg.id || msg.timestamp}')" title="Delete message">🗑️</button>` : ''}
+      </div>
+      <div class="chat-text">${escHtml(msg.text || '')}</div>
+    </div>
+  `).join('');
+  container.scrollTop = container.scrollHeight;
 }
 
 document.getElementById('btn-announce').addEventListener('click', () => {

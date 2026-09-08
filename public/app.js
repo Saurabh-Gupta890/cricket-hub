@@ -2221,23 +2221,33 @@ function renderRsvpGrid() {
       <div class="rsvp-card vote-${m.vote || 'null'}${isMe ? ' my-card' : ''}">
         <div class="rsvp-card-top">
           <div class="rsvp-avatar player-profile-link" onclick="openPlayerProfile('${escHtml(m.phone || m.name)}')" style="background:${avatarBg};cursor:pointer;overflow:hidden" title="View Profile">${avatarHtml}</div>
-          <div class="rsvp-name-wrap player-profile-link" onclick="openPlayerProfile('${escHtml(m.phone || m.name)}')" style="cursor:pointer" title="View Profile">
-            <div class="rsvp-name">
+          <div class="rsvp-name-wrap player-profile-link" onclick="openPlayerProfile('${escHtml(m.phone || m.name)}')" style="cursor:pointer;flex:1;min-width:0" title="View Profile">
+            <div class="rsvp-name" title="${escHtml(m.name)}">
               ${escHtml(m.name)}${isMe ? ' <span style="color:var(--primary);font-size:0.7rem">(you)</span>' : ''}
-              ${isHostUser ? '<span class="host-chip" style="margin-left:0.35rem">👑 HOST</span>' : ''}
+              ${isHostUser ? '<span class="host-chip" style="margin-left:0.25rem">👑 HOST</span>' : ''}
             </div>
             <div class="rsvp-phone">
               <span class="presence-badge ${isOnline ? 'online' : 'offline'}">
                 <span class="presence-dot ${isOnline ? 'online' : 'offline'}"></span>
-                ${statusText}
+                <span>${statusText}</span>
               </span>
             </div>
           </div>
-          <div style="display:flex;align-items:center;gap:0.35rem">
-            ${host && !isMe ? `<button class="nudge-btn-mini" onclick="nudgeMember('${m.phone}', '${escHtml(m.name)}')">🔔 Ping</button>` : ''}
-            ${host && !isMe && !isHostUser ? `<button class="kick-btn-mini" onclick="removeMemberFromRoom('${m.phone}', '${escHtml(m.name)}')" title="Remove player from room">🚫 Remove</button>` : ''}
-          </div>
         </div>
+        ${host && !isMe ? `
+          <div class="rsvp-card-actions">
+            <button class="nudge-btn-mini" onclick="nudgeMember('${m.phone}', '${escHtml(m.name)}')" title="Ping player">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+              <span>Ping</span>
+            </button>
+            ${!isHostUser ? `
+              <button class="kick-btn-mini" onclick="removeMemberFromRoom('${m.phone}', '${escHtml(m.name)}')" title="Remove player from room">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                <span>Remove</span>
+              </button>
+            ` : ''}
+          </div>
+        ` : ''}
         <div class="rsvp-vote-badge ${vl.cls}">
           ${vl.emoji} ${vl.text}
         </div>
@@ -2284,7 +2294,7 @@ function renderPlanningAnnouncements() {
         <div class="ann-text">📢 ${escHtml(a.text)}</div>
         <div class="ann-meta">${escHtml(a.author)} · ${fmtTime(a.timestamp)}</div>
       </div>
-      ${host ? `<button class="btn-delete-mini" onclick="deleteAnnouncement('${a.id || a.timestamp}')" title="Delete announcement">🗑️</button>` : ''}
+      ${host ? `<button class="btn-delete-mini" onclick="deleteAnnouncement('${a.id || a.timestamp}')" title="Delete announcement" aria-label="Delete"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button>` : ''}
     </div>
   `).join('');
 }
@@ -2348,7 +2358,7 @@ function renderPlanningChat() {
           <span class="chat-author" style="color:${msg.color || '#fff'}">${escHtml(msg.author || 'Player')}</span>
           <span class="chat-time">${fmtTime(msg.timestamp || msg.time)}</span>
         </div>
-        ${host ? `<button class="btn-delete-mini" onclick="deleteChatMessage('${msg.id || msg.timestamp}')" title="Delete message">🗑️</button>` : ''}
+        ${host ? `<button class="btn-delete-mini" onclick="deleteChatMessage('${msg.id || msg.timestamp}')" title="Delete message" aria-label="Delete"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button>` : ''}
       </div>
       <div class="chat-text">${escHtml(msg.text || '')}</div>
     </div>
@@ -3021,7 +3031,7 @@ function renderAnnouncements() {
         <div class="ann-text">📢 ${escHtml(a.text)}</div>
         <div class="ann-meta">${escHtml(a.author)} · ${fmtTime(a.timestamp)}</div>
       </div>
-      ${host ? `<button class="btn-delete-mini" onclick="deleteAnnouncement('${a.id || a.timestamp}')" title="Delete announcement">🗑️</button>` : ''}
+      ${host ? `<button class="btn-delete-mini" onclick="deleteAnnouncement('${a.id || a.timestamp}')" title="Delete announcement" aria-label="Delete"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button>` : ''}
     </div>
   `).join('');
 }
@@ -3042,7 +3052,7 @@ function renderLobbyChat() {
           <span class="chat-author" style="color:${msg.color || '#fff'}">${escHtml(msg.author || 'Player')}</span>
           <span class="chat-time">${fmtTime(msg.timestamp || msg.time)}</span>
         </div>
-        ${host ? `<button class="btn-delete-mini" onclick="deleteChatMessage('${msg.id || msg.timestamp}')" title="Delete message">🗑️</button>` : ''}
+        ${host ? `<button class="btn-delete-mini" onclick="deleteChatMessage('${msg.id || msg.timestamp}')" title="Delete message" aria-label="Delete"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button>` : ''}
       </div>
       <div class="chat-text">${escHtml(msg.text || '')}</div>
     </div>

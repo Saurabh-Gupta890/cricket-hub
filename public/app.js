@@ -1981,6 +1981,7 @@ window.openTimePicker = function () {
 };
 
 window.setQuickDate = function (preset) {
+  if (!isHost()) return;
   const input = document.getElementById('planning-date-input');
   if (!input) return;
   const now = new Date();
@@ -2008,6 +2009,7 @@ window.setQuickDate = function (preset) {
 };
 
 window.setQuickTime = function (timeStr) {
+  if (!isHost()) return;
   const input = document.getElementById('planning-time-input');
   if (!input) return;
   input.value = timeStr;
@@ -2020,6 +2022,10 @@ window.setQuickTime = function (timeStr) {
 
 let scheduleEditOpen = false;
 window.toggleScheduleEdit = function () {
+  if (!isHost()) {
+    toast('Only the match host can reschedule match date and time', 'error');
+    return;
+  }
   scheduleEditOpen = !scheduleEditOpen;
   const formEl = document.getElementById('planning-date-form');
   const editBtn = document.getElementById('btn-toggle-sched-edit');
@@ -2077,6 +2083,12 @@ function renderPlanningSchedule() {
     }
   }
 
+  const host = isHost();
+  const editBtn = document.getElementById('btn-toggle-sched-edit');
+  if (editBtn) {
+    editBtn.style.display = host ? 'block' : 'none';
+  }
+
   if (hasDate || hasTime) {
     if (displayEl) displayEl.style.display = 'block';
     if (dateValEl) {
@@ -2107,12 +2119,21 @@ function renderPlanningSchedule() {
         timeValEl.textContent = 'Time not specified';
       }
     }
-    if (formEl && !scheduleEditOpen) {
-      formEl.style.display = 'none';
+    if (formEl) {
+      formEl.style.display = (host && scheduleEditOpen) ? 'block' : 'none';
     }
   } else {
-    if (displayEl) displayEl.style.display = 'none';
-    if (formEl) formEl.style.display = 'block';
+    if (host) {
+      if (displayEl) displayEl.style.display = 'none';
+      if (formEl) formEl.style.display = 'block';
+    } else {
+      if (displayEl) {
+        displayEl.style.display = 'block';
+        if (dateValEl) dateValEl.textContent = 'Not Decided Yet';
+        if (timeValEl) timeValEl.textContent = 'Not Decided Yet';
+      }
+      if (formEl) formEl.style.display = 'none';
+    }
   }
 }
 
@@ -2469,10 +2490,22 @@ document.getElementById('btn-proceed-setup').addEventListener('click', () => {
 
 // ── Save Planning Date & Time ────────────────
 document.getElementById('btn-save-planning-date')?.addEventListener('click', () => {
+  if (!isHost()) {
+    toast('Only the match host can set or reschedule match date and time', 'error');
+    return;
+  }
   const date = document.getElementById('planning-date-input')?.value || null;
   const time = document.getElementById('planning-time-input')?.value || null;
-  socket.emit('planning:date', { date, time });
-  toast('📅 Match schedule saved!');
+  socket.emit('planning:date', { date, time }, (res) => {
+    if (res && res.success) {
+      toast('📅 Match schedule saved!');
+      scheduleEditOpen = false;
+      renderPlanningSchedule();
+    } else if (res?.error) {
+      toast(res.error, 'error');
+    }
+  });
+  toast('📅 Saving match schedule...');
 });
 
 // ── Save Planning Venue & Google Maps ─────────

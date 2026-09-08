@@ -2512,17 +2512,28 @@ io.on('connection', (socket) => {
   });
 
   // ─── Planning: Match Date & Time ──────────────────
-  socket.on('planning:date', ({ date, time }) => {
-    if (!currentRoom || !currentPhone) return;
+  socket.on('planning:date', ({ date, time }, cb) => {
+    if (!currentRoom || !currentPhone) {
+      if (typeof cb === 'function') cb({ success: false, error: 'Not connected to room' });
+      return;
+    }
     const room = rooms.get(currentRoom);
-    if (!room) return;
-    if (!phonesMatch(room.hostPhone, currentPhone)) return; // Host only
+    if (!room) {
+      if (typeof cb === 'function') cb({ success: false, error: 'Room not found' });
+      return;
+    }
+    if (!phonesMatch(room.hostPhone, currentPhone)) {
+      if (typeof cb === 'function') cb({ success: false, error: 'Only the match host can set or reschedule match date and time' });
+      return;
+    }
 
     if (date !== undefined) room.match.date = sanitizeText(date, 20);
     if (time !== undefined) room.match.time = sanitizeText(time, 15);
     saveRooms();
     io.to(currentRoom).emit('state:update', getRoomPublicState(room));
     io.to(currentRoom).emit('planning:update', getRoomPublicState(room));
+    console.log(`[planning:date] 📅 Host +${currentPhone} updated schedule to ${room.match.date || 'none'} ${room.match.time || 'none'} in room ${room.code}`);
+    if (typeof cb === 'function') cb({ success: true, date: room.match.date, time: room.match.time });
   });
 
   // ─── Planning: Ping / Nudge Squad (Popup Alert) ───

@@ -3754,6 +3754,7 @@ io.on('connection', (socket) => {
       color: me?.color || '#fff',
       timestamp: new Date().toISOString()
     };
+    if (!Array.isArray(room.match.chat)) room.match.chat = [];
     room.match.chat.push(msg);
     if (room.match.chat.length > 200) room.match.chat.shift();
     saveRooms();

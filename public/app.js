@@ -2750,6 +2750,18 @@ function sendPlanningChat() {
 
 // ── Planning & Lobby Chat receive ────────────
 socket.on('chat:message', (msg) => {
+  if (msg && state.room) {
+    if (!state.room.match) state.room.match = {};
+    if (!Array.isArray(state.room.match.chat)) state.room.match.chat = [];
+    const exists = state.room.match.chat.some(m =>
+      (msg.id && String(m.id) === String(msg.id)) ||
+      (m.timestamp === msg.timestamp && m.text === msg.text && m.author === msg.author)
+    );
+    if (!exists) {
+      state.room.match.chat.push(msg);
+      if (state.room.match.chat.length > 200) state.room.match.chat.shift();
+    }
+  }
   renderPlanningChat();
   renderLobbyChat();
 });
@@ -2760,6 +2772,20 @@ socket.on('chat:delete', ({ id }) => {
   }
   renderPlanningChat();
   renderLobbyChat();
+});
+
+socket.on('announcement:delete', ({ id }) => {
+  if (state.room?.match?.announcements) {
+    state.room.match.announcements = state.room.match.announcements.filter(a => String(a.id) !== String(id) && String(a.timestamp) !== String(id));
+  }
+  renderPlanningAnnouncements();
+  renderAnnouncements();
+});
+
+socket.on('chat:error', (err) => {
+  if (err?.message) {
+    toast(err.message, 'warning');
+  }
 });
 
 // ══════════════════════════════════════════════

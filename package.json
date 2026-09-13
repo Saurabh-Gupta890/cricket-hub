@@ -7,7 +7,9 @@
     "test": "node scratch/test_suite.js && node scratch/test_bowler_wickets_attribution.js && node scratch/test_all_cricket_rules.js",
     "start": "node server.js",
     "dev": "node server.js",
-    "kill-port": "lsof -ti:3000 | xargs kill -9 2>/dev/null || true"
+    "kill-port": "lsof -ti:3000 | xargs kill -9 2>/dev/null || true",
+    "graphify": "node scripts/graphify_architecture.js",
+    "security:audit": "node scripts/security_audit.js"
   },
   "keywords": [],
   "author": "",

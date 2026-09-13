@@ -655,6 +655,7 @@ function loadRooms() {
       }
       rooms.set(code, {
         ...r,
+        quietAlerts: typeof r.quietAlerts === 'boolean' ? r.quietAlerts : false,
         sockets: {} // Sockets are runtime live connections
       });
       scheduleRoomExpiry(code);
@@ -674,6 +675,7 @@ function saveRoomsLocal() {
         matchName: r.matchName,
         hostPhone: r.hostPhone,
         groupId: r.groupId || null,
+        quietAlerts: !!r.quietAlerts,
         planning: r.planning,
         match: r.match,
         createdAt: r.createdAt || Date.now()
@@ -696,6 +698,7 @@ function saveRooms() {
         matchName: r.matchName,
         hostPhone: r.hostPhone,
         groupId: r.groupId || null,
+        quietAlerts: !!r.quietAlerts,
         planning: r.planning,
         match: r.match,
         createdAt: r.createdAt || Date.now()
@@ -1409,12 +1412,13 @@ function createRoom(matchName, hostPhone) {
   const cleanHostPhone = String(hostPhone || '').replace(/\D/g, '');
   const hostUser = findUserByPhone(hostPhone) || (cleanHostPhone ? findUserByPhone(cleanHostPhone) : null) || userStore.get(hostPhone);
   const canonicalHostPhone = cleanHostPhone || hostPhone;
+  const initialQuietAlerts = !!(hostUser?.defaultQuietAlerts);
   const room = {
     code,
     matchName,
     createdAt: Date.now(),
     hostPhone: canonicalHostPhone,
-    quietAlerts: false,
+    quietAlerts: initialQuietAlerts,
     // Planning / RSVP state
     planning: {
       members: {},  // phone -> { phone, name, color, vote, comment, joinedAt }
@@ -2743,9 +2747,17 @@ io.on('connection', (socket) => {
 
       room.quietAlerts = !!enabled;
       saveRooms();
+      
+      // Persist host's lifetime default quiet alerts preference in user profile
+      const hostUser = findUserByPhone(currentPhone) || userStore.get(currentPhone);
+      if (hostUser) {
+        hostUser.defaultQuietAlerts = !!enabled;
+        saveUsers();
+      }
+
       io.to(currentRoom).emit('state:update', getRoomPublicState(room));
       io.to(currentRoom).emit('planning:update', getRoomPublicState(room));
-      console.log(`[room:setQuietAlerts] 🔕 Host +${currentPhone} set quietAlerts=${room.quietAlerts} for room ${room.code}`);
+      console.log(`[room:setQuietAlerts] 🔕 Host +${currentPhone} set quietAlerts=${room.quietAlerts} (Persisted lifetime state for room ${room.code})`);
       if (typeof cb === 'function') cb({ success: true, quietAlerts: room.quietAlerts });
     } catch (err) {
       console.error('room:setQuietAlerts error:', err);

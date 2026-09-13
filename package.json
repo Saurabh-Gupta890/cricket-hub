@@ -6,9 +6,13 @@
   "scripts": {
     "test": "node scratch/test_suite.js && node scratch/test_bowler_wickets_attribution.js && node scratch/test_all_cricket_rules.js",
     "test:e2e": "node scratch/master_e2e_app_test.js",
+    "test:staging": "PORT=3001 node scratch/master_e2e_app_test.js",
     "start": "node server.js",
     "dev": "node server.js",
-    "kill-port": "lsof -ti:3000 | xargs kill -9 2>/dev/null || true",
+    "start:staging": "NODE_ENV=staging PORT=3001 DATA_DIR=data-staging node server.js",
+    "start:prod": "NODE_ENV=production PORT=3000 DATA_DIR=data node server.js",
+    "staging:clean": "rm -rf data-staging && mkdir -p data-staging/matches",
+    "kill-port": "lsof -ti:3000,3001 | xargs kill -9 2>/dev/null || true",
     "graphify": "node scripts/graphify_architecture.js",
     "security:audit": "node scripts/security_audit.js"
   },

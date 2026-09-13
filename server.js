@@ -47,13 +47,17 @@ const io = new Server(server, {
   maxHttpBufferSize: 5e6 // 5MB max payload
 });
 
-const MATCHES_DIR = path.join(__dirname, 'data', 'matches');
-const USERS_FILE = path.join(__dirname, 'data', 'users.json');
-const VAPID_FILE = path.join(__dirname, 'data', 'vapid.json');
-const SUBS_FILE = path.join(__dirname, 'data', 'push_subscriptions.json');
-const ROOMS_FILE = path.join(__dirname, 'data', 'rooms.json');
-const GROUPS_FILE = path.join(__dirname, 'data', 'groups.json');
+const DATA_DIR = process.env.DATA_DIR ? path.resolve(process.env.DATA_DIR) : path.join(__dirname, 'data');
+const MATCHES_DIR = path.join(DATA_DIR, 'matches');
+const USERS_FILE = path.join(DATA_DIR, 'users.json');
+const VAPID_FILE = path.join(DATA_DIR, 'vapid.json');
+const SUBS_FILE = path.join(DATA_DIR, 'push_subscriptions.json');
+const ROOMS_FILE = path.join(DATA_DIR, 'rooms.json');
+const GROUPS_FILE = path.join(DATA_DIR, 'groups.json');
 
+if (!fs.existsSync(DATA_DIR)) {
+  fs.mkdirSync(DATA_DIR, { recursive: true });
+}
 if (!fs.existsSync(MATCHES_DIR)) {
   fs.mkdirSync(MATCHES_DIR, { recursive: true });
 }
@@ -311,6 +315,7 @@ app.get(['/api/health', '/healthz'], (req, res) => {
     uptime: Math.floor(process.uptime()),
     timestamp: new Date().toISOString(),
     environment: process.env.NODE_ENV || 'development',
+    dataDirectory: path.basename(DATA_DIR),
     stats: {
       activeRooms: rooms.size,
       registeredUsers: userStore.size,
@@ -320,6 +325,21 @@ app.get(['/api/health', '/healthz'], (req, res) => {
       rss: `${(mem.rss / 1024 / 1024).toFixed(2)} MB`,
       heapUsed: `${(mem.heapUsed / 1024 / 1024).toFixed(2)} MB`
     }
+  });
+});
+
+app.get('/api/environment', (req, res) => {
+  res.setHeader('Cache-Control', 'no-store');
+  const env = process.env.NODE_ENV || 'development';
+  res.json({
+    environment: env,
+    isDevelopment: env === 'development',
+    isStaging: env === 'staging',
+    isProduction: env === 'production',
+    dataDirectory: path.basename(DATA_DIR),
+    port: PORT,
+    version: '3.0.0',
+    timestamp: new Date().toISOString()
   });
 });
 
@@ -1241,13 +1261,18 @@ app.post('/api/auth/request-otp', (req, res, next) => {
 
     console.log(`\n🔐 OTP for +${cleaned} (${finalName}) [${mode || 'auth'}]: [ ${otp} ]  — expires in 5 min\n`);
 
-    res.json({
+    const isProd = process.env.NODE_ENV === 'production';
+    const otpResponse = {
       success: true,
-      devOtp: otp,
       isNew: !existingUser,
       name: finalName,
       maskedPhone: maskPhone(cleaned)
-    });
+    };
+    if (!isProd) {
+      otpResponse.devOtp = otp;
+    }
+
+    res.json(otpResponse);
   } catch (err) {
     next(err);
   }

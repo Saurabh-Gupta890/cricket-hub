@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  crickethub-production:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: crickethub-production-app
+    restart: always
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env.production
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - DATA_DIR=/app/data
+    volumes:
+      - prod_data:/app/data
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000/api/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
+volumes:
+  prod_data:
+    name: crickethub_production_volume

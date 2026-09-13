@@ -24,6 +24,10 @@ const {
   globalErrorHandler
 } = require('./src/utils/security');
 
+const { requestLoggerMiddleware, writeLog, logSecurityEvent } = require('./src/utils/logger');
+const { createBackup, initScheduledBackups } = require('./src/utils/backup_recovery');
+const { massAssignmentGuard, sanitizeAiPrompt, getSecurityMetrics, safeJsonParse } = require('./src/utils/securitymaxxing');
+
 const {
   validatePhone,
   validateOtp,
@@ -322,6 +326,8 @@ app.use(express.static(path.join(__dirname, 'public'), {
 app.use(express.json({ limit: '2mb' }));
 app.use(express.urlencoded({ extended: true, limit: '2mb' }));
 app.use(noSqlInjectionGuard);
+app.use(massAssignmentGuard());
+app.use(requestLoggerMiddleware);
 
 // ═══════════════════════════════════════════════
 //  HEALTH PROBE ENDPOINTS (Kubernetes / Render / AWS)
@@ -358,6 +364,15 @@ app.get('/api/environment', (req, res) => {
     dataDirectory: path.basename(DATA_DIR),
     port: PORT,
     version: '3.0.0',
+    timestamp: new Date().toISOString()
+  });
+});
+
+app.get('/api/security/stats', publicRateLimiter, (req, res) => {
+  res.setHeader('Cache-Control', 'no-store');
+  res.json({
+    success: true,
+    security: getSecurityMetrics(),
     timestamp: new Date().toISOString()
   });
 });
@@ -4005,6 +4020,7 @@ server.on('error', (err) => {
 server.listen(PORT, async () => {
   console.log(`🏏 CricketHub running in ${process.env.NODE_ENV || 'development'} mode at http://localhost:${PORT}`);
   await initCloudDatabase();
+  initScheduledBackups(24);
 });
 
 // ═══════════════════════════════════════════════

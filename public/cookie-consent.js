@@ -43,6 +43,8 @@
         timestamp: Date.now()
       };
       localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
+      const secureFlag = window.location.protocol === 'https:' ? '; Secure' : '';
+      document.cookie = `crickethub_consent_status=${encodeURIComponent(toSave.status)}; path=/; max-age=31536000; SameSite=Strict${secureFlag}`;
       return toSave;
     } catch (e) {
       console.error('Failed to persist cookie consent:', e);

@@ -9,10 +9,12 @@ node_modules/
 .env.staging
 !.env.example
 
-# Runtime Data Sandboxes & Logs
+# Runtime Data Sandboxes, Logs & Backups
 data-staging/
 data-staging-test/
+data-recovery-sandbox/
 logs/
+backups/
 *.log
 npm-debug.log*
 yarn-debug.log*

@@ -15,8 +15,13 @@
     "kill-port": "lsof -ti:3000,3001 | xargs kill -9 2>/dev/null || true",
     "graphify": "node scripts/graphify_architecture.js",
     "security:audit": "node scripts/security_audit.js",
+    "security:maxxing": "node scripts/securitymaxxing_audit.js",
+    "audit:deps": "node scripts/audit_dependencies.js",
+    "backup": "node scripts/backup.js",
+    "restore": "node scripts/restore.js",
     "test:worst-case": "node scratch/test_staging_worst_case_scenarios.js",
-    "test:mobile-ui": "node scratch/test_mobile_responsive_css_audit.js"
+    "test:mobile-ui": "node scratch/test_mobile_responsive_css_audit.js",
+    "test:backup": "node scratch/test_backup_and_recovery.js"
   },
   "keywords": [],
   "author": "",

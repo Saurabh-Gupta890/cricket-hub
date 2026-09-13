@@ -10,11 +10,16 @@ const webpush = require('web-push');
 
 const {
   getClientIp,
+  enforceHttpsMiddleware,
+  auditLog,
+  suspiciousTrafficDetector,
   checkAuthRateLimit,
   recordAuthFailure,
   recordAuthSuccess,
   publicRateLimiter,
   authedRateLimiter,
+  antiScrapingGuard,
+  checkSocketRateLimit,
   logErrorSafely,
   globalErrorHandler
 } = require('./src/utils/security');
@@ -272,6 +277,11 @@ app.use(compression({
   },
   threshold: 1024 // Only compress payloads > 1KB
 }));
+
+// Pillar 1: Enforce HTTPS & Strict Security Headers
+app.use(enforceHttpsMiddleware);
+app.use(suspiciousTrafficDetector);
+app.use(antiScrapingGuard);
 
 app.use((req, res, next) => {
   res.setHeader('X-Content-Type-Options', 'nosniff');
@@ -2438,6 +2448,15 @@ app.get('/api/history/:id', (req, res) => {
 io.on('connection', (socket) => {
   let currentRoom = null;
   let currentPhone = null;
+
+  // Pillar 3: Socket message flood limiter
+  socket.use(([event, ...args], next) => {
+    if (!checkSocketRateLimit(socket.id)) {
+      auditLog('SOCKET_FLOOD_LIMIT_EXCEEDED', { socketId: socket.id, event });
+      return next(new Error('Rate limit exceeded on realtime connection. Please slow down.'));
+    }
+    next();
+  });
 
   // ─── Auth Helper ─────────────────────────────────
   function getMe() {

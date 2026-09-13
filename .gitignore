@@ -1,3 +1,26 @@
 node_modules/
 .DS_Store
+
+# Secrets & Environment Variables (Never commit secrets)
 .env
+.env.local
+.env.*.local
+.env.production
+.env.staging
+!.env.example
+
+# Runtime Data Sandboxes & Logs
+data-staging/
+data-staging-test/
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS & Build Artifacts
+.DS_Store
+Thumbs.db
+dist/
+build/
+coverage/

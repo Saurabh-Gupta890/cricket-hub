@@ -21,7 +21,8 @@
     "restore": "node scripts/restore.js",
     "test:worst-case": "node scratch/test_staging_worst_case_scenarios.js",
     "test:mobile-ui": "node scratch/test_mobile_responsive_css_audit.js",
-    "test:backup": "node scratch/test_backup_and_recovery.js"
+    "test:backup": "node scratch/test_backup_and_recovery.js",
+    "test:commentary": "node scratch/test_ai_commentary_vision.js"
   },
   "keywords": [],
   "author": "",

@@ -25,6 +25,7 @@
     href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Outfit:wght@400;500;600;700;800&family=Rajdhani:wght@400;500;600;700&display=swap"
     rel="stylesheet" />
   <link rel="stylesheet" href="style.css?v=3.0.0" />
+  <link rel="stylesheet" href="ai_commentary.css?v=3.0.0" />
 
   <!-- Lighthouse Structured Data (JSON-LD) -->
   <script type="application/ld+json">
@@ -533,6 +534,9 @@
         <div class="planning-main-header">
           <h2 class="planning-section-title">👥 Squad Availability</h2>
           <div style="display:flex;align-items:center;gap:0.5rem">
+            <button class="btn btn-secondary btn-xs" onclick="openAiStudio()" title="Open AI Vision & Live Commentator Studio" aria-label="Open AI Commentator Studio">
+              🎙️ AI Studio
+            </button>
             <button class="btn btn-secondary btn-xs btn-graphify-trigger" onclick="openGraphifyModal()" title="View Graphify Squad Network & Context7 Intelligence" aria-label="Open Squad Graph">
               ⚡ Graphify & Synergy
             </button>
@@ -579,6 +583,9 @@
         <div class="room-badge" id="room-code-display"></div>
       </div>
       <div class="header-right">
+        <button class="btn btn-secondary btn-sm" id="btn-ai-studio" onclick="openAiStudio()" title="Open AI Vision & Live Commentator Studio">
+          🎙️ <span class="btn-hdr-text">AI Studio</span>
+        </button>
         <button class="btn btn-ghost btn-sm" id="btn-lobby-players-dir">👥 <span
             class="btn-hdr-text">Players</span></button>
         <button class="btn btn-ghost btn-sm" id="btn-copy-code">📋 <span class="btn-hdr-text">Share</span></button>
@@ -1711,6 +1718,7 @@
   <script src="cookie-consent.js?v=3.0.0"></script>
   <script src="graphify.js?v=3.0.0"></script>
   <script src="app.js?v=3.0.0"></script>
+  <script src="ai_commentary.js?v=3.0.0"></script>
 </body>
 
 </html>

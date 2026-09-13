@@ -4369,6 +4369,11 @@ window.commitBall = function () {
     dismissedSlot: state.pendingWicket ? (state.pendingDismissedSlot || 'striker') : null,
     token: state.session?.token
   });
+
+  if (typeof window.triggerLiveCommentaryOnScore === 'function') {
+    window.triggerLiveCommentaryOnScore(state.pendingWicket ? 'W' : finalRuns);
+  }
+
   state.pendingRuns = null;
   state.pendingExtras = {};
   state.pendingWicket = false;

@@ -119,6 +119,68 @@ function validateRequestBody(schema) {
   };
 }
 
+/**
+ * XSS HTML Entity Sanitizer
+ */
+function sanitizeHtmlXss(str) {
+  if (typeof str !== 'string') return str;
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#x27;')
+    .replace(/\//g, '&#x2F;');
+}
+
+/**
+ * NoSQL Injection Sanitizer: Strips operator keys ($where, $gt, $ne, etc.)
+ */
+function sanitizeNoSqlInjection(obj) {
+  if (obj === null || typeof obj !== 'object') return obj;
+  if (Array.isArray(obj)) return obj.map(sanitizeNoSqlInjection);
+  
+  const clean = {};
+  for (const [key, value] of Object.entries(obj)) {
+    if (key.startsWith('$') || key.includes('.')) {
+      continue;
+    }
+    clean[key] = sanitizeNoSqlInjection(value);
+  }
+  return clean;
+}
+
+/**
+ * NoSQL Injection Protection Middleware
+ */
+function noSqlInjectionGuard(req, res, next) {
+  if (req.body && typeof req.body === 'object') {
+    req.body = sanitizeNoSqlInjection(req.body);
+  }
+  if (req.query && typeof req.query === 'object') {
+    req.query = sanitizeNoSqlInjection(req.query);
+  }
+  next();
+}
+
+/**
+ * Secure File / Image Avatar Upload Validator
+ */
+function validateAvatarUpload(avatar) {
+  if (!avatar || typeof avatar !== 'string') return { valid: true, value: '🏏' };
+  const trimmed = avatar.trim();
+  if (trimmed.length > 500000) {
+    return { valid: false, error: 'Avatar image file cannot exceed 500KB.' };
+  }
+  if (trimmed.startsWith('data:image/')) {
+    const isSafeImage = /^data:image\/(png|jpeg|jpg|webp|gif);base64,[A-Za-z0-9+/=]+$/.test(trimmed);
+    if (!isSafeImage) {
+      return { valid: false, error: 'Invalid or unsupported image file format.' };
+    }
+  }
+  return { valid: true, value: trimmed };
+}
+
 module.exports = {
   validatePhone,
   validateOtp,
@@ -128,5 +190,9 @@ module.exports = {
   validateInteger,
   validateEnum,
   validateRequestBody,
+  sanitizeHtmlXss,
+  sanitizeNoSqlInjection,
+  noSqlInjectionGuard,
+  validateAvatarUpload,
   REGEX_SAFE_NAME
 };

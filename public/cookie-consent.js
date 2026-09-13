@@ -320,20 +320,125 @@
     }
   }
 
-  // Global window helpers
+  // ═══════════════════════════════════════════════════════════════════════
+  //  LEGAL, PRIVACY & DATA DECLARATION MODAL CONTROLLER
+  // ═══════════════════════════════════════════════════════════════════════
+
+  window.switchLegalTab = function (tabName) {
+    const tabs = ['terms', 'privacy', 'data'];
+    tabs.forEach(t => {
+      const btn = document.getElementById(`legal-tab-${t}`);
+      const pane = document.getElementById(`legal-pane-${t}`);
+      if (btn) btn.classList.toggle('active', t === tabName);
+      if (pane) pane.classList.toggle('active', t === tabName);
+    });
+  };
+
+  window.openLegalModal = function (tabName = 'privacy') {
+    const modal = document.getElementById('privacy-policy-modal');
+    if (modal) {
+      modal.style.display = 'flex';
+      window.switchLegalTab(tabName);
+    }
+  };
+
+  window.closeLegalModal = function () {
+    const modal = document.getElementById('privacy-policy-modal');
+    if (modal) modal.style.display = 'none';
+  };
+
+  window.openPrivacyPolicyModal = function () {
+    window.openLegalModal('privacy');
+  };
+
+  window.openTermsModal = function () {
+    window.openLegalModal('terms');
+  };
+
+  window.openDataDeclarationModal = function () {
+    window.openLegalModal('data');
+  };
+
+  window.closePrivacyPolicyModal = function () {
+    window.closeLegalModal();
+  };
+
   window.openCookieSettings = function () {
     const btn = document.getElementById('btn-open-cookie-settings');
     if (btn) btn.click();
   };
 
-  window.openPrivacyPolicyModal = function () {
-    const modal = document.getElementById('privacy-policy-modal');
-    if (modal) modal.style.display = 'flex';
+  /**
+   * DPDP Act 2023 §11 / GDPR Art. 15: Right to Access & Data Portability
+   * Exports all locally held user data, consent logs, and room references.
+   */
+  window.exportMyUserData = function () {
+    try {
+      const user = localStorage.getItem('crickethub_user') ? JSON.parse(localStorage.getItem('crickethub_user')) : null;
+      const consent = getSavedConsent();
+      const lastRoom = localStorage.getItem('crickethub_last_room') || null;
+
+      const exportPayload = {
+        exportDate: new Date().toISOString(),
+        dataFiduciary: 'CricketHub (compliance@crickethub.app)',
+        statutoryFramework: 'Digital Personal Data Protection Act, 2023 & GDPR',
+        userData: user || 'No active account on this device',
+        privacyAndConsent: consent || 'Default opt-in settings',
+        activeRoomReference: lastRoom,
+        securityGuarantees: {
+          encryptionInTransit: 'TLS 1.3',
+          phoneMasking: 'Enabled',
+          thirdPartySelling: 'None / Strictly Prohibited'
+        }
+      };
+
+      const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(exportPayload, null, 2));
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.setAttribute('href', dataStr);
+      downloadAnchor.setAttribute('download', `crickethub_data_export_${Date.now()}.json`);
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+
+      if (typeof window.showToast === 'function') {
+        window.showToast('📥 Data exported successfully! Check your downloads.', 'success');
+      } else {
+        alert('📥 Your personal data export has been downloaded.');
+      }
+    } catch (e) {
+      console.error('Failed to export user data:', e);
+      alert('Failed to generate data export.');
+    }
   };
 
-  window.closePrivacyPolicyModal = function () {
-    const modal = document.getElementById('privacy-policy-modal');
-    if (modal) modal.style.display = 'none';
+  /**
+   * DPDP Act 2023 §12 / GDPR Art. 17: Right to Erasure / Right to be Forgotten
+   */
+  window.requestDataErasure = function () {
+    const confirmErasure = confirm(
+      '⚠️ Exercise Right to Erasure (DPDP Act 2023 §12)?\n\n' +
+      'This will erase your stored login session, profile caches, and local cookie preferences from this device.\n\n' +
+      'Do you wish to proceed?'
+    );
+
+    if (confirmErasure) {
+      try {
+        localStorage.removeItem('crickethub_user');
+        localStorage.removeItem('crickethub_token');
+        localStorage.removeItem(STORAGE_KEY);
+        localStorage.removeItem('crickethub_last_room');
+
+        if (typeof window.showToast === 'function') {
+          window.showToast('🛡️ Account & personal data wiped from device.', 'info');
+        }
+
+        setTimeout(() => {
+          window.location.reload();
+        }, 1200);
+      } catch (e) {
+        console.error('Failed to erase data:', e);
+      }
+    }
   };
 
   if (document.readyState === 'loading') {

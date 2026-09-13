@@ -142,6 +142,17 @@
         <button class="btn btn-ghost btn-full" id="btn-resend-otp" onclick="resendOtp()" style="margin-top:0.5rem">📲
           Resend OTP</button>
       </div>
+
+      <!-- Screen 1 Legal Footer -->
+      <div class="legal-footer-bar">
+        <button class="legal-footer-link" onclick="openTermsModal()">📜 Terms of Use</button>
+        <span class="legal-footer-sep">·</span>
+        <button class="legal-footer-link" onclick="openPrivacyPolicyModal()">🛡️ Privacy Policy</button>
+        <span class="legal-footer-sep">·</span>
+        <button class="legal-footer-link" onclick="openDataDeclarationModal()">📊 Data Declaration</button>
+        <span class="legal-footer-sep">·</span>
+        <button class="legal-footer-link" onclick="openCookieSettings()">🍪 Cookies</button>
+      </div>
     </div>
   </div>
 
@@ -258,6 +269,17 @@
         <button class="btn btn-ghost btn-history" id="btn-open-history">
           📜 Past Match History
         </button>
+      </div>
+
+      <!-- Screen 2 Legal Footer -->
+      <div class="legal-footer-bar" style="margin-top:1.5rem">
+        <button class="legal-footer-link" onclick="openTermsModal()">📜 Terms of Use</button>
+        <span class="legal-footer-sep">·</span>
+        <button class="legal-footer-link" onclick="openPrivacyPolicyModal()">🛡️ Privacy Policy</button>
+        <span class="legal-footer-sep">·</span>
+        <button class="legal-footer-link" onclick="openDataDeclarationModal()">📊 Data Declaration</button>
+        <span class="legal-footer-sep">·</span>
+        <button class="legal-footer-link" onclick="openCookieSettings()">🍪 Cookies</button>
       </div>
     </div>
   </div>
@@ -1377,8 +1399,17 @@
 
       <!-- Profile Footer: Logout & Privacy Shield -->
       <div class="profile-modal-footer" id="prof-footer">
-        <div class="prof-privacy-note" id="prof-privacy-note">
+        <div class="prof-privacy-note" id="prof-privacy-note" style="display:flex;flex-direction:column;gap:0.4rem;margin-bottom:0.6rem">
           <span>🛡️ <strong>Privacy Protection:</strong> Phone numbers are strictly private and encrypted.</span>
+          <div style="display:flex;gap:0.6rem;flex-wrap:wrap;font-size:0.75rem">
+            <button class="legal-footer-link" onclick="openTermsModal()">📜 Terms</button>
+            <span class="legal-footer-sep">·</span>
+            <button class="legal-footer-link" onclick="openPrivacyPolicyModal()">🛡️ Privacy</button>
+            <span class="legal-footer-sep">·</span>
+            <button class="legal-footer-link" onclick="openDataDeclarationModal()">📊 Data Declaration</button>
+            <span class="legal-footer-sep">·</span>
+            <button class="legal-footer-link" onclick="exportMyUserData()">📥 Export Data</button>
+          </div>
         </div>
         <div class="prof-footer-actions" id="prof-footer-actions" style="display:none">
           <button type="button" class="btn btn-danger-outline btn-full" id="prof-btn-logout" onclick="logoutUser()">
@@ -1512,54 +1543,164 @@
   </div>
 
   <!-- ════════════════════════════════════════════
-     MODAL: PRIVACY POLICY (DPDP ACT 2023 & GDPR)
+     MODAL: LEGAL CENTER (TERMS, PRIVACY & DATA DECLARATION)
   ════════════════════════════════════════════ -->
   <div class="modal-overlay" id="privacy-policy-modal" style="display:none;z-index:2400">
-    <div class="modal glass-card privacy-modal" style="max-width:640px;width:95%;padding:1.35rem;display:flex;flex-direction:column">
+    <div class="modal glass-card privacy-modal" style="max-width:700px;width:95%;padding:1.35rem;display:flex;flex-direction:column;max-height:85vh">
       <div class="modal-header" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.75rem">
         <div style="display:flex;align-items:center;gap:0.5rem">
-          <span style="font-size:1.4rem">🛡️</span>
+          <span style="font-size:1.4rem">⚖️</span>
           <div>
-            <h3 style="margin:0;font-size:1.15rem;font-weight:800;color:var(--text-1)">Privacy Policy & Data Protection</h3>
-            <p style="margin:0;font-size:0.75rem;color:var(--text-3)">Digital Personal Data Protection (DPDP) Act 2023 & GDPR</p>
+            <h3 style="margin:0;font-size:1.15rem;font-weight:800;color:var(--text-1)">Legal & Data Transparency Center</h3>
+            <p style="margin:0;font-size:0.75rem;color:var(--text-3)">Digital Personal Data Protection (DPDP) Act 2023, GDPR & IT Act 2000</p>
           </div>
         </div>
-        <button class="btn btn-ghost btn-sm modal-close-btn" onclick="closePrivacyPolicyModal()" aria-label="Close modal">✕</button>
+        <button class="btn btn-ghost btn-sm modal-close-btn" onclick="closeLegalModal()" aria-label="Close modal">✕</button>
       </div>
 
+      <!-- Navigation Tabs -->
+      <div class="legal-modal-tabs">
+        <button class="legal-tab-btn" id="legal-tab-terms" onclick="switchLegalTab('terms')">📜 Terms of Use</button>
+        <button class="legal-tab-btn active" id="legal-tab-privacy" onclick="switchLegalTab('privacy')">🛡️ Privacy Policy</button>
+        <button class="legal-tab-btn" id="legal-tab-data" onclick="switchLegalTab('data')">📊 Data Declaration</button>
+      </div>
+
+      <!-- Content Panes Container -->
       <div class="privacy-policy-body">
-        <h4>1. Notice by Data Fiduciary (DPDP Act 2023 §5)</h4>
-        <p>CricketHub collects and processes specified digital personal data solely to provide real-time cricket match coordination, squad availability polling (RSVP), and ball-by-ball scorekeeping services.</p>
+        
+        <!-- PANE 1: TERMS OF USE -->
+        <div class="legal-pane" id="legal-pane-terms">
+          <h4>1. Acceptance of Terms</h4>
+          <p>By accessing or using CricketHub, you agree to these Terms of Use, compliant with India's Information Technology Act, 2000 and the Digital Personal Data Protection (DPDP) Act, 2023. If you do not agree, please do not use the service.</p>
 
-        <h4>2. Personal Data We Collect</h4>
-        <ul>
-          <li><strong>Phone Number:</strong> Used solely for passwordless OTP authentication, session security, and squad match alerts.</li>
-          <li><strong>Player Profile:</strong> Display name, profile avatar/emoji, player role, and team color.</li>
-          <li><strong>Match & Score Records:</strong> Ball-by-ball runs, wickets, overs, match history, and squad attendance.</li>
-        </ul>
+          <h4>2. Eligibility & Account Security</h4>
+          <p>CricketHub provides passwordless OTP authentication. You are responsible for maintaining the confidentiality of your device and received OTPs. Users under 18 must have parental or guardian consent.</p>
 
-        <h4>3. Purpose Limitation (§4 & §6)</h4>
-        <p>Your data is processed strictly for the specified purpose of cricket match planning and scorekeeping. We do not sell, rent, or monetize personal data with third-party advertisers.</p>
+          <h4>3. Permitted Use & Fair Play Code</h4>
+          <p>CricketHub is designed strictly for sports match coordination, squad availability polling, team synergy networking, and live scorekeeping. Users agree not to engage in harassment, unauthorized commercial scraping, spamming squad pings, or illegal betting/gambling.</p>
 
-        <h4>4. Your Rights as a Data Principal (§11–13)</h4>
-        <ul>
-          <li><strong>Right to Access:</strong> View all active rooms, squad memberships, and score records at any time.</li>
-          <li><strong>Right to Correction & Erasure:</strong> Edit your player profile or request complete account erasure.</li>
-          <li><strong>Right to Withdraw Consent:</strong> You may modify or withdraw consent at any time via the persistent <strong>Cookie Settings</strong> button.</li>
-          <li><strong>Right of Grievance Redressal:</strong> Contact our Data Protection Officer for prompt resolution of any privacy concerns.</li>
-        </ul>
+          <h4>4. Host Authority & Room Governance</h4>
+          <p>Match room hosts hold administrative authority to schedule or reschedule match dates, set overs, toggle Quiet Alerts, remove disruptive participants, and manage match status. Squad members agree to respect host match configurations.</p>
 
-        <h4>5. Cookies & Local Storage</h4>
-        <p>Strictly essential cookies and storage keys are utilized for session tokens and real-time WebSocket room connections. Analytics and marketing cookies are purely opt-in and require affirmative consent.</p>
+          <h4>5. Intellectual Property & User Content</h4>
+          <p>All software architectures, Graphify synergy algorithms, branding, and scoring engines are proprietary. Users retain ownership of their display names and chat messages while granting CricketHub a non-exclusive license to process them solely for delivering the service.</p>
+
+          <h4>6. Limitation of Liability & Governing Law</h4>
+          <p>CricketHub is provided "AS IS" without warranties of uninterrupted real-time operation. These Terms are governed by the laws of India, under the exclusive jurisdiction of courts in New Delhi, India.</p>
+        </div>
+
+        <!-- PANE 2: PRIVACY POLICY -->
+        <div class="legal-pane active" id="legal-pane-privacy">
+          <h4>1. Notice by Data Fiduciary (DPDP Act 2023 §5 / GDPR Art. 13)</h4>
+          <p>CricketHub collects and processes specified digital personal data solely to coordinate cricket matches, squad availability polling (RSVP), Graphify squad synergy analysis, and ball-by-ball scorekeeping.</p>
+
+          <h4>2. Personal Data We Collect (§6 Data Minimisation)</h4>
+          <ul>
+            <li><strong>Phone Number:</strong> Used solely for passwordless OTP authentication and session security. Never shared or sold.</li>
+            <li><strong>Player Profile:</strong> Display name, profile avatar/emoji, player role, and team color.</li>
+            <li><strong>Match & Score Records:</strong> Ball-by-ball runs, wickets, overs, match history, and squad attendance.</li>
+          </ul>
+
+          <h4>3. Purpose Limitation (§4 & §6)</h4>
+          <p>Your data is processed strictly for the specified purpose of cricket match planning and scorekeeping. We do not sell, rent, or monetize personal data with third-party advertisers or data brokers.</p>
+
+          <h4>4. Your Rights as a Data Principal (§11–13)</h4>
+          <ul>
+            <li><strong>Right to Access (§11):</strong> Download a complete JSON copy of your processed data at any time via the <strong>Export My Data</strong> button.</li>
+            <li><strong>Right to Correction & Erasure (§12):</strong> Update your player profile or request complete account erasure ("Right to be Forgotten").</li>
+            <li><strong>Right to Withdraw Consent:</strong> Modify cookie preferences or withdraw consent anytime via the persistent <strong>Cookie Settings</strong> button.</li>
+            <li><strong>Right of Grievance Redressal (§13):</strong> Contact our Data Protection Officer at <code>dpo@crickethub.app</code> for prompt resolution within 7 business days.</li>
+          </ul>
+
+          <h4>5. Cookies & Local Storage</h4>
+          <p>Essential storage keys are utilized for session tokens and real-time WebSocket room connections. Analytics and marketing cookies are strictly opt-in and require affirmative consent.</p>
+        </div>
+
+        <!-- PANE 3: DATA DECLARATION & INVENTORY -->
+        <div class="legal-pane" id="legal-pane-data">
+          <h4>📋 Complete Data Declaration & Transparency Report</h4>
+          <p>In accordance with pre-launch compliance requirements, here is the complete itemized declaration of all data collected, processed, and stored by CricketHub:</p>
+
+          <div class="legal-table-wrap">
+            <table class="legal-table">
+              <thead>
+                <tr>
+                  <th>Data Element</th>
+                  <th>Storage Location</th>
+                  <th>Sensitivity</th>
+                  <th>Purpose</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>Mobile Phone</strong></td>
+                  <td><code>data/users.json</code></td>
+                  <td><span class="legal-badge-pii">PII / High</span></td>
+                  <td>Passwordless OTP login; masked in UI</td>
+                </tr>
+                <tr>
+                  <td><strong>Player Profile</strong></td>
+                  <td><code>data/users.json</code></td>
+                  <td><span class="legal-badge-low">Low</span></td>
+                  <td>Display name, role, avatar & team color</td>
+                </tr>
+                <tr>
+                  <td><strong>Match RSVPs</strong></td>
+                  <td><code>data/rooms.json</code></td>
+                  <td><span class="legal-badge-low">Low</span></td>
+                  <td>Squad availability (Coming, Maybe, Can't Come)</td>
+                </tr>
+                <tr>
+                  <td><strong>Score & Timeline</strong></td>
+                  <td><code>data/matches/*.json</code></td>
+                  <td><span class="legal-badge-low">Low</span></td>
+                  <td>Ball-by-ball scorekeeping & bowler wickets</td>
+                </tr>
+                <tr>
+                  <td><strong>Push Keys</strong></td>
+                  <td><code>data/push_subscriptions.json</code></td>
+                  <td><span class="legal-badge-low">Medium</span></td>
+                  <td>Encrypted push notification dispatch</td>
+                </tr>
+                <tr>
+                  <td><strong>Cookie State</strong></td>
+                  <td><code>localStorage</code></td>
+                  <td><span class="legal-badge-low">Low</span></td>
+                  <td>DPDP/GDPR consent state (Essential/Analytics)</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h4>🛡️ Zero Third-Party Selling Pledge</h4>
+          <p>CricketHub certifies that <strong>100% of collected data</strong> remains within our secured application boundary and is never monetized, traded, or shared with external ad platforms.</p>
+
+          <h4>⚙️ Data Principal Self-Service Actions</h4>
+          <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:0.75rem">
+            <button type="button" class="btn btn-secondary btn-sm" onclick="exportMyUserData()">
+              📥 Export My Data (JSON)
+            </button>
+            <button type="button" class="btn btn-danger-outline btn-sm" onclick="requestDataErasure()">
+              🗑️ Request Account Erasure (DPDP §12)
+            </button>
+          </div>
+        </div>
+
       </div>
 
-      <div style="display:flex;justify-content:flex-end;gap:0.5rem;margin-top:1rem">
-        <button class="btn btn-secondary btn-sm" onclick="openCookieSettings(); closePrivacyPolicyModal();">
-          🍪 Manage Cookie Preferences
+      <!-- Modal Footer -->
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:0.5rem;margin-top:1rem;flex-wrap:wrap">
+        <button class="btn btn-ghost btn-sm" onclick="openCookieSettings(); closeLegalModal();">
+          🍪 Cookie Settings
         </button>
-        <button class="btn btn-primary btn-sm" onclick="closePrivacyPolicyModal()">
-          I Understand
-        </button>
+        <div style="display:flex;gap:0.5rem">
+          <button class="btn btn-secondary btn-sm" onclick="exportMyUserData()">
+            📥 Export Data
+          </button>
+          <button class="btn btn-primary btn-sm" onclick="closeLegalModal()">
+            I Understand ✅
+          </button>
+        </div>
       </div>
     </div>
   </div>

@@ -14,7 +14,8 @@
     "staging:clean": "rm -rf data-staging && mkdir -p data-staging/matches",
     "kill-port": "lsof -ti:3000,3001 | xargs kill -9 2>/dev/null || true",
     "graphify": "node scripts/graphify_architecture.js",
-    "security:audit": "node scripts/security_audit.js"
+    "security:audit": "node scripts/security_audit.js",
+    "test:worst-case": "node scratch/test_staging_worst_case_scenarios.js"
   },
   "keywords": [],
   "author": "",

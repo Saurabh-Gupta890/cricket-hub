@@ -278,7 +278,13 @@ function antiScrapingGuard(req, res, next) {
     'nikto',
     'nmap',
     'masscan',
-    'havij'
+    'havij',
+    'httrack',
+    'gobuster',
+    'dirbuster',
+    'zgrab',
+    'scrapy',
+    'acunetix'
   ].some(bot => userAgent.includes(bot));
 
   if (isMaliciousBot) {

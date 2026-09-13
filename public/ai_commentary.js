@@ -124,13 +124,85 @@
     }
   };
 
-  let activeAudioPlayer = null;
+  // Preload Audio Elements for zero latency
+  const PRELOADED_AUDIO = {};
+  function preloadAudioAssets() {
+    try {
+      const allFiles = [
+        '/audio/commentary/shastri_six_tracer_bullet.wav',
+        '/audio/commentary/shastri_four_covers.wav',
+        '/audio/commentary/shastri_wicket_castled.wav',
+        '/audio/commentary/bhogle_four_symphony.wav',
+        '/audio/commentary/bhogle_six_masterpiece.wav',
+        '/audio/commentary/dot_ball_defense.wav'
+      ];
+      for (const src of allFiles) {
+        const audio = new Audio();
+        audio.src = src;
+        audio.preload = 'auto';
+        PRELOADED_AUDIO[src] = audio;
+      }
+    } catch (e) { }
+  }
+  preloadAudioAssets();
+
+  // Audio Context Unlock on First User Gesture
+  function unlockAudioEngine() {
+    try {
+      if (!audioContext) {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (AudioCtx) audioContext = new AudioCtx();
+      }
+      if (audioContext && audioContext.state === 'suspended') {
+        audioContext.resume();
+      }
+    } catch (e) { }
+  }
+
+  document.addEventListener('click', unlockAudioEngine, { passive: true });
+  document.addEventListener('touchstart', unlockAudioEngine, { passive: true });
 
   /**
-   * 🎙️ Real Commentator Broadcast Audio Engine
+   * 🗣️ Spoken Voice Synthesis Engine (Ravi Shastri & Harsha Bhogle Persona Tuning)
+   */
+  function speakCommentaryPhrase(text, persona = activePersona) {
+    if (!('speechSynthesis' in window)) return;
+    try {
+      window.speechSynthesis.cancel(); // Stop any pending speech
+
+      const utterance = new SpeechSynthesisUtterance(text);
+      const voices = window.speechSynthesis.getVoices() || [];
+
+      if (persona === 'shastri') {
+        // Deep, booming, commanding Ravi Shastri cadence
+        utterance.pitch = 0.88;
+        utterance.rate = 1.14;
+        utterance.volume = 1.0;
+        const voice = voices.find(v => /male|daniel|oliver|rishi|aaron|david/i.test(v.name) && /en/i.test(v.lang)) ||
+                      voices.find(v => /en-GB|en-IN|en-US/i.test(v.lang));
+        if (voice) utterance.voice = voice;
+      } else {
+        // Articulate, cultured, poetic Harsha Bhogle cadence
+        utterance.pitch = 1.05;
+        utterance.rate = 1.0;
+        utterance.volume = 1.0;
+        const voice = voices.find(v => /en-IN|rishi|veena|samantha|george|alex/i.test(v.name) && /en/i.test(v.lang)) ||
+                      voices.find(v => /en-IN|en-GB|en-US/i.test(v.lang));
+        if (voice) utterance.voice = voice;
+      }
+
+      window.speechSynthesis.speak(utterance);
+    } catch (err) {
+      console.warn('Speech synthesis note:', err);
+    }
+  }
+
+  /**
+   * 🎙️ Real Commentator Broadcast Soundboard Audio Engine
    */
   function playRealCommentatorAudio(shotKey, persona = activePersona) {
     if (!isAiEnabled) return;
+    unlockAudioEngine();
 
     const audioMap = REAL_COMMENTATOR_AUDIO_MAP[persona] || REAL_COMMENTATOR_AUDIO_MAP.shastri;
     const audioSrc = audioMap[shotKey] || '/audio/commentary/shastri_four_covers.wav';
@@ -140,11 +212,15 @@
         activeAudioPlayer.pause();
         activeAudioPlayer.currentTime = 0;
       }
-      activeAudioPlayer = new Audio(audioSrc);
+      activeAudioPlayer = PRELOADED_AUDIO[audioSrc] || new Audio(audioSrc);
       activeAudioPlayer.volume = 1.0;
-      activeAudioPlayer.play().catch((err) => {
-        console.warn('Real commentator audio autoplay note:', err.message);
-      });
+      activeAudioPlayer.currentTime = 0;
+      const playPromise = activeAudioPlayer.play();
+      if (playPromise !== undefined) {
+        playPromise.catch((err) => {
+          console.warn('Audio playback note:', err.message);
+        });
+      }
     } catch (e) {
       console.warn('Audio playback error:', e);
     }
@@ -154,13 +230,9 @@
    * 🏟️ Procedural Stadium Crowd Roar Synthesizer (Web Audio API)
    */
   function playStadiumCrowdRoar(intensity = 'medium') {
+    unlockAudioEngine();
     try {
-      if (!audioContext) {
-        const AudioCtx = window.AudioContext || window.webkitAudioContext;
-        if (AudioCtx) audioContext = new AudioCtx();
-      }
       if (!audioContext) return;
-      if (audioContext.state === 'suspended') audioContext.resume();
 
       const duration = intensity === 'massive' ? 3.5 : intensity === 'high' ? 2.5 : 1.5;
       const bufferSize = audioContext.sampleRate * duration;
@@ -203,28 +275,45 @@
   function updateTickerUI(persona, text) {
     const tickerName = document.getElementById('ai-ticker-name');
     const tickerText = document.getElementById('ai-ticker-text');
+    const commentatorLabel = persona === 'shastri' ? '⚡ Ravi Shastri' : '🏏 Harsha Bhogle';
     if (tickerName) {
-      tickerName.textContent = persona === 'shastri' ? '🎙️ RAVI SHASTRI (REAL BROADCAST)' : '🎙️ HARSHA BHOGLE (REAL BROADCAST)';
+      tickerName.textContent = persona === 'shastri' ? '🎙️ RAVI SHASTRI (LIVE ON AIR)' : '🎙️ HARSHA BHOGLE (LIVE ON AIR)';
     }
     if (tickerText) {
       tickerText.textContent = `"${text}"`;
+    }
+    if (typeof window.toast === 'function') {
+      window.toast(`🎙️ [${commentatorLabel}]: "${text}"`);
     }
   }
 
   /**
    * Generates commentary for a specific stroke
    */
-  function triggerShotCommentary(shotKey, runValue = 4) {
-    const personaPool = COMMENTARY_ARCHIVE[activePersona] || COMMENTARY_ARCHIVE.shastri;
+  function triggerShotCommentary(shotKey, runValue = 4, explicitPersona = null) {
+    const persona = explicitPersona || activePersona;
+    const personaPool = COMMENTARY_ARCHIVE[persona] || COMMENTARY_ARCHIVE.shastri;
     const phrases = personaPool[shotKey] || personaPool.COVER_DRIVE;
     const randomPhrase = phrases[Math.floor(Math.random() * phrases.length)];
 
     const intensity = runValue >= 6 ? 'massive' : runValue >= 4 ? 'high' : 'medium';
     
-    // Play real broadcast audio recording + stadium crowd roar
-    playRealCommentatorAudio(shotKey, activePersona);
+    // 1. Play real stadium sound effect cue
+    playRealCommentatorAudio(shotKey, persona);
+    // 2. Synthesize crowd roar
     playStadiumCrowdRoar(intensity);
-    updateTickerUI(activePersona, randomPhrase);
+    // 3. Speak the commentator sentence with tailored voice cadence
+    speakCommentaryPhrase(randomPhrase, persona);
+    // 4. Update HUD and Toast
+    updateTickerUI(persona, randomPhrase);
+
+    // If auto-sync is enabled and socket is live, dispatch scoring
+    if (isAutoScoreSync && window.currentRoomCode) {
+      autoSyncScore(shotKey, runValue);
+    }
+
+    return randomPhrase;
+  }
 
     // If auto-sync is enabled and socket is live, dispatch scoring
     if (isAutoScoreSync && window.currentRoomCode) {
@@ -585,9 +674,17 @@
     document.getElementById('ai-btn-bhogle').onclick = () => setPersona('bhogle');
     document.getElementById('ai-btn-switch-cam').onclick = switchCamera;
 
-    document.getElementById('ai-btn-test-six').onclick = () => triggerShotCommentary('PULL_SHOT', 6);
-    document.getElementById('ai-btn-test-four').onclick = () => triggerShotCommentary('COVER_DRIVE', 4);
-    document.getElementById('ai-btn-test-wicket').onclick = () => triggerShotCommentary('WICKET', 0);
+    document.getElementById('ai-btn-test-six').onclick = () => {
+      setPersona('shastri');
+      triggerShotCommentary('PULL_SHOT', 6, 'shastri');
+    };
+    document.getElementById('ai-btn-test-four').onclick = () => {
+      setPersona('bhogle');
+      triggerShotCommentary('COVER_DRIVE', 4, 'bhogle');
+    };
+    document.getElementById('ai-btn-test-wicket').onclick = () => {
+      triggerShotCommentary('WICKET', 0, activePersona);
+    };
 
     document.getElementById('ai-master-toggle').onchange = (e) => toggleAiCommentary(e.target.checked);
     document.getElementById('ai-sync-toggle').onchange = (e) => toggleAutoSync(e.target.checked);

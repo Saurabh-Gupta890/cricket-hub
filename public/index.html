@@ -62,6 +62,11 @@
         <div class="logo-icon">🏏</div>
         <h1 class="logo-text">CricketHub</h1>
         <p class="logo-tagline">Plan · Vote · Play · Score</p>
+        <div style="margin-top: 0.75rem;">
+          <button type="button" class="btn btn-secondary btn-sm" id="btn-auth-ai-studio" onclick="openAiStudio()" title="Try Live AI Commentator Studio">
+            🎙️ <span class="btn-hdr-text">Live Commentator Studio (Shastri & Bhogle)</span>
+          </button>
+        </div>
       </div>
 
       <!-- Auth Mode Switcher (Log In vs Sign Up) -->
@@ -169,6 +174,7 @@
     <header class="app-header">
       <span class="header-logo">🏏 CricketHub</span>
       <div class="header-right">
+        <button class="btn btn-secondary btn-sm" id="btn-home-ai-studio" onclick="openAiStudio()" title="Open Live Commentator Studio">🎙️ <span class="btn-hdr-text">AI Studio</span></button>
         <button class="btn btn-ghost btn-sm" id="btn-home-players-dir">👥 Players</button>
         <div class="user-info-header" id="home-user-info" title="View My Profile" style="cursor:pointer"></div>
         <button class="btn btn-ghost btn-sm" id="btn-logout">Logout</button>

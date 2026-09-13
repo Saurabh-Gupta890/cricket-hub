@@ -1494,9 +1494,63 @@
     </div>
   </div>
 
+  <!-- ════════════════════════════════════════════
+     MODAL: PRIVACY POLICY (DPDP ACT 2023 & GDPR)
+  ════════════════════════════════════════════ -->
+  <div class="modal-overlay" id="privacy-policy-modal" style="display:none;z-index:2400">
+    <div class="modal glass-card privacy-modal" style="max-width:640px;width:95%;padding:1.35rem;display:flex;flex-direction:column">
+      <div class="modal-header" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.75rem">
+        <div style="display:flex;align-items:center;gap:0.5rem">
+          <span style="font-size:1.4rem">🛡️</span>
+          <div>
+            <h3 style="margin:0;font-size:1.15rem;font-weight:800;color:var(--text-1)">Privacy Policy & Data Protection</h3>
+            <p style="margin:0;font-size:0.75rem;color:var(--text-3)">Digital Personal Data Protection (DPDP) Act 2023 & GDPR</p>
+          </div>
+        </div>
+        <button class="btn btn-ghost btn-sm modal-close-btn" onclick="closePrivacyPolicyModal()" aria-label="Close modal">✕</button>
+      </div>
+
+      <div class="privacy-policy-body">
+        <h4>1. Notice by Data Fiduciary (DPDP Act 2023 §5)</h4>
+        <p>CricketHub collects and processes specified digital personal data solely to provide real-time cricket match coordination, squad availability polling (RSVP), and ball-by-ball scorekeeping services.</p>
+
+        <h4>2. Personal Data We Collect</h4>
+        <ul>
+          <li><strong>Phone Number:</strong> Used solely for passwordless OTP authentication, session security, and squad match alerts.</li>
+          <li><strong>Player Profile:</strong> Display name, profile avatar/emoji, player role, and team color.</li>
+          <li><strong>Match & Score Records:</strong> Ball-by-ball runs, wickets, overs, match history, and squad attendance.</li>
+        </ul>
+
+        <h4>3. Purpose Limitation (§4 & §6)</h4>
+        <p>Your data is processed strictly for the specified purpose of cricket match planning and scorekeeping. We do not sell, rent, or monetize personal data with third-party advertisers.</p>
+
+        <h4>4. Your Rights as a Data Principal (§11–13)</h4>
+        <ul>
+          <li><strong>Right to Access:</strong> View all active rooms, squad memberships, and score records at any time.</li>
+          <li><strong>Right to Correction & Erasure:</strong> Edit your player profile or request complete account erasure.</li>
+          <li><strong>Right to Withdraw Consent:</strong> You may modify or withdraw consent at any time via the persistent <strong>Cookie Settings</strong> button.</li>
+          <li><strong>Right of Grievance Redressal:</strong> Contact our Data Protection Officer for prompt resolution of any privacy concerns.</li>
+        </ul>
+
+        <h4>5. Cookies & Local Storage</h4>
+        <p>Strictly essential cookies and storage keys are utilized for session tokens and real-time WebSocket room connections. Analytics and marketing cookies are purely opt-in and require affirmative consent.</p>
+      </div>
+
+      <div style="display:flex;justify-content:flex-end;gap:0.5rem;margin-top:1rem">
+        <button class="btn btn-secondary btn-sm" onclick="openCookieSettings(); closePrivacyPolicyModal();">
+          🍪 Manage Cookie Preferences
+        </button>
+        <button class="btn btn-primary btn-sm" onclick="closePrivacyPolicyModal()">
+          I Understand
+        </button>
+      </div>
+    </div>
+  </div>
+
   <div id="toast" class="toast"></div>
 
   <script src="/socket.io/socket.io.js"></script>
+  <script src="cookie-consent.js?v=3.0.0"></script>
   <script src="graphify.js?v=3.0.0"></script>
   <script src="app.js?v=3.0.0"></script>
 </body>

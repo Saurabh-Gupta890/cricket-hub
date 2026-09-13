@@ -8,6 +8,28 @@ const fs = require('fs');
 const compression = require('compression');
 const webpush = require('web-push');
 
+const {
+  getClientIp,
+  checkAuthRateLimit,
+  recordAuthFailure,
+  recordAuthSuccess,
+  publicRateLimiter,
+  authedRateLimiter,
+  logErrorSafely,
+  globalErrorHandler
+} = require('./src/utils/security');
+
+const {
+  validatePhone,
+  validateOtp,
+  validateRoomCode,
+  validateGroupCode,
+  validateText,
+  validateInteger,
+  validateEnum,
+  REGEX_SAFE_NAME
+} = require('./src/utils/validator');
+
 const app = express();
 const server = http.createServer(app);
 
@@ -690,24 +712,19 @@ loadUsers();
 loadRooms();
 loadGroups();
 
-// ── Web Push Endpoints ────────────────────────
-app.get('/api/push/vapid-public-key', (req, res) => {
+app.get('/api/push/vapid-public-key', publicRateLimiter, (req, res) => {
   res.json({ publicKey: vapidKeys.publicKey });
 });
 
-app.post('/api/push/subscribe', (req, res) => {
-  const { phone, subscription } = req.body;
+app.post('/api/push/subscribe', authedRateLimiter, (req, res) => {
+  const { phone, subscription } = req.body || {};
   if (!phone || !subscription || !subscription.endpoint || typeof subscription.endpoint !== 'string') {
     return res.status(400).json({ error: 'Valid phone and push subscription required' });
   }
 
-  const cleaned = phone.replace(/\D/g, '');
-  if (cleaned.length < 8) return res.status(400).json({ error: 'Invalid phone number' });
-
-  // Rate limit push subscriptions per phone
-  if (isRateLimited(`push_sub:${cleaned}`, 10, 60 * 1000)) {
-    return res.status(429).json({ error: 'Too many subscription requests' });
-  }
+  const phoneCheck = validatePhone(phone);
+  if (!phoneCheck.valid) return res.status(400).json({ error: phoneCheck.error });
+  const cleaned = phoneCheck.value;
 
   // Basic endpoint sanity check
   if (!isValidHttpUrl(subscription.endpoint)) {
@@ -737,7 +754,7 @@ app.post('/api/push/subscribe', (req, res) => {
   res.json({ success: true });
 });
 
-app.post('/api/push/broadcast', async (req, res) => {
+app.post('/api/push/broadcast', authedRateLimiter, async (req, res) => {
   try {
     const { message, author, token, targetPhone, roomCode, matchName } = req.body || {};
 
@@ -839,7 +856,7 @@ app.post('/api/push/broadcast', async (req, res) => {
   }
 });
 
-app.get('/api/push/subscriptions-count', (req, res) => {
+app.get('/api/push/subscriptions-count', publicRateLimiter, (req, res) => {
   let totalSubs = 0;
   for (const subs of pushSubscriptions.values()) totalSubs += subs.length;
   res.json({ users: pushSubscriptions.size, totalSubscriptions: totalSubs });
@@ -849,7 +866,7 @@ app.get('/api/push/subscriptions-count', (req, res) => {
 //  CRICKET GROUPS REST ENDPOINTS
 // ═══════════════════════════════════════════════
 
-app.get('/api/groups', (req, res) => {
+app.get('/api/groups', authedRateLimiter, (req, res) => {
   const token = req.headers.authorization?.replace('Bearer ', '') || req.query.token;
   let phone = req.query.phone;
   if (token && tokenIndex.has(token)) {
@@ -862,14 +879,14 @@ app.get('/api/groups', (req, res) => {
   res.json({ groups: userGroups });
 });
 
-app.get('/api/groups/:id', (req, res) => {
+app.get('/api/groups/:id', authedRateLimiter, (req, res) => {
   const group = groups.get(req.params.id);
   if (!group) return res.status(404).json({ error: 'Group not found' });
   res.json({ group });
 });
 
-app.post('/api/groups/create', (req, res) => {
-  const { name, description, creatorPhone, creatorName, token } = req.body;
+app.post('/api/groups/create', authedRateLimiter, (req, res) => {
+  const { name, description, creatorPhone, creatorName, token } = req.body || {};
   let phone = creatorPhone;
   let uName = creatorName;
   if (token && tokenIndex.has(token)) {
@@ -878,7 +895,9 @@ app.post('/api/groups/create', (req, res) => {
     if (u?.name) uName = u.name;
   }
   if (!phone) return res.status(400).json({ error: 'Creator phone is required' });
-  if (!name || !name.trim()) return res.status(400).json({ error: 'Group name is required' });
+  
+  const nameCheck = validateText(name, { min: 1, max: 40, field: 'Squad Name', pattern: REGEX_SAFE_NAME });
+  if (!nameCheck.valid) return res.status(400).json({ error: nameCheck.error });
 
   const cleanPhone = String(phone).replace(/\D/g, '');
   const id = 'grp_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
@@ -889,7 +908,7 @@ app.post('/api/groups/create', (req, res) => {
   const group = {
     id,
     code,
-    name: sanitizeText(name, 40),
+    name: nameCheck.value,
     description: sanitizeText(description || '', 120),
     hostPhone: cleanPhone,
     hostName: sanitizeText(creatorUser.name || uName || 'Captain', 30),
@@ -912,8 +931,8 @@ app.post('/api/groups/create', (req, res) => {
   res.json({ success: true, group });
 });
 
-app.post('/api/groups/join', (req, res) => {
-  const { code, phone, name, token } = req.body;
+app.post('/api/groups/join', authedRateLimiter, (req, res) => {
+  const { code, phone, name, token } = req.body || {};
   let userPhone = phone;
   let userName = name;
   if (token && tokenIndex.has(token)) {
@@ -924,7 +943,9 @@ app.post('/api/groups/join', (req, res) => {
   if (!userPhone) return res.status(400).json({ error: 'Phone number is required' });
   if (!code) return res.status(400).json({ error: 'Group invite code is required' });
 
-  const cleanCode = String(code).trim().toUpperCase();
+  const codeCheck = validateGroupCode(code);
+  if (!codeCheck.valid) return res.status(400).json({ error: codeCheck.error });
+  const cleanCode = codeCheck.value;
   const cleanPhone = String(userPhone).replace(/\D/g, '');
 
   let targetGroup = null;
@@ -1142,141 +1163,207 @@ function findPhoneByToken(token) {
   return u?.phone || null;
 }
 
-// Request OTP for Login or Signup
-app.post('/api/auth/request-otp', (req, res) => {
-  const { phone, name, mode } = req.body;
-  if (!phone) return res.status(400).json({ error: 'Phone number is required' });
+// Request OTP for Login or Signup (Strict Validation + Exponential Backoff Rate Limiting)
+app.post('/api/auth/request-otp', (req, res, next) => {
+  try {
+    const { phone, name, mode } = req.body || {};
 
-  const cleaned = phone.replace(/\D/g, '');
-  if (cleaned.length < 8) return res.status(400).json({ error: 'Please enter a valid 10-digit phone number' });
-
-  const existingUser = findUserByPhone(cleaned);
-
-  // If in login mode and account does not exist
-  if (mode === 'login' && !existingUser) {
-    return res.status(404).json({
-      error: 'No registered player found with this number. Please switch to Sign Up to create your account!',
-      notFound: true
-    });
-  }
-
-  // If in signup mode and user already exists
-  if (mode === 'signup' && existingUser) {
-    return res.status(409).json({
-      error: `An account already exists for this number (${existingUser.name || 'Player'}). Please log in instead!`,
-      alreadyExists: true,
-      existingName: existingUser.name
-    });
-  }
-
-  // If in signup mode, player name is required for new registration
-  const sanitizedName = sanitizeText(name || '', 30);
-  if (mode === 'signup' && !sanitizedName) {
-    return res.status(400).json({ error: 'Player Name is required to Sign Up' });
-  }
-
-  const finalName = sanitizedName || (existingUser && existingUser.name) || 'Player';
-
-  // Cryptographically secure random 6-digit OTP
-  const otp = crypto.randomInt(100000, 1000000).toString();
-  const expiresAt = Date.now() + OTP_TTL;
-
-  // Clear any existing OTP records for this phone number and variants
-  for (const [k, _] of Array.from(otpStore.entries())) {
-    if (phonesMatch(k, cleaned)) {
-      otpStore.delete(k);
+    // 1. Strict Phone Validation (reject on mismatch)
+    const phoneCheck = validatePhone(phone);
+    if (!phoneCheck.valid) {
+      return res.status(400).json({ success: false, error: phoneCheck.error });
     }
+    const cleaned = phoneCheck.value;
+
+    // 2. Multi-tier Rate Limiting with Exponential Backoff
+    const rateCheck = checkAuthRateLimit(req, cleaned);
+    if (rateCheck.limited) {
+      return res.status(rateCheck.statusCode || 429).json({
+        success: false,
+        error: rateCheck.error,
+        retryAfterSec: rateCheck.retryAfterSec
+      });
+    }
+
+    const existingUser = findUserByPhone(cleaned);
+
+    // If in login mode and account does not exist
+    if (mode === 'login' && !existingUser) {
+      recordAuthFailure(req, cleaned);
+      return res.status(404).json({
+        success: false,
+        error: 'No registered player found with this number. Please switch to Sign Up to create your account!',
+        notFound: true
+      });
+    }
+
+    // If in signup mode and user already exists
+    if (mode === 'signup' && existingUser) {
+      recordAuthFailure(req, cleaned);
+      return res.status(409).json({
+        success: false,
+        error: `An account already exists for this number (${existingUser.name || 'Player'}). Please log in instead!`,
+        alreadyExists: true,
+        existingName: existingUser.name
+      });
+    }
+
+    // 3. Strict Name Validation
+    const nameCheck = validateText(name, { min: 1, max: 30, field: 'Player Name', required: mode === 'signup', pattern: REGEX_SAFE_NAME });
+    if (!nameCheck.valid && mode === 'signup') {
+      return res.status(400).json({ success: false, error: nameCheck.error });
+    }
+
+    const finalName = nameCheck.value || (existingUser && existingUser.name) || 'Player';
+
+    // Cryptographically secure random 6-digit OTP
+    const otp = crypto.randomInt(100000, 1000000).toString();
+    const expiresAt = Date.now() + OTP_TTL;
+
+    // Clear any existing OTP records for this phone number and variants
+    for (const [k, _] of Array.from(otpStore.entries())) {
+      if (phonesMatch(k, cleaned)) {
+        otpStore.delete(k);
+      }
+    }
+
+    otpStore.set(cleaned, {
+      otp,
+      expiresAt,
+      name: finalName,
+      attempts: 0,
+      isNew: !existingUser,
+      existingKey: existingUser?.phone
+    });
+
+    console.log(`\n🔐 OTP for +${cleaned} (${finalName}) [${mode || 'auth'}]: [ ${otp} ]  — expires in 5 min\n`);
+
+    res.json({
+      success: true,
+      devOtp: otp,
+      isNew: !existingUser,
+      name: finalName,
+      maskedPhone: maskPhone(cleaned)
+    });
+  } catch (err) {
+    next(err);
   }
-
-  otpStore.set(cleaned, {
-    otp,
-    expiresAt,
-    name: finalName,
-    attempts: 0,
-    isNew: !existingUser,
-    existingKey: existingUser?.phone
-  });
-
-  console.log(`\n🔐 OTP for +${cleaned} (${finalName}) [${mode || 'auth'}]: [ ${otp} ]  — expires in 5 min\n`);
-
-  res.json({
-    success: true,
-    devOtp: otp,
-    isNew: !existingUser,
-    name: finalName,
-    maskedPhone: maskPhone(cleaned)
-  });
 });
 
-// Verify OTP
-app.post('/api/auth/verify-otp', (req, res) => {
-  const { phone, otp } = req.body;
-  if (!phone || !otp) return res.status(400).json({ error: 'Phone and OTP required' });
+// Verify OTP (Strict Validation + Attempt Tracking + Backoff)
+app.post('/api/auth/verify-otp', (req, res, next) => {
+  try {
+    const { phone, otp } = req.body || {};
 
-  const cleaned = phone.replace(/\D/g, '');
-  const cleanOtp = String(otp).trim().replace(/\D/g, '').slice(0, 6);
-  const otpMatch = findOtpRecord(phone);
-
-  if (!otpMatch) return res.status(400).json({ error: 'No active OTP requested for this number. Please tap "Resend OTP" or "Send OTP".' });
-  
-  const { key: recordKey, record } = otpMatch;
-  if (Date.now() > record.expiresAt) {
-    otpStore.delete(recordKey);
-    return res.status(400).json({ error: 'OTP has expired. Please click Resend OTP for a new code.', expired: true });
-  }
-
-  if (record.otp !== cleanOtp) {
-    return res.status(400).json({
-      error: 'Incorrect OTP code. Please check the code or tap Resend OTP.'
-    });
-  }
-
-  // OTP verified successfully - purge all matching OTP keys
-  for (const [k, _] of Array.from(otpStore.entries())) {
-    if (phonesMatch(k, cleaned) || k === recordKey) {
-      otpStore.delete(k);
+    // 1. Strict Phone & OTP Schema Validation
+    const phoneCheck = validatePhone(phone);
+    if (!phoneCheck.valid) {
+      return res.status(400).json({ success: false, error: phoneCheck.error });
     }
-  }
+    const cleaned = phoneCheck.value;
 
-  // Create or update user
-  let user = findUserByPhone(cleaned) || findUserByPhone(recordKey);
-  const userKey = user?.phone || cleaned;
-  const token = crypto.randomBytes(32).toString('hex');
+    const otpCheck = validateOtp(otp);
+    if (!otpCheck.valid) {
+      return res.status(400).json({ success: false, error: otpCheck.error });
+    }
+    const cleanOtp = otpCheck.value;
 
-  if (user) {
-    if (tokenIndex.has(user.token)) tokenIndex.delete(user.token);
-    if (record.name && record.name !== 'Player') user.name = record.name;
-    user.token = token;
-    user.createdAt = user.createdAt || Date.now();
-  } else {
-    user = {
-      phone: cleaned,
-      name: record.name || 'Player',
+    // 2. Check Exponential Backoff
+    const rateCheck = checkAuthRateLimit(req, cleaned);
+    if (rateCheck.limited) {
+      return res.status(rateCheck.statusCode || 429).json({
+        success: false,
+        error: rateCheck.error,
+        retryAfterSec: rateCheck.retryAfterSec
+      });
+    }
+
+    const otpMatch = findOtpRecord(cleaned);
+    if (!otpMatch) {
+      recordAuthFailure(req, cleaned);
+      return res.status(400).json({
+        success: false,
+        error: 'No active OTP requested for this number. Please tap "Resend OTP" or "Send OTP".'
+      });
+    }
+
+    const { key: recordKey, record } = otpMatch;
+    if (Date.now() > record.expiresAt) {
+      otpStore.delete(recordKey);
+      recordAuthFailure(req, cleaned);
+      return res.status(400).json({
+        success: false,
+        error: 'OTP has expired. Please click Resend OTP for a new code.',
+        expired: true
+      });
+    }
+
+    if (record.otp !== cleanOtp) {
+      record.attempts = (record.attempts || 0) + 1;
+      recordAuthFailure(req, cleaned);
+      if (record.attempts >= 4) {
+        otpStore.delete(recordKey);
+        return res.status(400).json({
+          success: false,
+          error: 'Maximum OTP verification attempts exceeded. Please request a new OTP.'
+        });
+      }
+      return res.status(400).json({
+        success: false,
+        error: 'Incorrect OTP code. Please check the code or tap Resend OTP.'
+      });
+    }
+
+    // OTP verified successfully - clear backoff tracking and purge OTP records
+    recordAuthSuccess(req, cleaned);
+    for (const [k, _] of Array.from(otpStore.entries())) {
+      if (phonesMatch(k, cleaned) || k === recordKey) {
+        otpStore.delete(k);
+      }
+    }
+
+    // Create or update user
+    let user = findUserByPhone(cleaned) || findUserByPhone(recordKey);
+    const userKey = user?.phone || cleaned;
+    const token = crypto.randomBytes(32).toString('hex');
+
+    if (user) {
+      if (tokenIndex.has(user.token)) tokenIndex.delete(user.token);
+      if (record.name && record.name !== 'Player') user.name = record.name;
+      user.token = token;
+      user.createdAt = user.createdAt || Date.now();
+    } else {
+      user = {
+        phone: cleaned,
+        name: record.name || 'Player',
+        token,
+        avatar: null,
+        createdAt: Date.now(),
+        color: COLORS[userStore.size % COLORS.length]
+      };
+    }
+
+    userStore.set(cleaned, user);
+    tokenIndex.set(token, cleaned);
+    saveUsers();
+
+    // Set persistent cookie for iOS Safari & PWA standalone sync
+    res.setHeader('Set-Cookie', `crickethub_token=${token}; Path=/; Max-Age=${365 * 24 * 3600}; SameSite=Lax`);
+
+    res.json({
+      success: true,
       token,
-      avatar: null,
-      createdAt: Date.now(),
-      color: COLORS[userStore.size % COLORS.length]
-    };
+      user: {
+        phone: cleaned,
+        name: user.name,
+        color: user.color,
+        avatar: user.avatar,
+        createdAt: user.createdAt
+      }
+    });
+  } catch (err) {
+    next(err);
   }
-
-  userStore.set(cleaned, user);
-  tokenIndex.set(token, cleaned);
-  saveUsers();
-
-  // Set persistent cookie for iOS Safari & PWA standalone sync
-  res.setHeader('Set-Cookie', `crickethub_token=${token}; Path=/; Max-Age=${365 * 24 * 3600}; SameSite=Lax`);
-
-  res.json({
-    success: true,
-    token,
-    user: {
-      phone: cleaned,
-      name: user.name,
-      color: user.color,
-      avatar: user.avatar,
-      createdAt: user.createdAt
-    }
-  });
 });
 
 // Validate session token
@@ -3834,6 +3921,11 @@ io.on('connection', (socket) => {
     io.to(currentRoom).emit('state:update', getRoomPublicState(room));
   });
 });
+
+// ═══════════════════════════════════════════════
+//  ZERO-INFORMATION-LEAKAGE GLOBAL ERROR HANDLER
+// ═══════════════════════════════════════════════
+app.use(globalErrorHandler);
 
 const PORT = process.env.PORT || 3000;
 server.on('error', (err) => {

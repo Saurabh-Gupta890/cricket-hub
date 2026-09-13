@@ -4,19 +4,27 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport"
-    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover" />
   <meta name="theme-color" content="#080c14" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <title>CricketHub — Plan, Play & Score</title>
+  <title>CricketHub — Real-Time Cricket Planner, Squad Intelligence & Live Scorekeeper</title>
   <meta name="description"
-    content="Real-time cricket match planner, availability voting, and score tracker. Login with phone, vote on availability, and track every ball live." />
+    content="CricketHub: Real-time cricket match planner, squad availability voting, Graphify team synergy network, and ball-by-ball live scorekeeper." />
+  <meta name="keywords" content="cricket, match planner, live cricket score, cricket squad, availability vote, cricket scorekeeper" />
+  <meta property="og:title" content="CricketHub — Plan, Play & Score Real-Time" />
+  <meta property="og:description" content="Vote on squad availability, plan matches, and score ball-by-ball live with Graphify synergy analytics." />
+  <meta property="og:type" content="website" />
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="CricketHub — Real-Time Cricket Planner & Scorekeeper" />
+  <meta name="twitter:description" content="Plan, vote on availability, and score your cricket matches live." />
   <link rel="manifest" href="/manifest.json" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link
-    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Rajdhani:wght@400;500;600;700&display=swap"
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Outfit:wght@400;500;600;700;800&family=Rajdhani:wght@400;500;600;700&display=swap"
     rel="stylesheet" />
-  <link rel="stylesheet" href="style.css?v=2.9.22" />
+  <link rel="stylesheet" href="style.css?v=3.0.0" />
 </head>
 
 <body>
@@ -485,7 +493,12 @@
       <main class="planning-main">
         <div class="planning-main-header">
           <h2 class="planning-section-title">👥 Squad Availability</h2>
-          <span class="total-badge" id="planning-total-badge">0 members</span>
+          <div style="display:flex;align-items:center;gap:0.5rem">
+            <button class="btn btn-secondary btn-xs btn-graphify-trigger" onclick="openGraphifyModal()" title="View Graphify Squad Network & Context7 Intelligence" aria-label="Open Squad Graph">
+              ⚡ Graphify & Synergy
+            </button>
+            <span class="total-badge" id="planning-total-badge">0 members</span>
+          </div>
         </div>
 
         <div class="rsvp-grid" id="rsvp-grid">
@@ -1439,10 +1452,53 @@
     </div>
   </div>
 
+  <!-- ════════════════════════════════════════════
+     MODAL: GRAPHIFY & CONTEXT7 SQUAD INTELLIGENCE
+  ════════════════════════════════════════════ -->
+  <div class="modal-overlay" id="graphify-modal" style="display:none;z-index:2200">
+    <div class="modal glass-card graphify-modal" style="max-width:680px;width:95%;padding:1.25rem;max-height:92vh;display:flex;flex-direction:column;overflow-y:auto">
+      <div class="modal-header" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.75rem">
+        <div style="display:flex;align-items:center;gap:0.5rem">
+          <span style="font-size:1.4rem">⚡</span>
+          <div>
+            <h3 style="margin:0;font-size:1.15rem;font-weight:800;color:var(--text-1)">Graphify Squad Network</h3>
+            <p style="margin:0;font-size:0.75rem;color:var(--text-3)">Context7 Interactive Synergy & Team Intelligence</p>
+          </div>
+        </div>
+        <button class="btn btn-ghost btn-sm modal-close-btn" onclick="closeGraphifyModal()" aria-label="Close modal">✕</button>
+      </div>
+
+      <!-- Context7 Intelligence HUD -->
+      <div id="context7-hud" style="margin-bottom:0.75rem"></div>
+
+      <!-- Role Filters -->
+      <div class="graph-filter-bar" style="display:flex;gap:0.35rem;overflow-x:auto;padding-bottom:0.4rem;margin-bottom:0.5rem">
+        <button class="graph-filter-btn active" data-filter="all" onclick="setGraphFilter('all')">All</button>
+        <button class="graph-filter-btn" data-filter="captain" onclick="setGraphFilter('captain')">👑 Captain</button>
+        <button class="graph-filter-btn" data-filter="online" onclick="setGraphFilter('online')">🟢 Live</button>
+        <button class="graph-filter-btn" data-filter="allrounder" onclick="setGraphFilter('allrounder')">⚡ All-Rounder</button>
+        <button class="graph-filter-btn" data-filter="batter" onclick="setGraphFilter('batter')">🏏 Batter</button>
+        <button class="graph-filter-btn" data-filter="bowler" onclick="setGraphFilter('bowler')">🎯 Bowler</button>
+      </div>
+
+      <!-- Interactive Canvas Area -->
+      <div class="graph-canvas-container" style="position:relative;width:100%;height:300px;background:#0d1117;border-radius:12px;border:1px solid rgba(255,255,255,0.08);overflow:hidden">
+        <canvas id="graphify-canvas" style="width:100%;height:100%;display:block"></canvas>
+        <div class="graph-hint" style="position:absolute;bottom:8px;left:10px;font-size:0.7rem;color:var(--text-3);pointer-events:none">
+          💡 Drag players to reposition · Tap node for synergy details
+        </div>
+      </div>
+
+      <!-- Selected Node Inspector -->
+      <div id="graphify-node-details" style="display:none;margin-top:0.75rem"></div>
+    </div>
+  </div>
+
   <div id="toast" class="toast"></div>
 
   <script src="/socket.io/socket.io.js"></script>
-  <script src="app.js?v=2.9.22"></script>
+  <script src="graphify.js?v=3.0.0"></script>
+  <script src="app.js?v=3.0.0"></script>
 </body>
 
 </html>

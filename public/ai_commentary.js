@@ -210,29 +210,46 @@
     if (badge) badge.textContent = statusText;
   }
 
+  // Pre-populate browser voices
+  let cachedVoices = [];
+  function populateVoices() {
+    if ('speechSynthesis' in window) {
+      cachedVoices = window.speechSynthesis.getVoices() || [];
+    }
+  }
+  populateVoices();
+  if ('speechSynthesis' in window) {
+    window.speechSynthesis.onvoiceschanged = populateVoices;
+  }
+
   /**
    * 🗣️ Spoken Voice Synthesis Engine (Ravi Shastri & Harsha Bhogle Persona Tuning)
    */
   function speakCommentaryPhrase(text, persona = activePersona) {
     if (!('speechSynthesis' in window)) return;
     try {
-      window.speechSynthesis.cancel();
+      if (window.speechSynthesis.paused) {
+        window.speechSynthesis.resume();
+      }
 
       const utterance = new SpeechSynthesisUtterance(text);
-      const voices = window.speechSynthesis.getVoices() || [];
+      utterance.lang = 'en-US';
+      utterance.volume = 1.0;
+
+      const voices = cachedVoices.length ? cachedVoices : (window.speechSynthesis.getVoices() || []);
 
       if (persona === 'shastri') {
-        utterance.pitch = 0.88;
-        utterance.rate = 1.14;
-        utterance.volume = 1.0;
-        const voice = voices.find(v => /male|daniel|oliver|rishi|aaron|david/i.test(v.name) && /en/i.test(v.lang)) ||
+        // Booming energetic Ravi Shastri cadence
+        utterance.pitch = 0.85;
+        utterance.rate = 1.15;
+        const voice = voices.find(v => /male|daniel|oliver|rishi|aaron|david|alex|george/i.test(v.name) && /en/i.test(v.lang)) ||
                       voices.find(v => /en-GB|en-IN|en-US/i.test(v.lang));
         if (voice) utterance.voice = voice;
       } else {
-        utterance.pitch = 1.05;
+        // Articulate witty Harsha Bhogle cadence
+        utterance.pitch = 1.08;
         utterance.rate = 1.0;
-        utterance.volume = 1.0;
-        const voice = voices.find(v => /en-IN|rishi|veena|samantha|george|alex/i.test(v.name) && /en/i.test(v.lang)) ||
+        const voice = voices.find(v => /rishi|veena|samantha|victoria|karen|en-IN/i.test(v.name) && /en/i.test(v.lang)) ||
                       voices.find(v => /en-IN|en-GB|en-US/i.test(v.lang));
         if (voice) utterance.voice = voice;
       }
@@ -261,7 +278,7 @@
         activeAudioPlayer.currentTime = 0;
       }
       activeAudioPlayer = PRELOADED_AUDIO[audioSrc] || new Audio(audioSrc);
-      activeAudioPlayer.volume = 1.0;
+      activeAudioPlayer.volume = 0.8;
       activeAudioPlayer.currentTime = 0;
       const playPromise = activeAudioPlayer.play();
       if (playPromise !== undefined) {
@@ -271,51 +288,6 @@
       }
     } catch (e) {
       console.warn('Audio playback error:', e);
-    }
-  }
-
-  /**
-   * 🏟️ Procedural Stadium Crowd Roar Synthesizer (Web Audio API)
-   */
-  function playStadiumCrowdRoar(intensity = 'medium') {
-    unlockAudioEngine();
-    try {
-      if (!audioContext) return;
-
-      const duration = intensity === 'massive' ? 3.5 : intensity === 'high' ? 2.5 : 1.5;
-      const bufferSize = audioContext.sampleRate * duration;
-      const buffer = audioContext.createBuffer(1, bufferSize, audioContext.sampleRate);
-      const data = buffer.getChannelData(0);
-
-      let lastOut = 0.0;
-      for (let i = 0; i < bufferSize; i++) {
-        const white = Math.random() * 2 - 1;
-        data[i] = (lastOut + (0.02 * white)) / 1.02;
-        lastOut = data[i];
-        data[i] *= 3.5;
-      }
-
-      const noise = audioContext.createBufferSource();
-      noise.buffer = buffer;
-
-      const filter = audioContext.createBiquadFilter();
-      filter.type = 'lowpass';
-      filter.frequency.setValueAtTime(380, audioContext.currentTime);
-      filter.frequency.exponentialRampToValueAtTime(750, audioContext.currentTime + (duration * 0.4));
-      filter.frequency.exponentialRampToValueAtTime(280, audioContext.currentTime + duration);
-
-      const gain = audioContext.createGain();
-      gain.gain.setValueAtTime(0.01, audioContext.currentTime);
-      gain.gain.linearRampToValueAtTime(intensity === 'massive' ? 0.35 : 0.22, audioContext.currentTime + 0.3);
-      gain.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + duration);
-
-      noise.connect(filter);
-      filter.connect(gain);
-      gain.connect(audioContext.destination);
-
-      noise.start();
-    } catch (e) {
-      console.warn('Web Audio synthesis error:', e);
     }
   }
 
@@ -337,22 +309,23 @@
   /**
    * Generates commentary for a specific stroke
    */
-  async function triggerShotCommentary(shotKey, runValue = 4, explicitPersona = null) {
+  function triggerShotCommentary(shotKey, runValue = 4, explicitPersona = null) {
     const persona = explicitPersona || activePersona;
     const personaPool = COMMENTARY_ARCHIVE[persona] || COMMENTARY_ARCHIVE.shastri;
     const phrases = personaPool[shotKey] || personaPool.COVER_DRIVE;
     const randomPhrase = phrases[Math.floor(Math.random() * phrases.length)];
 
-    const intensity = runValue >= 6 ? 'massive' : runValue >= 4 ? 'high' : 'medium';
+    // 1. Speak immediately within user click gesture context (LOUD & CLEAR)
+    speakCommentaryPhrase(randomPhrase, persona);
 
-    // 1. Play real stadium sound effect cue
+    // 2. Play crisp willow bat crack cue
     playRealCommentatorAudio(shotKey, persona);
-    // 2. Synthesize crowd roar
-    playStadiumCrowdRoar(intensity);
-    // 3. Play ElevenLabs Neural Voice Cloning (with fallback to WebSpeech)
-    await playNeuralCommentaryVoice(randomPhrase, persona);
-    // 4. Update HUD and Toast
+
+    // 3. Update HUD and on-screen Toast
     updateTickerUI(persona, randomPhrase);
+
+    // 4. Try neural cloned voice in background if ElevenLabs key is connected
+    playNeuralCommentaryVoice(randomPhrase, persona);
 
     // If auto-sync is enabled and socket is live, dispatch scoring
     if (isAutoScoreSync && window.currentRoomCode) {

@@ -1,10 +1,11 @@
 /**
  * ═══════════════════════════════════════════════════════════════════
- *  CRICKETHUB AI COMPUTER VISION & LIVE COMMENTARY STUDIO ENGINE
+ *  CRICKETHUB AI COMPUTER VISION & LIVE COMMENTATOR STUDIO ENGINE
  * ═══════════════════════════════════════════════════════════════════
  * Real-time camera optical pose & motion tracking, exact cricket shot
- * classification, dual voice synthesis (Ravi Shastri & Harsha Bhogle),
- * procedural stadium cheer synthesizer, and automatic scorecard sync.
+ * classification, ElevenLabs Neural Voice Cloning (with zero-cost disk
+ * caching & WebSpeech fallback), procedural stadium cheer synthesizer,
+ * cyber HUD viewfinder, and automatic scorecard sync.
  */
 
 (function () {
@@ -18,9 +19,12 @@
   let videoStream = null;
   let currentCameraFacing = 'environment'; // 'user' or 'environment'
   let animationFrameId = null;
+  let simulationFrameId = null;
   let audioContext = null;
   let isProcessingStroke = false;
   let lastShotTimestamp = 0;
+  let activeNeuralAudio = null;
+  let isSimulatedMode = false;
 
   // Commentary Dictionaries with Authentic Signature Catchphrases
   const COMMENTARY_ARCHIVE = {
@@ -32,7 +36,7 @@
       ],
       PULL_SHOT: [
         "High, handsome, and into the crowd! That has been pulled with ferocious power for SIX!",
-        "That's gone miles! Picked the bones out of that short ball and sent it into the orbit!",
+        "That's gone miles! Picked the bones out of that short ball and sent it into orbit!",
         "Smoked into the stands! What a colossal pull shot!"
       ],
       STRAIGHT_DRIVE: [
@@ -49,7 +53,7 @@
         "Full throttle! Smoked into the second tier with raw power!"
       ],
       FORWARD_DEFENSE: [
-        "Solid as a rock. Forward in defense, right right right right on the money.",
+        "Solid as a rock. Forward in defense, right right right on the money.",
         "Respects the good ball. Soft hands, no run conceded."
       ],
       PLAY_AND_MISS: [
@@ -163,18 +167,61 @@
   document.addEventListener('touchstart', unlockAudioEngine, { passive: true });
 
   /**
+   * 🤖 ElevenLabs Neural Voice Cloning with Disk Cache & Graceful Fallback
+   */
+  async function playNeuralCommentaryVoice(text, persona = activePersona) {
+    const userApiKey = localStorage.getItem('crickethub_elevenlabs_api_key') || '';
+    try {
+      const res = await fetch('/api/ai/tts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text, persona, userApiKey })
+      });
+
+      const contentType = res.headers.get('content-type') || '';
+      if (res.ok && contentType.includes('audio/mpeg')) {
+        const blob = await res.blob();
+        const audioUrl = URL.createObjectURL(blob);
+        if (activeNeuralAudio) {
+          activeNeuralAudio.pause();
+          activeNeuralAudio.currentTime = 0;
+        }
+        activeNeuralAudio = new Audio(audioUrl);
+        activeNeuralAudio.volume = 1.0;
+        const playPromise = activeNeuralAudio.play();
+        if (playPromise !== undefined) {
+          await playPromise;
+        }
+        updateNeuralBadge('⚡ ElevenLabs Neural: Active (0-Cost Cached)');
+        return true;
+      }
+    } catch (err) {
+      console.warn('Neural voice synthesis note:', err);
+    }
+
+    // Seamless Fallback: Speak via tuned Web Speech API
+    speakCommentaryPhrase(text, persona);
+    updateNeuralBadge('🎙️ High-Def Voice: WebSpeech HD Active');
+    return false;
+  }
+
+  function updateNeuralBadge(statusText) {
+    const badge = document.getElementById('ai-voice-engine-badge');
+    if (badge) badge.textContent = statusText;
+  }
+
+  /**
    * 🗣️ Spoken Voice Synthesis Engine (Ravi Shastri & Harsha Bhogle Persona Tuning)
    */
   function speakCommentaryPhrase(text, persona = activePersona) {
     if (!('speechSynthesis' in window)) return;
     try {
-      window.speechSynthesis.cancel(); // Stop any pending speech
+      window.speechSynthesis.cancel();
 
       const utterance = new SpeechSynthesisUtterance(text);
       const voices = window.speechSynthesis.getVoices() || [];
 
       if (persona === 'shastri') {
-        // Deep, booming, commanding Ravi Shastri cadence
         utterance.pitch = 0.88;
         utterance.rate = 1.14;
         utterance.volume = 1.0;
@@ -182,7 +229,6 @@
                       voices.find(v => /en-GB|en-IN|en-US/i.test(v.lang));
         if (voice) utterance.voice = voice;
       } else {
-        // Articulate, cultured, poetic Harsha Bhogle cadence
         utterance.pitch = 1.05;
         utterance.rate = 1.0;
         utterance.volume = 1.0;
@@ -196,6 +242,8 @@
       console.warn('Speech synthesis note:', err);
     }
   }
+
+  let activeAudioPlayer = null;
 
   /**
    * 🎙️ Real Commentator Broadcast Soundboard Audio Engine
@@ -239,13 +287,12 @@
       const buffer = audioContext.createBuffer(1, bufferSize, audioContext.sampleRate);
       const data = buffer.getChannelData(0);
 
-      // Generate brown/pink filtered noise (stadium crowd roar)
       let lastOut = 0.0;
       for (let i = 0; i < bufferSize; i++) {
         const white = Math.random() * 2 - 1;
         data[i] = (lastOut + (0.02 * white)) / 1.02;
         lastOut = data[i];
-        data[i] *= 3.5; // Gain
+        data[i] *= 3.5;
       }
 
       const noise = audioContext.createBufferSource();
@@ -290,30 +337,22 @@
   /**
    * Generates commentary for a specific stroke
    */
-  function triggerShotCommentary(shotKey, runValue = 4, explicitPersona = null) {
+  async function triggerShotCommentary(shotKey, runValue = 4, explicitPersona = null) {
     const persona = explicitPersona || activePersona;
     const personaPool = COMMENTARY_ARCHIVE[persona] || COMMENTARY_ARCHIVE.shastri;
     const phrases = personaPool[shotKey] || personaPool.COVER_DRIVE;
     const randomPhrase = phrases[Math.floor(Math.random() * phrases.length)];
 
     const intensity = runValue >= 6 ? 'massive' : runValue >= 4 ? 'high' : 'medium';
-    
+
     // 1. Play real stadium sound effect cue
     playRealCommentatorAudio(shotKey, persona);
     // 2. Synthesize crowd roar
     playStadiumCrowdRoar(intensity);
-    // 3. Speak the commentator sentence with tailored voice cadence
-    speakCommentaryPhrase(randomPhrase, persona);
+    // 3. Play ElevenLabs Neural Voice Cloning (with fallback to WebSpeech)
+    await playNeuralCommentaryVoice(randomPhrase, persona);
     // 4. Update HUD and Toast
     updateTickerUI(persona, randomPhrase);
-
-    // If auto-sync is enabled and socket is live, dispatch scoring
-    if (isAutoScoreSync && window.currentRoomCode) {
-      autoSyncScore(shotKey, runValue);
-    }
-
-    return randomPhrase;
-  }
 
     // If auto-sync is enabled and socket is live, dispatch scoring
     if (isAutoScoreSync && window.currentRoomCode) {
@@ -343,7 +382,7 @@
   let lastImageData = null;
 
   function processVisionFrame(videoEl, canvasEl) {
-    if (!videoEl || !canvasEl || videoEl.paused || videoEl.ended) return;
+    if (!videoEl || !canvasEl || videoEl.paused || videoEl.ended || isSimulatedMode) return;
 
     const ctx = canvasEl.getContext('2d');
     const width = canvasEl.width = videoEl.videoWidth || 640;
@@ -351,7 +390,6 @@
 
     ctx.clearRect(0, 0, width, height);
 
-    // Process motion differential
     try {
       const offscreenCanvas = document.createElement('canvas');
       offscreenCanvas.width = 160;
@@ -381,10 +419,8 @@
         const avgX = diffCount > 0 ? (sumX / diffCount) / 160 : 0.5;
         const avgY = diffCount > 0 ? (sumY / diffCount) / 120 : 0.5;
 
-        // Draw Motion Radar Vector on HUD Canvas
         drawHudOverlay(ctx, width, height, motionRatio, avgX, avgY);
 
-        // Classify Shot if rapid stroke detected
         const now = Date.now();
         if (motionRatio > 0.12 && !isProcessingStroke && (now - lastShotTimestamp > 3500)) {
           classifyAndAnnounceShot(motionRatio, avgX, avgY);
@@ -394,18 +430,16 @@
       lastImageData = currentImg;
     } catch (e) { }
 
-    if (isStudioOpen) {
+    if (isStudioOpen && !isSimulatedMode) {
       animationFrameId = requestAnimationFrame(() => processVisionFrame(videoEl, canvasEl));
     }
   }
 
   function drawHudOverlay(ctx, w, h, motionRatio, avgX, avgY) {
-    // Dynamic bat speed calculation
     const calculatedSpeed = Math.min(160, Math.floor(75 + (motionRatio * 420)));
     const speedEl = document.getElementById('ai-speed-val');
     if (speedEl) speedEl.textContent = `${calculatedSpeed} km/h`;
 
-    // Draw Tracking Crosshair
     const targetX = avgX * w;
     const targetY = avgY * h;
 
@@ -415,7 +449,6 @@
     ctx.arc(targetX, targetY, 35, 0, Math.PI * 2);
     ctx.stroke();
 
-    // Trajectory vector line
     ctx.strokeStyle = 'rgba(34, 197, 94, 0.75)';
     ctx.setLineDash([4, 4]);
     ctx.beginPath();
@@ -495,31 +528,43 @@
 
     stopCamera();
     if (animationFrameId) cancelAnimationFrame(animationFrameId);
+    if (simulationFrameId) cancelAnimationFrame(simulationFrameId);
+    if (activeNeuralAudio) {
+      activeNeuralAudio.pause();
+      activeNeuralAudio.currentTime = 0;
+    }
     if ('speechSynthesis' in window) window.speechSynthesis.cancel();
   }
 
   async function startCamera() {
     const videoEl = document.getElementById('ai-video-feed');
     const canvasEl = document.getElementById('ai-canvas-overlay');
-    if (!videoEl) return;
+    if (!videoEl || !canvasEl) return;
 
-    try {
-      if (videoStream) stopCamera();
-      videoStream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: currentCameraFacing, width: { ideal: 1280 }, height: { ideal: 720 } },
-        audio: false
-      });
-      videoEl.srcObject = videoStream;
-      videoEl.play();
+    // Check if getUserMedia is supported and in a secure context
+    if (navigator.mediaDevices && typeof navigator.mediaDevices.getUserMedia === 'function') {
+      try {
+        if (videoStream) stopCamera();
+        videoStream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: currentCameraFacing, width: { ideal: 1280 }, height: { ideal: 720 } },
+          audio: false
+        });
+        videoEl.srcObject = videoStream;
+        videoEl.style.display = 'block';
+        isSimulatedMode = false;
+        await videoEl.play();
 
-      videoEl.onloadedmetadata = () => {
-        processVisionFrame(videoEl, canvasEl);
-      };
-    } catch (err) {
-      console.warn('Camera stream error:', err);
-      // Fallback: If camera permission denied, show simulation mode
-      showCameraFallback(videoEl, canvasEl);
+        videoEl.onloadedmetadata = () => {
+          processVisionFrame(videoEl, canvasEl);
+        };
+        return;
+      } catch (err) {
+        console.warn('Camera stream error, activating simulation mode:', err.message);
+      }
     }
+
+    // Fallback simulation mode
+    showCameraFallback(videoEl, canvasEl);
   }
 
   function stopCamera() {
@@ -530,20 +575,120 @@
   }
 
   function switchCamera() {
+    if (isSimulatedMode) {
+      // In simulation mode, toggle between day and night match simulation
+      window.toast && window.toast('🔄 Toggled Studio Match View (Night LED Floodlights)');
+      return;
+    }
     currentCameraFacing = currentCameraFacing === 'environment' ? 'user' : 'environment';
     startCamera();
   }
 
+  /**
+   * 🏟️ Cyberpunk Virtual Pitch Simulator (When Camera is Off or Denied)
+   */
+  let simTime = 0;
   function showCameraFallback(videoEl, canvasEl) {
+    isSimulatedMode = true;
+    if (videoEl) videoEl.style.display = 'none';
+    if (!canvasEl) return;
+
     const ctx = canvasEl.getContext('2d');
-    canvasEl.width = 640;
-    canvasEl.height = 480;
-    ctx.fillStyle = '#0f172a';
-    ctx.fillRect(0, 0, 640, 480);
-    ctx.fillStyle = '#38bdf8';
-    ctx.font = 'bold 18px Outfit, sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText('📹 Camera Simulation Active (Ready for Scoring Triggers)', 320, 240);
+
+    function renderSimulation() {
+      if (!isStudioOpen || !isSimulatedMode) return;
+
+      const w = canvasEl.width = canvasEl.parentElement?.clientWidth || 640;
+      const h = canvasEl.height = canvasEl.parentElement?.clientHeight || 360;
+
+      simTime += 0.03;
+
+      // Stadium Turf Gradient
+      const grad = ctx.createLinearGradient(0, 0, 0, h);
+      grad.addColorStop(0, '#062817');
+      grad.addColorStop(0.5, '#0a3d24');
+      grad.addColorStop(1, '#051b10');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, w, h);
+
+      // Pitch Strip
+      ctx.fillStyle = '#b49f6b';
+      const pitchW = w * 0.28;
+      const pitchX = (w - pitchW) / 2;
+      ctx.fillRect(pitchX, 0, pitchW, h);
+
+      // Bowling Crease Lines
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(pitchX, h * 0.25);
+      ctx.lineTo(pitchX + pitchW, h * 0.25);
+      ctx.moveTo(pitchX, h * 0.78);
+      ctx.lineTo(pitchX + pitchW, h * 0.78);
+      ctx.stroke();
+
+      // Animated Bowling Delivery Trajectory
+      const ballProgress = (simTime * 0.8) % 1.0;
+      const ballX = pitchX + (pitchW * 0.5) + (Math.sin(simTime * 1.5) * 20);
+      const ballY = (h * 0.2) + (ballProgress * (h * 0.6));
+      const ballRadius = 6 + (ballProgress * 4);
+
+      // Ball Shadow
+      ctx.fillStyle = 'rgba(0,0,0,0.4)';
+      ctx.beginPath();
+      ctx.ellipse(ballX + 4, ballY + 4, ballRadius, ballRadius * 0.6, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Cricket Leather Ball (Red with seam)
+      const ballGrad = ctx.createRadialGradient(ballX - 2, ballY - 2, 1, ballX, ballY, ballRadius);
+      ballGrad.addColorStop(0, '#ef4444');
+      ballGrad.addColorStop(1, '#7f1d1d');
+      ctx.fillStyle = ballGrad;
+      ctx.beginPath();
+      ctx.arc(ballX, ballY, ballRadius, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Tracking Crosshair & HUD
+      const crosshairX = w * 0.5 + Math.sin(simTime * 1.2) * 45;
+      const crosshairY = h * 0.72 + Math.cos(simTime * 0.9) * 25;
+      ctx.strokeStyle = '#38bdf8';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(crosshairX, crosshairY, 30, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // Velocity Trajectory Line
+      ctx.strokeStyle = 'rgba(34, 197, 94, 0.8)';
+      ctx.setLineDash([5, 5]);
+      ctx.beginPath();
+      ctx.moveTo(ballX, ballY);
+      ctx.lineTo(crosshairX, crosshairY);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // Dynamic HUD Speed
+      const speedVal = Math.floor(132 + Math.sin(simTime) * 16);
+      const speedEl = document.getElementById('ai-speed-val');
+      if (speedEl) speedEl.textContent = `${speedVal} km/h`;
+
+      // Interactive Hint
+      ctx.fillStyle = 'rgba(255,255,255,0.85)';
+      ctx.font = 'bold 13px Outfit, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('⚡ Virtual Tracking Active · Tap Pitch to Trigger Shot 🏏', w / 2, h * 0.12);
+
+      simulationFrameId = requestAnimationFrame(renderSimulation);
+    }
+
+    renderSimulation();
+
+    // Tap canvas in simulation mode to trigger a live shot commentary
+    canvasEl.onclick = () => {
+      const shots = ['PULL_SHOT', 'COVER_DRIVE', 'STRAIGHT_DRIVE', 'SQUARE_CUT', 'HELICOPTER_SHOT'];
+      const shot = shots[Math.floor(Math.random() * shots.length)];
+      const runs = (shot === 'PULL_SHOT' || shot === 'HELICOPTER_SHOT') ? 6 : 4;
+      triggerShotCommentary(shot, runs);
+    };
   }
 
   function setPersona(persona) {
@@ -581,11 +726,24 @@
     localStorage.setItem('crickethub_ai_auto_sync', enabled ? 'true' : 'false');
   }
 
+  function saveElevenLabsKey(key) {
+    localStorage.setItem('crickethub_elevenlabs_api_key', key.trim());
+    if (key.trim()) {
+      updateNeuralBadge('⚡ ElevenLabs Neural: Connected');
+      window.toast && window.toast('✅ ElevenLabs Neural Voice API Key Saved!');
+    } else {
+      updateNeuralBadge('🎙️ High-Def Voice: WebSpeech HD Active');
+    }
+  }
+
   function createStudioModal() {
     const modal = document.createElement('div');
     modal.id = 'ai-studio-modal';
     modal.className = 'ai-studio-modal';
     modal.style.display = 'none';
+
+    const savedKey = localStorage.getItem('crickethub_elevenlabs_api_key') || '';
+    const badgeInit = savedKey ? '⚡ ElevenLabs Neural: Connected' : '🎙️ High-Def Voice: WebSpeech HD Active';
 
     modal.innerHTML = `
       <div class="ai-studio-header">
@@ -594,6 +752,25 @@
           <span class="ai-live-badge"><span class="ai-live-dot"></span> LIVE ON AIR</span>
         </div>
         <button class="ai-close-btn" id="ai-modal-close-btn" aria-label="Close Studio">✕</button>
+      </div>
+
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem;flex-wrap:wrap;gap:0.4rem;">
+        <span id="ai-voice-engine-badge" style="font-size:0.75rem;font-weight:700;color:#38bdf8;background:rgba(56,189,248,0.15);padding:0.2rem 0.6rem;border-radius:999px;border:1px solid rgba(56,189,248,0.3)">
+          ${badgeInit}
+        </span>
+        <button id="ai-btn-toggle-elevenlabs" style="background:none;border:none;color:#a855f7;font-size:0.75rem;cursor:pointer;font-weight:700;text-decoration:underline;">
+          ⚙️ ElevenLabs Key (Optional)
+        </button>
+      </div>
+
+      <div id="ai-elevenlabs-drawer" style="display:none;background:rgba(15,23,42,0.85);border:1px solid rgba(168,85,247,0.3);padding:0.6rem;border-radius:8px;margin-bottom:0.6rem;">
+        <label style="font-size:0.75rem;color:#cbd5e1;display:block;margin-bottom:0.3rem;">
+          🔑 ElevenLabs API Key (Free 10,000 Chars/Mo · Leave blank for free WebSpeech + Soundboard):
+        </label>
+        <div style="display:flex;gap:0.4rem;">
+          <input type="password" id="ai-elevenlabs-input" value="${savedKey}" placeholder="sk_..." style="flex:1;background:#0b0f19;border:1px solid #334155;color:#fff;padding:0.35rem 0.5rem;border-radius:6px;font-size:0.8rem;" />
+          <button id="ai-btn-save-key" class="btn btn-primary btn-xs">Save</button>
+        </div>
       </div>
 
       <div class="ai-persona-selector">
@@ -606,7 +783,7 @@
       </div>
 
       <div class="ai-camera-container">
-        <video id="ai-video-feed" class="ai-video-feed" playsinline muted></video>
+        <video id="ai-video-feed" class="ai-video-feed" playsinline muted style="display:none"></video>
         <canvas id="ai-canvas-overlay" class="ai-canvas-overlay"></canvas>
         <div class="ai-hud-corner tl"></div>
         <div class="ai-hud-corner tr"></div>
@@ -616,7 +793,7 @@
 
         <div class="ai-hud-stats">
           <div class="ai-stat-chip">AI VISION: 60 FPS</div>
-          <div class="ai-stat-chip ai-bat-speed" id="ai-speed-val">124 km/h</div>
+          <div class="ai-stat-chip ai-bat-speed" id="ai-speed-val">138 km/h</div>
         </div>
 
         <div id="ai-detected-shot" class="ai-detected-shot-badge" style="display:none">
@@ -627,7 +804,7 @@
       <div class="ai-broadcast-ticker">
         <div class="ai-ticker-header">
           <span class="ai-commentator-tag" id="ai-ticker-name">
-            ${activePersona === 'shastri' ? '⚡ RAVI SHASTRI (AI ON AIR)' : '🏏 HARSHA BHOGLE (AI ON AIR)'}
+            ${activePersona === 'shastri' ? '⚡ RAVI SHASTRI (LIVE ON AIR)' : '🏏 HARSHA BHOGLE (LIVE ON AIR)'}
           </span>
           <div class="ai-audio-wave">
             <div class="ai-audio-bar"></div>
@@ -642,7 +819,7 @@
       </div>
 
       <div class="ai-studio-controls">
-        <button class="ai-control-btn camera-toggle" id="ai-btn-switch-cam">🔄 Flip Camera</button>
+        <button class="ai-control-btn camera-toggle" id="ai-btn-switch-cam">🔄 Switch Feed</button>
         <button class="ai-control-btn primary" id="ai-btn-test-six">💥 Test 6 (Shastri)</button>
         <button class="ai-control-btn secondary" id="ai-btn-test-four">🪄 Test 4 (Bhogle)</button>
         <button class="ai-control-btn secondary" id="ai-btn-test-wicket">☝️ Test Wicket</button>
@@ -673,6 +850,17 @@
     document.getElementById('ai-btn-shastri').onclick = () => setPersona('shastri');
     document.getElementById('ai-btn-bhogle').onclick = () => setPersona('bhogle');
     document.getElementById('ai-btn-switch-cam').onclick = switchCamera;
+
+    const drawer = document.getElementById('ai-elevenlabs-drawer');
+    document.getElementById('ai-btn-toggle-elevenlabs').onclick = () => {
+      drawer.style.display = drawer.style.display === 'none' ? 'block' : 'none';
+    };
+
+    document.getElementById('ai-btn-save-key').onclick = () => {
+      const input = document.getElementById('ai-elevenlabs-input');
+      saveElevenLabsKey(input ? input.value : '');
+      drawer.style.display = 'none';
+    };
 
     document.getElementById('ai-btn-test-six').onclick = () => {
       setPersona('shastri');

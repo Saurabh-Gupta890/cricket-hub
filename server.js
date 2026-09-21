@@ -68,12 +68,16 @@ const VAPID_FILE = path.join(DATA_DIR, 'vapid.json');
 const SUBS_FILE = path.join(DATA_DIR, 'push_subscriptions.json');
 const ROOMS_FILE = path.join(DATA_DIR, 'rooms.json');
 const GROUPS_FILE = path.join(DATA_DIR, 'groups.json');
+const TTS_CACHE_DIR = path.join(DATA_DIR, 'tts_cache');
 
 if (!fs.existsSync(DATA_DIR)) {
   fs.mkdirSync(DATA_DIR, { recursive: true });
 }
 if (!fs.existsSync(MATCHES_DIR)) {
   fs.mkdirSync(MATCHES_DIR, { recursive: true });
+}
+if (!fs.existsSync(TTS_CACHE_DIR)) {
+  fs.mkdirSync(TTS_CACHE_DIR, { recursive: true });
 }
 
 // ═══════════════════════════════════════════════
@@ -1452,6 +1456,99 @@ app.post('/api/auth/me', (req, res) => {
       createdAt: user.createdAt
     }
   });
+});
+
+// ═══════════════════════════════════════════════
+//  ELEVENLABS NEURAL VOICE CLONING (TTS ENGINE)
+// ═══════════════════════════════════════════════
+const ELEVENLABS_VOICE_IDS = {
+  shastri: process.env.ELEVENLABS_SHASTRI_VOICE_ID || 'pNInz6obpgDQGcFmaJgB', // Adam / Deep baritone
+  bhogle: process.env.ELEVENLABS_BHOGLE_VOICE_ID || 'ErXwobaYiN019PkySvjV'    // Antoni / Cultured narrator
+};
+
+app.post('/api/ai/tts', async (req, res) => {
+  try {
+    const { text, persona = 'shastri', userApiKey } = req.body || {};
+    if (!text || typeof text !== 'string') {
+      return res.status(400).json({ error: 'Text is required for TTS synthesis' });
+    }
+
+    const cleanText = text.trim().slice(0, 300);
+    const voicePersona = persona === 'bhogle' ? 'bhogle' : 'shastri';
+    const voiceId = ELEVENLABS_VOICE_IDS[voicePersona];
+
+    // Compute deterministic cache key for free re-use
+    const cacheHash = crypto.createHash('sha256').update(`${voicePersona}:${cleanText}`).digest('hex');
+    const cachedFilePath = path.join(TTS_CACHE_DIR, `${cacheHash}.mp3`);
+
+    // 1. Serve from zero-cost local cache if already synthesized
+    if (fs.existsSync(cachedFilePath)) {
+      res.setHeader('Content-Type', 'audio/mpeg');
+      res.setHeader('X-TTS-Source', 'local-cache');
+      return fs.createReadStream(cachedFilePath).pipe(res);
+    }
+
+    const apiKey = userApiKey || process.env.ELEVENLABS_API_KEY;
+    if (!apiKey) {
+      return res.status(200).json({
+        success: false,
+        fallback: true,
+        reason: 'NO_API_KEY',
+        message: 'No ElevenLabs API key provided. Using browser high-definition speech synthesis & stadium soundboard.'
+      });
+    }
+
+    // 2. Call ElevenLabs Neural Voice API (Turbo v2.5 low latency)
+    const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}?output_format=mp3_44100_128`, {
+      method: 'POST',
+      headers: {
+        'Accept': 'audio/mpeg',
+        'Content-Type': 'application/json',
+        'xi-api-key': apiKey
+      },
+      body: JSON.stringify({
+        text: cleanText,
+        model_id: 'eleven_turbo_v2_5',
+        voice_settings: voicePersona === 'shastri'
+          ? { stability: 0.45, similarity_boost: 0.85, style: 0.65, use_speaker_boost: true }
+          : { stability: 0.70, similarity_boost: 0.80, style: 0.35, use_speaker_boost: true }
+      })
+    });
+
+    if (!response.ok) {
+      const errText = await response.text();
+      console.warn('ElevenLabs API note:', response.status, errText);
+      return res.status(200).json({
+        success: false,
+        fallback: true,
+        statusCode: response.status,
+        reason: 'ELEVENLABS_API_ERROR',
+        message: 'ElevenLabs quota reached or error. Falling back to native voice synthesis.'
+      });
+    }
+
+    const arrayBuffer = await response.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+
+    // Save to disk cache for future 0-cost playback
+    try {
+      fs.writeFileSync(cachedFilePath, buffer);
+    } catch (e) {
+      console.warn('Failed to write TTS cache:', e);
+    }
+
+    res.setHeader('Content-Type', 'audio/mpeg');
+    res.setHeader('X-TTS-Source', 'elevenlabs-neural');
+    res.send(buffer);
+  } catch (err) {
+    console.warn('TTS route error:', err);
+    res.status(200).json({
+      success: false,
+      fallback: true,
+      reason: 'EXCEPTION',
+      message: err.message
+    });
+  }
 });
 
 // ═══════════════════════════════════════════════

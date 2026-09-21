@@ -150,7 +150,7 @@
   }
   preloadAudioAssets();
 
-  // Audio Context Unlock on First User Gesture
+  // Audio Context Unlock & Acoustic Filter Synthesizer
   function unlockAudioEngine() {
     try {
       if (!audioContext) {
@@ -160,6 +160,19 @@
       if (audioContext && audioContext.state === 'suspended') {
         audioContext.resume();
       }
+    } catch (e) { }
+  }
+
+  function applyAcousticMasterFilter(gainVal = 0.8) {
+    if (!audioContext) return;
+    try {
+      const filter = audioContext.createBiquadFilter();
+      filter.type = 'lowpass';
+      filter.frequency.setValueAtTime(3200, audioContext.currentTime);
+      const gainNode = audioContext.createGain();
+      gainNode.gain.setValueAtTime(gainVal, audioContext.currentTime);
+      filter.connect(gainNode);
+      gainNode.connect(audioContext.destination);
     } catch (e) { }
   }
 
@@ -188,20 +201,17 @@
         }
         activeNeuralAudio = new Audio(audioUrl);
         activeNeuralAudio.volume = 1.0;
-        const playPromise = activeNeuralAudio.play();
-        if (playPromise !== undefined) {
-          await playPromise;
-        }
-        updateNeuralBadge('⚡ ElevenLabs Neural: Active (0-Cost Cached)');
+        await activeNeuralAudio.play();
+        updateNeuralBadge('⚡ ElevenLabs Neural Voice: Active');
         return true;
       }
     } catch (err) {
       console.warn('Neural voice synthesis note:', err);
     }
 
-    // Seamless Fallback: Speak via tuned Web Speech API
+    // Fallback: If ElevenLabs has no key or error, use browser voice
     speakCommentaryPhrase(text, persona);
-    updateNeuralBadge('🎙️ High-Def Voice: WebSpeech HD Active');
+    updateNeuralBadge('🎙️ Voice Fallback: WebSpeech HD Active');
     return false;
   }
 
@@ -239,14 +249,12 @@
       const voices = cachedVoices.length ? cachedVoices : (window.speechSynthesis.getVoices() || []);
 
       if (persona === 'shastri') {
-        // Booming energetic Ravi Shastri cadence
         utterance.pitch = 0.85;
         utterance.rate = 1.15;
         const voice = voices.find(v => /male|daniel|oliver|rishi|aaron|david|alex|george/i.test(v.name) && /en/i.test(v.lang)) ||
                       voices.find(v => /en-GB|en-IN|en-US/i.test(v.lang));
         if (voice) utterance.voice = voice;
       } else {
-        // Articulate witty Harsha Bhogle cadence
         utterance.pitch = 1.08;
         utterance.rate = 1.0;
         const voice = voices.find(v => /rishi|veena|samantha|victoria|karen|en-IN/i.test(v.name) && /en/i.test(v.lang)) ||
@@ -309,25 +317,22 @@
   /**
    * Generates commentary for a specific stroke
    */
-  function triggerShotCommentary(shotKey, runValue = 4, explicitPersona = null) {
+  async function triggerShotCommentary(shotKey, runValue = 4, explicitPersona = null) {
     const persona = explicitPersona || activePersona;
     const personaPool = COMMENTARY_ARCHIVE[persona] || COMMENTARY_ARCHIVE.shastri;
     const phrases = personaPool[shotKey] || personaPool.COVER_DRIVE;
     const randomPhrase = phrases[Math.floor(Math.random() * phrases.length)];
 
-    // 1. Speak immediately within user click gesture context (LOUD & CLEAR)
-    speakCommentaryPhrase(randomPhrase, persona);
-
-    // 2. Play crisp willow bat crack cue
+    // 1. Play crisp willow bat crack cue
     playRealCommentatorAudio(shotKey, persona);
 
-    // 3. Update HUD and on-screen Toast
+    // 2. Update HUD and on-screen Toast
     updateTickerUI(persona, randomPhrase);
 
-    // 4. Try neural cloned voice in background if ElevenLabs key is connected
-    playNeuralCommentaryVoice(randomPhrase, persona);
+    // 3. Play realistic human voice (ElevenLabs neural voice first, WebSpeech fallback only if no key/offline)
+    await playNeuralCommentaryVoice(randomPhrase, persona);
 
-    // If auto-sync is enabled and socket is live, dispatch scoring
+    // 4. If auto-sync is enabled and socket is live, dispatch scoring
     if (isAutoScoreSync && window.currentRoomCode) {
       autoSyncScore(shotKey, runValue);
     }

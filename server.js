@@ -1498,48 +1498,63 @@ app.post('/api/ai/tts', async (req, res) => {
       });
     }
 
-    // 2. Call ElevenLabs Neural Voice API (Turbo v2.5 low latency)
-    const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}?output_format=mp3_44100_128`, {
-      method: 'POST',
-      headers: {
-        'Accept': 'audio/mpeg',
-        'Content-Type': 'application/json',
-        'xi-api-key': apiKey
-      },
-      body: JSON.stringify({
-        text: cleanText,
-        model_id: 'eleven_turbo_v2_5',
-        voice_settings: voicePersona === 'shastri'
-          ? { stability: 0.45, similarity_boost: 0.85, style: 0.65, use_speaker_boost: true }
-          : { stability: 0.70, similarity_boost: 0.80, style: 0.35, use_speaker_boost: true }
-      })
-    });
+    // 2. Call ElevenLabs Neural Voice API (Universal Free/Paid Model support)
+    const modelsToTry = ['eleven_multilingual_v2', 'eleven_turbo_v2_5', 'eleven_turbo_v2', 'eleven_monolingual_v1'];
+    let audioBuffer = null;
+    let lastError = null;
 
-    if (!response.ok) {
-      const errText = await response.text();
-      console.warn('ElevenLabs API note:', response.status, errText);
+    for (const modelId of modelsToTry) {
+      try {
+        const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}?output_format=mp3_44100_128`, {
+          method: 'POST',
+          headers: {
+            'Accept': 'audio/mpeg',
+            'Content-Type': 'application/json',
+            'xi-api-key': apiKey
+          },
+          body: JSON.stringify({
+            text: cleanText,
+            model_id: modelId,
+            voice_settings: {
+              stability: voicePersona === 'shastri' ? 0.45 : 0.65,
+              similarity_boost: 0.80
+            }
+          })
+        });
+
+        if (response.ok) {
+          const arrayBuffer = await response.arrayBuffer();
+          audioBuffer = Buffer.from(arrayBuffer);
+          break;
+        } else {
+          lastError = await response.text();
+          console.warn(`ElevenLabs model ${modelId} failed:`, response.status, lastError);
+        }
+      } catch (e) {
+        lastError = e.message;
+      }
+    }
+
+    if (!audioBuffer) {
       return res.status(200).json({
         success: false,
         fallback: true,
-        statusCode: response.status,
         reason: 'ELEVENLABS_API_ERROR',
-        message: 'ElevenLabs quota reached or error. Falling back to native voice synthesis.'
+        details: lastError,
+        message: 'ElevenLabs synthesis failed or invalid key. Falling back to native voice synthesis.'
       });
     }
 
-    const arrayBuffer = await response.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
-
     // Save to disk cache for future 0-cost playback
     try {
-      fs.writeFileSync(cachedFilePath, buffer);
+      fs.writeFileSync(cachedFilePath, audioBuffer);
     } catch (e) {
       console.warn('Failed to write TTS cache:', e);
     }
 
     res.setHeader('Content-Type', 'audio/mpeg');
     res.setHeader('X-TTS-Source', 'elevenlabs-neural');
-    res.send(buffer);
+    return res.send(audioBuffer);
   } catch (err) {
     console.warn('TTS route error:', err);
     res.status(200).json({

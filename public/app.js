@@ -249,6 +249,19 @@ function getPlayerList(match, teamKey) {
   return players;
 }
 
+// Get a player object (batsman or bowler) from the current innings by index
+function getPlayer(idx) {
+  if (idx === null || idx === undefined) return null;
+  const match = state.room?.match;
+  if (!match) return null;
+  const inn = match.innings[match.currentInnings];
+  if (!inn) return null;
+  // Check batsmen array first, then bowlers
+  if (inn.batsmen && inn.batsmen[idx]) return inn.batsmen[idx];
+  if (inn.bowlers && inn.bowlers[idx]) return inn.bowlers[idx];
+  return null;
+}
+
 function escHtml(str) {
   if (str === null || str === undefined) return '';
   return String(str)
@@ -4665,9 +4678,9 @@ window.commitBall = function () {
   const customNote = state.pendingDismissalNote || document.getElementById('dismissal-input')?.value || '';
   const dismissalText = state.pendingWicket ? (customNote.trim() || state.pendingDismissalType || 'out') : null;
 
-  const strikerObj = getPlayer(inn.currentBatsmen[0]);
-  const nonStrikerObj = (!inn.isSingleBatter && inn.currentBatsmen[1] !== null) ? getPlayer(inn.currentBatsmen[1]) : null;
-  const bowlerObj = getPlayer(inn.currentBowler);
+  const strikerObj = inn.currentBatsmen[0] !== null ? inn.batsmen[inn.currentBatsmen[0]] : null;
+  const nonStrikerObj = (!inn.isSingleBatter && inn.currentBatsmen[1] !== null) ? inn.batsmen[inn.currentBatsmen[1]] : null;
+  const bowlerObj = inn.currentBowler !== null ? inn.bowlers[inn.currentBowler] : null;
 
   const scorePayload = {
     inningsIdx: idx,
@@ -5293,8 +5306,8 @@ socket.on('state:update', (room) => {
     if (prevInn && currInn && (currInn.balls > prevInn.balls || currInn.runs > prevInn.runs || currInn.wickets > prevInn.wickets)) {
       const runsDiff = Math.max(0, currInn.runs - prevInn.runs);
       const wicketDiff = currInn.wickets - prevInn.wickets;
-      const strikerObj = getPlayer(currInn.currentBatsmen?.[0]);
-      const bowlerObj = getPlayer(currInn.currentBowler);
+      const strikerObj = currInn.currentBatsmen?.[0] != null ? currInn.batsmen?.[currInn.currentBatsmen[0]] : null;
+      const bowlerObj = currInn.currentBowler != null ? currInn.bowlers?.[currInn.currentBowler] : null;
       if (typeof window.triggerLiveCommentaryOnScore === 'function') {
         window.triggerLiveCommentaryOnScore({
           runs: wicketDiff > 0 ? 0 : runsDiff,

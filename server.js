@@ -3216,7 +3216,15 @@ io.on('connection', (socket) => {
     if (!room) return;
     if (!phonesMatch(room.hostPhone, currentPhone)) return; // Strict Host Check
 
-    if (room.match.status === 'planning') {
+    if (room.match.status === 'planning' || room.match.status === 'completed') {
+      if (room.match.status === 'completed') {
+        const hasScoring = room.match.innings && room.match.innings.some(inn => (inn.balls > 0 || inn.runs > 0 || inn.wickets > 0));
+        if (hasScoring) saveMatchToHistory(room);
+        room.match.currentInnings = 0;
+        room.match.isSuperOver = false;
+        delete room.match.result;
+        room.match.innings = [createInnings(), createInnings()];
+      }
       room.match.status = 'setup';
     }
 
@@ -3269,7 +3277,18 @@ io.on('connection', (socket) => {
     if (!currentRoom || !currentPhone) return;
     const room = rooms.get(currentRoom);
     if (!room || !phonesMatch(room.hostPhone, currentPhone)) return;
+
+    // If match was previously completed or had scoring, archive and reset innings
+    const hasScoring = room.match.innings && room.match.innings.some(inn => (inn.balls > 0 || inn.runs > 0 || inn.wickets > 0));
+    if (hasScoring && (room.match.status === 'completed' || room.match.innings[0]?.completed)) {
+      saveMatchToHistory(room);
+    }
     room.match.status = 'toss';
+    room.match.currentInnings = 0;
+    room.match.isSuperOver = false;
+    delete room.match.result;
+    room.match.innings = [createInnings(), createInnings()];
+
     saveRooms();
     io.to(currentRoom).emit('state:update', getRoomPublicState(room));
   });
@@ -3281,17 +3300,29 @@ io.on('connection', (socket) => {
     const ch = choice || decision;
     if (!['team1', 'team2'].includes(winner) || !['bat', 'bowl'].includes(ch)) return;
 
+    // If match was previously completed or had old innings, archive and ensure fresh innings
+    const hasScoring = room.match.innings && room.match.innings.some(inn => (inn.balls > 0 || inn.runs > 0 || inn.wickets > 0));
+    if (hasScoring && (room.match.status === 'completed' || room.match.innings[0]?.completed)) {
+      saveMatchToHistory(room);
+    }
+
     room.match.toss = { winner, choice: ch };
     room.match.battingFirst = ch === 'bat' ? winner : (winner === 'team1' ? 'team2' : 'team1');
     room.match.status = 'innings1';
-    const inn = room.match.innings[0];
-    inn.battingTeam = room.match.battingFirst;
-    inn.bowlingTeam = room.match.battingFirst === 'team1' ? 'team2' : 'team1';
-    const inn2 = room.match.innings[1];
-    if (inn2) {
-      inn2.battingTeam = inn.bowlingTeam;
-      inn2.bowlingTeam = inn.battingTeam;
-    }
+    room.match.currentInnings = 0;
+    room.match.isSuperOver = false;
+    delete room.match.result;
+
+    const inn1 = createInnings();
+    inn1.battingTeam = room.match.battingFirst;
+    inn1.bowlingTeam = room.match.battingFirst === 'team1' ? 'team2' : 'team1';
+
+    const inn2 = createInnings();
+    inn2.battingTeam = inn1.bowlingTeam;
+    inn2.bowlingTeam = inn1.battingTeam;
+
+    room.match.innings = [inn1, inn2];
+
     saveRooms();
     io.to(currentRoom).emit('state:update', getRoomPublicState(room));
     if (typeof cb === 'function') cb({ success: true, room: getRoomPublicState(room) });

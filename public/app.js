@@ -4389,19 +4389,105 @@ function renderScoringPanel() {
   const panel = document.getElementById('scoring-panel');
   if (!panel) return;
 
-  if (match.status === 'planning' || match.status === 'toss') {
-    panel.innerHTML = `<div class="empty-state-large"><div class="empty-icon">⚾</div><p>Scoring becomes available once the match starts</p></div>`;
+  if (match.status === 'planning') {
+    panel.innerHTML = `
+      <div class="empty-state-large glass-card" style="padding:1.6rem;text-align:center">
+        <div class="empty-icon" style="font-size:2.2rem">⚾</div>
+        <h3 style="font-family:var(--font-display);color:var(--text-1);margin:0.4rem 0 0.25rem">Match Planning in Progress</h3>
+        <p style="color:var(--text-2);font-size:0.9rem;margin-bottom:1rem">Configure teams & overs on the Setup tab to start the coin toss.</p>
+        ${isHost() ? `
+          <button class="btn btn-primary" onclick="document.querySelector('.tab[data-tab=\\'setup\\']')?.click()" style="font-weight:700">
+            ⚙️ Go to Setup Tab
+          </button>
+        ` : ''}
+      </div>`;
+    return;
+  }
+  if (match.status === 'toss') {
+    panel.innerHTML = `
+      <div class="empty-state-large glass-card" style="padding:1.6rem;text-align:center">
+        <div class="empty-icon" style="font-size:2.2rem">🪙</div>
+        <h3 style="font-family:var(--font-display);color:var(--text-1);margin:0.4rem 0 0.25rem">Coin Toss Phase</h3>
+        <p style="color:var(--text-2);font-size:0.9rem;margin-bottom:1rem">Flip the coin and choose to bat or bowl to start scoring.</p>
+        ${isHost() ? `
+          <button class="btn btn-primary" onclick="showTossModal()" style="font-weight:800;background:var(--grad-primary)">
+            🪙 Open Coin Toss Modal
+          </button>
+        ` : `
+          <p style="font-size:0.85rem;color:var(--text-3)">Waiting for host to flip coin...</p>
+        `}
+      </div>`;
     return;
   }
   if (match.status === 'completed') {
-    panel.innerHTML = `<div class="empty-state-large"><div class="empty-icon">🏆</div><p>Match has ended!</p></div>`;
+    const winnerName = match.result?.winnerName || match.result?.winner || 'Match Finished';
+    const summaryText = match.result?.summary || 'The match has finished.';
+    panel.innerHTML = `
+      <div class="empty-state-large glass-card" style="padding:1.6rem;text-align:center;border:1px solid rgba(0,229,255,0.3);background:linear-gradient(135deg,rgba(0,229,255,0.06),rgba(255,107,53,0.06))">
+        <div class="empty-icon" style="font-size:2.5rem">🏆</div>
+        <h3 style="font-family:var(--font-display);color:var(--text-1);margin:0.4rem 0 0.25rem">${escHtml(winnerName)}</h3>
+        <p style="color:var(--text-2);font-size:0.9rem;margin-bottom:1.1rem">${escHtml(summaryText)}</p>
+        <div style="display:flex;gap:0.6rem;justify-content:center;flex-wrap:wrap">
+          <button class="btn btn-primary" onclick="document.querySelector('.tab[data-tab=\\'summary\\']')?.click()" style="font-weight:700">
+            📊 View Full Summary
+          </button>
+          ${isHost() ? `
+            <button class="btn btn-primary" id="btn-scoring-rematch" onclick="startRematch(false)" style="font-weight:800;background:var(--grad-primary)">
+              🔄 Start Rematch (New Toss)
+            </button>
+            <button class="btn btn-secondary" id="btn-scoring-reset" onclick="startRematch(true)" style="font-weight:700">
+              ⚙️ Change Teams / Overs
+            </button>
+          ` : `
+            <span class="status-badge" style="padding:0.4rem 0.9rem;background:rgba(255,255,255,0.05);color:var(--text-2)">
+              ⏳ Waiting for host to launch next match...
+            </span>
+          `}
+        </div>
+      </div>`;
     return;
   }
 
   const idx = match.currentInnings;
   const inn = match.innings[idx];
   if (!inn || inn.completed) {
-    panel.innerHTML = `<div class="empty-state-large"><div class="empty-icon">✅</div><p>Innings completed</p></div>`;
+    if (idx === 0 || match.status === 'innings1') {
+      const inn1 = match.innings[0];
+      panel.innerHTML = `
+        <div class="empty-state-large glass-card" style="padding:1.6rem;text-align:center">
+          <div class="empty-icon" style="font-size:2.2rem">🏁</div>
+          <h3 style="font-family:var(--font-display);color:var(--text-1);margin:0.4rem 0 0.25rem">1st Innings Completed</h3>
+          <p style="color:var(--text-2);font-size:0.95rem;margin-bottom:1.1rem">
+            ${escHtml(getTeamName(match, inn1?.battingTeam))}: <strong>${inn1?.runs || 0}/${inn1?.wickets || 0}</strong> in ${formatOvers(inn1?.balls || 0)} ov • Target: <strong>${(inn1?.runs || 0) + 1}</strong> runs
+          </p>
+          ${isHost() ? `
+            <button class="btn btn-primary btn-lg" onclick="openBatsmenModal()" style="font-weight:800">
+              👥 Pick 2nd Innings Batsmen & Start →
+            </button>
+          ` : `
+            <p style="font-size:0.85rem;color:var(--text-3)">Waiting for host to pick 2nd innings opening batsmen...</p>
+          `}
+        </div>`;
+    } else {
+      panel.innerHTML = `
+        <div class="empty-state-large glass-card" style="padding:1.6rem;text-align:center">
+          <div class="empty-icon" style="font-size:2.2rem">🏆</div>
+          <h3 style="font-family:var(--font-display);color:var(--text-1);margin:0.4rem 0 0.25rem">Innings & Match Completed</h3>
+          <div style="display:flex;gap:0.6rem;justify-content:center;flex-wrap:wrap;margin-top:0.9rem">
+            <button class="btn btn-primary" onclick="document.querySelector('.tab[data-tab=\\'summary\\']')?.click()" style="font-weight:700">
+              📊 View Match Summary
+            </button>
+            ${isHost() ? `
+              <button class="btn btn-primary" onclick="startRematch(false)" style="font-weight:800">
+                🔄 Start Rematch
+              </button>
+              <button class="btn btn-secondary" onclick="startRematch(true)" style="font-weight:700">
+                ⚙️ Re-Setup Match
+              </button>
+            ` : ''}
+          </div>
+        </div>`;
+    }
     return;
   }
 
@@ -5198,9 +5284,19 @@ function renderSummary() {
       <div class="summary-trophy">${trophyIcon}</div>
       <div class="summary-winner">${escHtml(winner)}</div>
       <div class="summary-detail">${escHtml(winnerDetail)}</div>
-      <button class="btn btn-primary" onclick="openPosterExport()" style="margin-top:0.85rem;font-weight:700">
-        🎨 Export Match Poster (WhatsApp / Story) 📲
-      </button>
+      <div style="display:flex;gap:0.6rem;justify-content:center;flex-wrap:wrap;margin-top:0.85rem">
+        <button class="btn btn-primary" onclick="openPosterExport()" style="font-weight:700">
+          🎨 Export Poster 📲
+        </button>
+        ${isHost() ? `
+          <button class="btn btn-primary" id="btn-hero-rematch" onclick="startRematch(false)" style="font-weight:800;background:var(--grad-primary)">
+            🔄 Start Rematch (New Toss)
+          </button>
+          <button class="btn btn-secondary" id="btn-hero-reset" onclick="startRematch(true)" style="font-weight:700">
+            ⚙️ Re-Setup
+          </button>
+        ` : ''}
+      </div>
     </div>
     <div class="summary-scores">
       <div class="glass-card">

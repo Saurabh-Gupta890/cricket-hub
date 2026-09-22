@@ -4550,6 +4550,57 @@ window.selectDismissedSlot = function (slot) {
   renderScoringPanel();
 };
 
+window.recordBall = function (runsOrPayload, options = {}) {
+  if (runsOrPayload !== undefined && runsOrPayload !== null) {
+    if (typeof runsOrPayload === 'number') {
+      state.pendingRuns = runsOrPayload;
+      state.pendingWicket = false;
+      state.pendingExtras = {};
+    } else if (typeof runsOrPayload === 'string') {
+      const s = runsOrPayload.toUpperCase().trim();
+      if (s === 'W' || s === 'WICKET' || s === 'OUT') {
+        state.pendingWicket = true;
+        state.pendingDismissalType = options.dismissalType || 'Bowled';
+        state.pendingDismissedSlot = options.dismissedSlot || 'striker';
+        state.pendingRuns = 0;
+        state.pendingExtras = {};
+      } else if (s === 'WD' || s === 'WIDE') {
+        state.pendingExtras = { wide: true };
+        state.pendingRuns = 0;
+        state.pendingWicket = false;
+      } else if (s === 'NB' || s === 'NOBALL') {
+        state.pendingExtras = { noBall: true };
+        state.pendingRuns = 0;
+        state.pendingWicket = false;
+      } else if (s === 'BYE' || s === 'B') {
+        state.pendingExtras = { bye: options.runs || 1 };
+        state.pendingRuns = 0;
+        state.pendingWicket = false;
+      } else if (s === 'LEGBYE' || s === 'LB') {
+        state.pendingExtras = { legBye: options.runs || 1 };
+        state.pendingRuns = 0;
+        state.pendingWicket = false;
+      } else if (!isNaN(parseInt(s, 10))) {
+        state.pendingRuns = parseInt(s, 10);
+        state.pendingWicket = false;
+        state.pendingExtras = {};
+      }
+    } else if (typeof runsOrPayload === 'object') {
+      if (runsOrPayload.runs !== undefined) state.pendingRuns = parseInt(runsOrPayload.runs) || 0;
+      if (runsOrPayload.wicket !== undefined || runsOrPayload.isWicket !== undefined) {
+        state.pendingWicket = !!(runsOrPayload.wicket || runsOrPayload.isWicket);
+        if (runsOrPayload.dismissalType) state.pendingDismissalType = runsOrPayload.dismissalType;
+        if (runsOrPayload.dismissedSlot) state.pendingDismissedSlot = runsOrPayload.dismissedSlot;
+      }
+      if (runsOrPayload.extras) {
+        state.pendingExtras = { ...runsOrPayload.extras };
+      }
+    }
+  }
+
+  return window.commitBall();
+};
+
 window.commitBall = function () {
   if (!isHost()) return toast('Only the host can score');
   if (state.pendingRuns === null) state.pendingRuns = 0;
@@ -4557,6 +4608,7 @@ window.commitBall = function () {
   if (!match) return;
   const idx = match.currentInnings;
   const inn = match.innings[idx];
+  if (!inn) return;
 
   if (inn.awaitingNewBatsman) {
     openNextBatsmanModal();
@@ -4627,6 +4679,7 @@ window.commitBall = function () {
   state.pendingExtras = {};
   state.pendingWicket = false;
   state.pendingDismissalNote = '';
+  renderScoringPanel();
 };
 
 // ── Undo / Redo ───────────────────────────────
@@ -5239,6 +5292,12 @@ socket.on('state:update', (room) => {
     }
     document.querySelector('.tab[data-tab="scoring"]')?.click();
     toast(room.match.status.startsWith('super_over_') ? '⚡ Super Over started! Time to score!' : '🏏 Match started! Time to score!');
+    if (isHost()) {
+      const curInn = room.match.innings?.[room.match.currentInnings];
+      if (curInn && curInn.currentBatsmen && curInn.currentBatsmen[0] === null) {
+        setTimeout(() => openBatsmenModal(), 400);
+      }
+    }
   }
   if (room.match.status === 'innings2' && prevStatus === 'innings1') {
     const inn = room.match.innings[0];

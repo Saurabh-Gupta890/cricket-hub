@@ -3757,7 +3757,7 @@ io.on('connection', (socket) => {
         room.match.currentInnings = 3;
         room.match.status = 'super_over_inn2';
       }
-    } else if (wicket && !isWide && !isNoBall) {
+    } else if (wicket) {
       // A wicket fell -> pause for host to pick next batter, play single batter, or declare all out
       inn.awaitingNewBatsman = true;
     }
@@ -3940,7 +3940,10 @@ io.on('connection', (socket) => {
       inn.awaitingNewBatsman = false;
     } else {
       const safeName = sanitizeText(batsmanName, 35);
-      if (!safeName) return;
+      if (!safeName) {
+        if (typeof cb === 'function') cb({ success: false, error: 'Invalid batsman name' });
+        return;
+      }
 
       if (!inn.batsmen.find(b => b.name === safeName)) {
         inn.batsmen.push({ name: safeName, runs: 0, balls: 0, fours: 0, sixes: 0, out: false, dismissal: '' });
@@ -4092,6 +4095,7 @@ io.on('connection', (socket) => {
       const lastBowler = inn.bowlers[inn.lastBowlerIdx];
       if (lastBowler && lastBowler.name === safeBowler) {
         socket.emit('score:error', { message: `${safeBowler} just bowled the last over. Pick a different bowler.` });
+        if (typeof cb === 'function') cb({ success: false, error: `${safeBowler} just bowled the last over. Pick a different bowler.` });
         return;
       }
     }

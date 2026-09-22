@@ -676,14 +676,22 @@
 
   function autoSyncScore(shotKey, runValue) {
     if (typeof window.recordBall === 'function') {
-      if (shotKey === 'WICKET') {
+      if (shotKey === 'WICKET' || (typeof shotKey === 'string' && shotKey.startsWith('WICKET_'))) {
         window.recordBall('W');
-      } else if (runValue === 6) {
+      } else if (runValue === 6 || shotKey === 'PULL_SHOT' || shotKey === 'HELICOPTER_SHOT') {
         window.recordBall(6);
-      } else if (runValue === 4) {
+      } else if (runValue === 4 || shotKey === 'COVER_DRIVE' || shotKey === 'STRAIGHT_DRIVE' || shotKey === 'SQUARE_CUT') {
         window.recordBall(4);
-      } else if (shotKey === 'FORWARD_DEFENSE') {
+      } else if (runValue === 1 || shotKey === 'RUN_1') {
+        window.recordBall(1);
+      } else if (runValue === 2 || shotKey === 'RUN_2') {
+        window.recordBall(2);
+      } else if (runValue === 3 || shotKey === 'RUN_3') {
+        window.recordBall(3);
+      } else if (shotKey === 'FORWARD_DEFENSE' || shotKey === 'PLAY_AND_MISS' || runValue === 0) {
         window.recordBall(0);
+      } else {
+        window.recordBall(runValue || 0);
       }
     }
   }

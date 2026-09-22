@@ -4523,7 +4523,7 @@ function renderScoringPanel() {
 
 window.selectRun = function (r) {
   state.pendingRuns = parseInt(r) || 0;
-  // If wicket is active and NOT Run Out, selecting a non-zero run turns off wicket (runs and normal wickets are mutually exclusive)
+  // If wicket is active and NOT Run Out, selecting a non-zero run turns off wicket
   if (state.pendingWicket && state.pendingDismissalType !== 'Run Out' && state.pendingRuns > 0) {
     state.pendingWicket = false;
   }
@@ -4572,95 +4572,6 @@ window.selectDismissalType = function (type) {
 window.selectDismissedSlot = function (slot) {
   state.pendingDismissedSlot = slot;
   renderScorecard();
-  renderScoringPanel();
-};otal.` : 'No runs added (run out on delivery).'}
-                  </div>
-                </div>
-              ` : ''}
-
-              <input type="text" class="dismissal-input form-control" id="dismissal-input"
-                value="${escHtml(state.pendingDismissalNote || '')}"
-                oninput="state.pendingDismissalNote = this.value"
-                placeholder="${state.pendingDismissalType === 'Caught' ? 'e.g. c Kohli (or leave blank for c & b ' + (bowlerObj?.name || 'Bowler') + ')' : (state.pendingDismissalType === 'Stumped' ? 'e.g. st Dhoni (or leave blank for st b ' + (bowlerObj?.name || 'Bowler') + ')' : (state.pendingDismissalType === 'Run Out' ? 'e.g. Direct hit by Jadeja' : 'Optional custom note (e.g. b ' + (bowlerObj?.name || 'Bowler') + ')'))}" 
-                style="width:100%;font-size:0.8rem;padding:0.4rem 0.6rem" />
-            </div>
-          </div>
-        </div>
-        <button class="commit-btn" onclick="commitBall()">✅ Record Ball</button>
-      </div>
-    </div>
-    <div style="display:flex;gap:0.75rem;margin-top:0.5rem;flex-wrap:wrap">
-      <button class="btn btn-ghost" style="flex:1;min-width:110px" onclick="openBatsmenModal()">🏏 Set Batsmen</button>
-      <button class="btn btn-ghost" style="flex:1;min-width:110px" onclick="openBowlerModal()">⚾ Set Bowler</button>
-      <button class="btn btn-ghost" style="flex:1;min-width:110px;color:var(--danger);border-color:rgba(255,82,82,0.35)" onclick="declareAllOut()">${isLastInnings ? '🏆 End Match' : '🏁 End Innings'}</button>
-    </div>
-    ` : `
-    <div class="glass-card" style="text-align:center;padding:1.5rem">
-      <div style="font-size:1.5rem;margin-bottom:0.5rem">👀</div>
-      <div style="color:var(--text-2);font-size:0.9rem">You're viewing live — only the host can score</div>
-    </div>
-    `}
-  `;
-
-  if (state.pendingRuns !== null) document.getElementById(`run-${state.pendingRuns}`)?.classList.add('selected');
-  Object.keys(state.pendingExtras).forEach(k => {
-    if (state.pendingExtras[k]) document.getElementById(`extra-${k}`)?.classList.add('selected');
-  });
-  if (state.pendingWicket) {
-    document.getElementById('wicket-toggle')?.classList.add('active');
-  }
-}
-
-window.selectRun = function (r) {
-  state.pendingRuns = parseInt(r) || 0;
-  // If wicket is active and NOT Run Out, selecting a non-zero run turns off wicket (runs and normal wickets are mutually exclusive)
-  if (state.pendingWicket && state.pendingDismissalType !== 'Run Out' && state.pendingRuns > 0) {
-    state.pendingWicket = false;
-    document.getElementById('wicket-toggle')?.classList.remove('active');
-    const wp = document.getElementById('wicket-details-panel');
-    if (wp) wp.style.display = 'none';
-  }
-  document.querySelectorAll('.run-btn').forEach(b => b.classList.remove('selected'));
-  document.getElementById(`run-${r}`)?.classList.add('selected');
-};
-
-window.selectRunOutCompletedRuns = function (r) {
-  state.pendingRuns = parseInt(r) || 0;
-  renderScoringPanel();
-};
-
-window.toggleExtra = function (type) {
-  state.pendingExtras[type] = !state.pendingExtras[type];
-  if (type === 'wide' && state.pendingExtras.wide) state.pendingExtras.noBall = false;
-  if (type === 'noBall' && state.pendingExtras.noBall) state.pendingExtras.wide = false;
-  ['wide', 'noBall', 'bye', 'legBye'].forEach(k =>
-    document.getElementById(`extra-${k}`)?.classList.toggle('selected', !!state.pendingExtras[k]));
-};
-
-window.toggleWicket = function () {
-  state.pendingWicket = !state.pendingWicket;
-  if (state.pendingWicket) {
-    if (!state.pendingDismissalType) state.pendingDismissalType = 'Bowled';
-    if (!state.pendingDismissedSlot) state.pendingDismissedSlot = 'striker';
-    // Wicket priority: reset runs to 0 unless Run Out
-    if (state.pendingDismissalType !== 'Run Out') {
-      state.pendingRuns = 0;
-    }
-  }
-  renderScoringPanel();
-};
-
-window.selectDismissalType = function (type) {
-  state.pendingDismissalType = type;
-  if (type !== 'Run Out') {
-    state.pendingRuns = 0;
-    state.pendingDismissedSlot = 'striker';
-  }
-  renderScoringPanel();
-};
-
-window.selectDismissedSlot = function (slot) {
-  state.pendingDismissedSlot = slot;
   renderScoringPanel();
 };
 
@@ -4793,6 +4704,7 @@ window.commitBall = function () {
   state.pendingExtras = {};
   state.pendingWicket = false;
   state.pendingDismissalNote = '';
+  renderScorecard();
   renderScoringPanel();
 };
 

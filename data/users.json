@@ -736,28 +736,46 @@
   "919111222333": {
     "phone": "919111222333",
     "name": "Player",
-    "token": "61906fa615c6997ead849372475ac44e1432ebf90fc0660f4bbf82097bef8ec3",
+    "token": "b60ea131965827a32174b810b68eca6eba2f6001272e0dc5f28f04100c78784e",
     "avatar": null,
     "createdAt": 1789985225569,
     "color": "#00E5FF",
-    "lastActiveRoom": "CRK-L33H"
+    "lastActiveRoom": "CRK-3B6M"
   },
   "919555444333": {
     "phone": "919555444333",
     "name": "Player",
-    "token": "e74e0d071b6fe0164d4600e85c080255e508dd06729487cd58b105d938d64d11",
+    "token": "3bdd1cbe63229e5ca11cb0eee5165eaf4b435fb4a4a2596ed42bf38bcedede50",
     "avatar": null,
     "createdAt": 1789985782641,
     "color": "#FF6B35",
-    "lastActiveRoom": "CRK-TZXL"
+    "lastActiveRoom": "CRK-EA7B"
   },
   "919555444334": {
     "phone": "919555444334",
     "name": "Player",
-    "token": "2e63ecd56f885b71be6551063e7b05ebe085671b0766f60306fedc86714f2928",
+    "token": "aad3845c872edcf69bd84fb8c4a7b511aa666c0875db47197133a4f7853de120",
     "avatar": null,
     "createdAt": 1789985782649,
     "color": "#7C4DFF",
+    "lastActiveRoom": null
+  },
+  "919999000001": {
+    "phone": "919999000001",
+    "name": "Host Captain",
+    "token": "82ce64ec55b7a236fa2d011e18a0c7c98a0fb4850dfd5375ee09ba062570ef8d",
+    "avatar": null,
+    "createdAt": 1790067259705,
+    "color": "#00E676",
+    "lastActiveRoom": null
+  },
+  "919999000002": {
+    "phone": "919999000002",
+    "name": "Spectator User",
+    "token": "b11300d20672c2e419165fce0dd2dff8118618402733625da796830494083078",
+    "avatar": null,
+    "createdAt": 1790067259712,
+    "color": "#FF4081",
     "lastActiveRoom": null
   }
 }

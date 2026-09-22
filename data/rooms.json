@@ -82224,5 +82224,483 @@
     },
     "createdAt": 1789985782946,
     "lastAccessedAt": 1789985782946
+  },
+  "CRK-K2MS": {
+    "code": "CRK-K2MS",
+    "matchName": "E2E Cup Final 1790067259723",
+    "hostPhone": "919999000001",
+    "groupId": null,
+    "quietAlerts": false,
+    "planning": {
+      "members": {
+        "919999000001": {
+          "phone": "919999000001",
+          "name": "Host Captain",
+          "color": "#00E676",
+          "avatar": "🏏",
+          "vote": null,
+          "comment": "",
+          "isHost": true,
+          "joinedAt": 1790067259726,
+          "lastJoinedAt": 1790067259726
+        },
+        "919999000002": {
+          "phone": "919999000002",
+          "name": "Spectator User",
+          "color": "#FF4081",
+          "avatar": "🏏",
+          "vote": null,
+          "comment": "",
+          "isHost": false,
+          "joinedAt": 1790067259744,
+          "lastJoinedAt": 1790067259744
+        }
+      }
+    },
+    "match": {
+      "status": "planning",
+      "date": "",
+      "time": "",
+      "teams": {
+        "team1": {
+          "name": "India",
+          "players": []
+        },
+        "team2": {
+          "name": "Australia",
+          "players": []
+        }
+      },
+      "overs": 2,
+      "toss": null,
+      "battingFirst": null,
+      "location": {
+        "text": "",
+        "mapUrl": ""
+      },
+      "innings": [
+        {
+          "battingTeam": null,
+          "bowlingTeam": null,
+          "runs": 0,
+          "wickets": 0,
+          "overs": 0,
+          "balls": 0,
+          "extras": {
+            "wide": 0,
+            "noBall": 0,
+            "bye": 0,
+            "legBye": 0
+          },
+          "batsmen": [],
+          "bowlers": [],
+          "currentBatsmen": [
+            null,
+            null
+          ],
+          "currentBowler": null,
+          "ballLog": [],
+          "currentOver": [],
+          "target": null,
+          "completed": false,
+          "awaitingNewBowler": false,
+          "awaitingNewBatsman": false,
+          "dismissedBatsmanIdx": null,
+          "isSingleBatter": false,
+          "lastBowlerIdx": null,
+          "_history": [],
+          "_redoStack": []
+        },
+        {
+          "battingTeam": null,
+          "bowlingTeam": null,
+          "runs": 0,
+          "wickets": 0,
+          "overs": 0,
+          "balls": 0,
+          "extras": {
+            "wide": 0,
+            "noBall": 0,
+            "bye": 0,
+            "legBye": 0
+          },
+          "batsmen": [],
+          "bowlers": [],
+          "currentBatsmen": [
+            null,
+            null
+          ],
+          "currentBowler": null,
+          "ballLog": [],
+          "currentOver": [],
+          "target": null,
+          "completed": false,
+          "awaitingNewBowler": false,
+          "awaitingNewBatsman": false,
+          "dismissedBatsmanIdx": null,
+          "isSingleBatter": false,
+          "lastBowlerIdx": null,
+          "_history": [],
+          "_redoStack": []
+        }
+      ],
+      "currentInnings": 0,
+      "announcements": [
+        {
+          "id": 1790067259757,
+          "text": "Welcome to the Grand Final!",
+          "author": "Host Captain",
+          "timestamp": "2026-09-22T08:54:19.757Z"
+        }
+      ],
+      "chat": []
+    },
+    "createdAt": 1790067259726,
+    "lastAccessedAt": 1790067259743
+  },
+  "CRK-EA7B": {
+    "code": "CRK-EA7B",
+    "matchName": "Unique Premier Cup 1790067391859",
+    "hostPhone": "919555444333",
+    "groupId": null,
+    "quietAlerts": false,
+    "planning": {
+      "members": {
+        "919555444333": {
+          "phone": "919555444333",
+          "name": "Player",
+          "color": "#FF6B35",
+          "avatar": "🏏",
+          "vote": null,
+          "comment": "",
+          "isHost": true,
+          "joinedAt": 1790067392110,
+          "lastJoinedAt": 1790067392110
+        }
+      }
+    },
+    "match": {
+      "status": "planning",
+      "date": "",
+      "time": "",
+      "teams": {
+        "team1": {
+          "name": "Team 1",
+          "players": []
+        },
+        "team2": {
+          "name": "Team 2",
+          "players": []
+        }
+      },
+      "overs": 20,
+      "toss": null,
+      "battingFirst": null,
+      "location": {
+        "text": "",
+        "mapUrl": ""
+      },
+      "innings": [
+        {
+          "battingTeam": null,
+          "bowlingTeam": null,
+          "runs": 0,
+          "wickets": 0,
+          "overs": 0,
+          "balls": 0,
+          "extras": {
+            "wide": 0,
+            "noBall": 0,
+            "bye": 0,
+            "legBye": 0
+          },
+          "batsmen": [],
+          "bowlers": [],
+          "currentBatsmen": [
+            null,
+            null
+          ],
+          "currentBowler": null,
+          "ballLog": [],
+          "currentOver": [],
+          "target": null,
+          "completed": false,
+          "awaitingNewBowler": false,
+          "awaitingNewBatsman": false,
+          "dismissedBatsmanIdx": null,
+          "isSingleBatter": false,
+          "lastBowlerIdx": null,
+          "_history": [],
+          "_redoStack": []
+        },
+        {
+          "battingTeam": null,
+          "bowlingTeam": null,
+          "runs": 0,
+          "wickets": 0,
+          "overs": 0,
+          "balls": 0,
+          "extras": {
+            "wide": 0,
+            "noBall": 0,
+            "bye": 0,
+            "legBye": 0
+          },
+          "batsmen": [],
+          "bowlers": [],
+          "currentBatsmen": [
+            null,
+            null
+          ],
+          "currentBowler": null,
+          "ballLog": [],
+          "currentOver": [],
+          "target": null,
+          "completed": false,
+          "awaitingNewBowler": false,
+          "awaitingNewBatsman": false,
+          "dismissedBatsmanIdx": null,
+          "isSingleBatter": false,
+          "lastBowlerIdx": null,
+          "_history": [],
+          "_redoStack": []
+        }
+      ],
+      "currentInnings": 0,
+      "announcements": [],
+      "chat": []
+    },
+    "createdAt": 1790067392110,
+    "lastAccessedAt": 1790067392110
+  },
+  "CRK-3B6M": {
+    "code": "CRK-3B6M",
+    "matchName": "Room Alpha Match 1790067470722",
+    "hostPhone": "919111222333",
+    "groupId": null,
+    "quietAlerts": false,
+    "planning": {
+      "members": {
+        "919111222333": {
+          "phone": "919111222333",
+          "name": "Player",
+          "color": "#00E5FF",
+          "avatar": "🏏",
+          "vote": null,
+          "comment": "",
+          "isHost": true,
+          "joinedAt": 1790067470724,
+          "lastJoinedAt": 1790067470977
+        }
+      }
+    },
+    "match": {
+      "status": "planning",
+      "date": "",
+      "time": "",
+      "teams": {
+        "team1": {
+          "name": "Team 1",
+          "players": []
+        },
+        "team2": {
+          "name": "Team 2",
+          "players": []
+        }
+      },
+      "overs": 20,
+      "toss": null,
+      "battingFirst": null,
+      "location": {
+        "text": "",
+        "mapUrl": ""
+      },
+      "innings": [
+        {
+          "battingTeam": null,
+          "bowlingTeam": null,
+          "runs": 0,
+          "wickets": 0,
+          "overs": 0,
+          "balls": 0,
+          "extras": {
+            "wide": 0,
+            "noBall": 0,
+            "bye": 0,
+            "legBye": 0
+          },
+          "batsmen": [],
+          "bowlers": [],
+          "currentBatsmen": [
+            null,
+            null
+          ],
+          "currentBowler": null,
+          "ballLog": [],
+          "currentOver": [],
+          "target": null,
+          "completed": false,
+          "awaitingNewBowler": false,
+          "awaitingNewBatsman": false,
+          "dismissedBatsmanIdx": null,
+          "isSingleBatter": false,
+          "lastBowlerIdx": null,
+          "_history": [],
+          "_redoStack": []
+        },
+        {
+          "battingTeam": null,
+          "bowlingTeam": null,
+          "runs": 0,
+          "wickets": 0,
+          "overs": 0,
+          "balls": 0,
+          "extras": {
+            "wide": 0,
+            "noBall": 0,
+            "bye": 0,
+            "legBye": 0
+          },
+          "batsmen": [],
+          "bowlers": [],
+          "currentBatsmen": [
+            null,
+            null
+          ],
+          "currentBowler": null,
+          "ballLog": [],
+          "currentOver": [],
+          "target": null,
+          "completed": false,
+          "awaitingNewBowler": false,
+          "awaitingNewBatsman": false,
+          "dismissedBatsmanIdx": null,
+          "isSingleBatter": false,
+          "lastBowlerIdx": null,
+          "_history": [],
+          "_redoStack": []
+        }
+      ],
+      "currentInnings": 0,
+      "announcements": [],
+      "chat": []
+    },
+    "createdAt": 1790067470724,
+    "lastAccessedAt": 1790067470977
+  },
+  "CRK-WSUP": {
+    "code": "CRK-WSUP",
+    "matchName": "Room Beta Match 1790067470856",
+    "hostPhone": "919111222333",
+    "groupId": null,
+    "quietAlerts": false,
+    "planning": {
+      "members": {
+        "919111222333": {
+          "phone": "919111222333",
+          "name": "Player",
+          "color": "#00E5FF",
+          "avatar": "🏏",
+          "vote": null,
+          "comment": "",
+          "isHost": true,
+          "joinedAt": 1790067470857,
+          "lastJoinedAt": 1790067470857
+        }
+      }
+    },
+    "match": {
+      "status": "planning",
+      "date": "",
+      "time": "",
+      "teams": {
+        "team1": {
+          "name": "Team 1",
+          "players": []
+        },
+        "team2": {
+          "name": "Team 2",
+          "players": []
+        }
+      },
+      "overs": 20,
+      "toss": null,
+      "battingFirst": null,
+      "location": {
+        "text": "",
+        "mapUrl": ""
+      },
+      "innings": [
+        {
+          "battingTeam": null,
+          "bowlingTeam": null,
+          "runs": 0,
+          "wickets": 0,
+          "overs": 0,
+          "balls": 0,
+          "extras": {
+            "wide": 0,
+            "noBall": 0,
+            "bye": 0,
+            "legBye": 0
+          },
+          "batsmen": [],
+          "bowlers": [],
+          "currentBatsmen": [
+            null,
+            null
+          ],
+          "currentBowler": null,
+          "ballLog": [],
+          "currentOver": [],
+          "target": null,
+          "completed": false,
+          "awaitingNewBowler": false,
+          "awaitingNewBatsman": false,
+          "dismissedBatsmanIdx": null,
+          "isSingleBatter": false,
+          "lastBowlerIdx": null,
+          "_history": [],
+          "_redoStack": []
+        },
+        {
+          "battingTeam": null,
+          "bowlingTeam": null,
+          "runs": 0,
+          "wickets": 0,
+          "overs": 0,
+          "balls": 0,
+          "extras": {
+            "wide": 0,
+            "noBall": 0,
+            "bye": 0,
+            "legBye": 0
+          },
+          "batsmen": [],
+          "bowlers": [],
+          "currentBatsmen": [
+            null,
+            null
+          ],
+          "currentBowler": null,
+          "ballLog": [],
+          "currentOver": [],
+          "target": null,
+          "completed": false,
+          "awaitingNewBowler": false,
+          "awaitingNewBatsman": false,
+          "dismissedBatsmanIdx": null,
+          "isSingleBatter": false,
+          "lastBowlerIdx": null,
+          "_history": [],
+          "_redoStack": []
+        }
+      ],
+      "currentInnings": 0,
+      "announcements": [],
+      "chat": []
+    },
+    "createdAt": 1790067470857,
+    "lastAccessedAt": 1790067470857
   }
 }

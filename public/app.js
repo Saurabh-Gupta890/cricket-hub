@@ -4090,6 +4090,178 @@ function renderScorecard() {
   wrap.innerHTML = html || `<div class="empty-state-large"><div class="empty-icon">📊</div><p>Match starting soon...</p></div>`;
 }
 
+function buildLiveCommentaryCardHTML() {
+  const isEnabled = localStorage.getItem('crickethub_ai_commentary_enabled') !== 'false';
+  const persona = localStorage.getItem('crickethub_ai_persona') || 'shastri';
+  const lastText = (typeof window.getAiCommentaryState === 'function' && window.getAiCommentaryState().lastText) 
+    || "Ready for live match commentary — every run, boundary & wicket will be announced live!";
+
+  return `
+    <div class="scoring-commentary-card glass-card" style="margin-bottom:1rem;padding:0.75rem 1rem;border-radius:12px;background:rgba(15,23,42,0.65);border:1px solid rgba(56,189,248,0.2)">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:0.6rem">
+        <div style="display:flex;align-items:center;gap:0.6rem">
+          <label class="commentary-switch" title="Toggle AI Audio Commentary">
+            <input type="checkbox" class="scoring-commentary-toggle" ${isEnabled ? 'checked' : ''} onchange="window.toggleAiCommentary && window.toggleAiCommentary(this.checked); renderScorecard(); renderScoringPanel();">
+            <span class="commentary-slider"></span>
+          </label>
+          <div>
+            <div style="font-size:0.85rem;font-weight:800;color:#fff;display:flex;align-items:center;gap:0.4rem">
+              <span>🎙️ Live AI Commentary</span>
+              <span class="scoring-commentary-status-pill" style="font-size:0.68rem;font-weight:700;padding:0.1rem 0.5rem;border-radius:999px;background:${isEnabled ? 'rgba(34,197,94,0.2)' : 'rgba(148,163,184,0.2)'};color:${isEnabled ? '#22c55e' : '#94a3b8'};border:1px solid ${isEnabled ? 'rgba(34,197,94,0.4)' : 'rgba(148,163,184,0.3)'}">
+                ${isEnabled ? 'ON AIR' : 'MUTED'}
+              </span>
+            </div>
+            <div style="font-size:0.7rem;color:#94a3b8">Voice narration for runs, wickets & extras</div>
+          </div>
+        </div>
+
+        <div style="display:flex;align-items:center;gap:0.4rem;flex-wrap:wrap">
+          <button type="button" class="btn btn-xs scoring-persona-btn ${persona === 'shastri' ? 'active' : ''}" 
+            data-persona="shastri"
+            style="padding:0.25rem 0.6rem;font-size:0.75rem;border-radius:20px;${persona === 'shastri' ? 'background:#38bdf8;color:#0b0f19;border-color:#38bdf8;font-weight:800;box-shadow:0 0 10px rgba(56,189,248,0.4)' : 'background:rgba(255,255,255,0.06);color:#cbd5e1;border-color:rgba(255,255,255,0.1)'}" 
+            onclick="window.setAiPersona && window.setAiPersona('shastri'); renderScorecard(); renderScoringPanel();">
+            ⚡ Ravi Shastri
+          </button>
+          <button type="button" class="btn btn-xs scoring-persona-btn ${persona === 'bhogle' ? 'active' : ''}" 
+            data-persona="bhogle"
+            style="padding:0.25rem 0.6rem;font-size:0.75rem;border-radius:20px;${persona === 'bhogle' ? 'background:#38bdf8;color:#0b0f19;border-color:#38bdf8;font-weight:800;box-shadow:0 0 10px rgba(56,189,248,0.4)' : 'background:rgba(255,255,255,0.06);color:#cbd5e1;border-color:rgba(255,255,255,0.1)'}" 
+            onclick="window.setAiPersona && window.setAiPersona('bhogle'); renderScorecard(); renderScoringPanel();">
+            🏏 Harsha Bhogle
+          </button>
+          <button type="button" class="btn btn-xs btn-ghost" title="Test voice" style="padding:0.25rem 0.5rem;font-size:0.75rem;border-color:rgba(255,255,255,0.15)" onclick="window.testCommentaryVoice && window.testCommentaryVoice('four')">
+            🔊 Test
+          </button>
+          <button type="button" class="btn btn-xs btn-ghost" title="Open Vision & Voice Studio" style="padding:0.25rem 0.5rem;font-size:0.75rem;border-color:rgba(255,255,255,0.15)" onclick="window.openAiStudio && window.openAiStudio()">
+            🎥 Studio
+          </button>
+        </div>
+      </div>
+
+      <div class="scoring-commentary-ticker" style="margin-top:0.5rem;padding:0.4rem 0.65rem;background:rgba(0,0,0,0.35);border-radius:8px;border:1px solid rgba(255,255,255,0.06);display:flex;align-items:center;gap:0.5rem">
+        <span class="scoring-wave-indicator" style="display:none">
+          <div class="ai-audio-bar"></div>
+          <div class="ai-audio-bar"></div>
+          <div class="ai-audio-bar"></div>
+          <div class="ai-audio-bar"></div>
+        </span>
+        <span class="scoring-commentary-text" style="font-size:0.76rem;color:#e2e8f0;font-style:italic;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
+          "${escHtml(lastText)}"
+        </span>
+      </div>
+    </div>`;
+}
+
+function buildLiveScoringControlsHTML(match, inn, idx, hostUser) {
+  if (!hostUser) {
+    return `
+    <div class="glass-card" style="text-align:center;padding:1.5rem;margin-bottom:1rem">
+      <div style="font-size:1.5rem;margin-bottom:0.5rem">👀</div>
+      <div style="color:var(--text-2);font-size:0.9rem">You're viewing live — only the host can score</div>
+    </div>`;
+  }
+
+  const strikerObj = inn.currentBatsmen[0] !== null ? inn.batsmen[inn.currentBatsmen[0]] : null;
+  const nonStrikerObj = inn.currentBatsmen[1] !== null ? inn.batsmen[inn.currentBatsmen[1]] : null;
+  const bowlerObj = inn.currentBowler !== null ? inn.bowlers[inn.currentBowler] : null;
+  const isLastInnings = idx === 1 || idx === 3 || match.status === 'innings2' || match.status === 'super_over_inn2';
+
+  return `
+    <div class="glass-card" style="margin-bottom:1rem">
+      <div class="scoring-controls">
+        <div>
+          <div class="scoring-label">RUNS</div>
+          <div class="runs-grid">
+            ${[0, 1, 2, 3, '4', '5', '6'].map(r => `
+              <button type="button" class="run-btn ${r == '4' ? 'four-btn' : ''} ${r == '6' ? 'six-btn' : ''} ${state.pendingRuns === (parseInt(r) || 0) && !state.pendingWicket ? 'selected' : ''}"
+                onclick="selectRun(${r})">${r}</button>
+            `).join('')}
+          </div>
+        </div>
+        <div>
+          <div class="scoring-label">EXTRAS</div>
+          <div class="extras-row">
+            <button type="button" class="extra-btn ${state.pendingExtras?.wide ? 'selected' : ''}" onclick="toggleExtra('wide')">Wide (+1)</button>
+            <button type="button" class="extra-btn ${state.pendingExtras?.noBall ? 'selected' : ''}" onclick="toggleExtra('noBall')">No Ball (+1)</button>
+            <button type="button" class="extra-btn ${state.pendingExtras?.bye ? 'selected' : ''}" onclick="toggleExtra('bye')">Bye</button>
+            <button type="button" class="extra-btn ${state.pendingExtras?.legBye ? 'selected' : ''}" onclick="toggleExtra('legBye')">Leg Bye</button>
+          </div>
+        </div>
+        <div>
+          <div class="scoring-label">WICKET</div>
+          <div class="wicket-section">
+            <button type="button" class="wicket-toggle ${state.pendingWicket ? 'active' : ''}" onclick="toggleWicket()">🚫 Wicket</button>
+            
+            <div style="display:${state.pendingWicket ? 'block' : 'none'};margin-top:0.75rem;padding:0.75rem;background:rgba(255,82,82,0.08);border:1px solid rgba(255,82,82,0.3);border-radius:10px">
+              <div style="font-size:0.75rem;font-weight:700;color:var(--danger);margin-bottom:0.4rem;display:flex;justify-content:space-between;align-items:center">
+                <span>DISMISSAL TYPE</span>
+                <span style="font-size:0.7rem;font-weight:700;color:${state.pendingDismissalType === 'Run Out' ? '#ffab00' : '#00e5ff'}">
+                  ${state.pendingDismissalType === 'Run Out' ? '🏃 Fielding (No Bowler Wicket)' : '⚾ Bowler\'s Wicket (+1 W)'}
+                </span>
+              </div>
+              <div class="dismissal-pills-grid" style="display:flex;gap:0.35rem;flex-wrap:wrap;margin-bottom:0.6rem">
+                ${['Bowled', 'Caught', 'LBW', 'Stumped', 'Hit Wicket', 'Run Out'].map(d => `
+                  <button type="button" class="btn btn-sm ${(state.pendingDismissalType || 'Bowled') === d ? 'btn-primary' : 'btn-ghost'}" 
+                    style="padding:0.25rem 0.55rem;font-size:0.75rem;font-weight:700" 
+                    onclick="selectDismissalType('${d}')">${d}</button>
+                `).join('')}
+              </div>
+
+              ${state.pendingDismissalType === 'Run Out' ? `
+                <div style="margin-bottom:0.75rem;padding:0.75rem;background:rgba(0,0,0,0.35);border-radius:10px;border:1px solid rgba(255,171,0,0.4)">
+                  <div style="font-size:0.78rem;font-weight:800;color:#ffab00;margin-bottom:0.45rem;display:flex;align-items:center;gap:0.35rem">
+                    <span>🏃</span> WHO GOT RUN OUT?
+                  </div>
+                  <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:0.75rem">
+                    <button type="button" class="btn btn-sm ${state.pendingDismissedSlot === 'striker' ? 'btn-primary' : 'btn-ghost'}" 
+                      style="flex:1;min-width:130px;font-size:0.8rem;font-weight:700;padding:0.45rem 0.6rem;${state.pendingDismissedSlot === 'striker' ? 'box-shadow:0 0 10px rgba(0,229,255,0.4);' : ''}" 
+                      onclick="selectDismissedSlot('striker')">
+                      🏏 Striker (${escHtml(strikerObj?.name || 'Striker')})
+                    </button>
+                    ${(!inn.isSingleBatter && (nonStrikerObj || inn.currentBatsmen[1] !== null)) ? `
+                    <button type="button" class="btn btn-sm ${state.pendingDismissedSlot === 'non_striker' ? 'btn-primary' : 'btn-ghost'}" 
+                      style="flex:1;min-width:130px;font-size:0.8rem;font-weight:700;padding:0.45rem 0.6rem;${state.pendingDismissedSlot === 'non_striker' ? 'box-shadow:0 0 10px rgba(0,229,255,0.4);' : ''}" 
+                      onclick="selectDismissedSlot('non_striker')">
+                      ◇ Non-Striker (${escHtml(nonStrikerObj?.name || 'Non-Striker')})
+                    </button>
+                    ` : ''}
+                  </div>
+
+                  <div style="font-size:0.78rem;font-weight:800;color:#00e5ff;margin-bottom:0.45rem;display:flex;align-items:center;gap:0.35rem">
+                    <span>⚡</span> RUNS COMPLETED BEFORE RUN OUT
+                  </div>
+                  <div style="display:flex;gap:0.4rem;flex-wrap:wrap;margin-bottom:0.35rem">
+                    ${[0, 1, 2, 3].map(r => `
+                      <button type="button" class="btn btn-sm ${(state.pendingRuns === r || (state.pendingRuns === null && r === 0)) ? 'btn-primary' : 'btn-ghost'}"
+                        style="flex:1;min-width:65px;font-size:0.8rem;font-weight:800;padding:0.4rem 0.6rem;${(state.pendingRuns === r || (state.pendingRuns === null && r === 0)) ? 'background:#00e5ff;color:#080c14;box-shadow:0 0 10px rgba(0,229,255,0.5);' : ''}"
+                        onclick="selectRunOutCompletedRuns(${r})">
+                        ${r === 0 ? '0 (No Run)' : `${r} ${r === 1 ? 'Run' : 'Runs'}`}
+                      </button>
+                    `).join('')}
+                  </div>
+                  <div style="font-size:0.72rem;color:var(--text-3);margin-top:0.35rem">
+                    ${(state.pendingRuns && state.pendingRuns > 0) ? `✅ ${state.pendingRuns} ${state.pendingRuns === 1 ? 'run' : 'runs'} will be added to team & batter total.` : 'No runs added (run out on delivery).'}
+                  </div>
+                </div>
+              ` : ''}
+
+              <input type="text" class="form-control"
+                value="${escHtml(state.pendingDismissalNote || '')}"
+                oninput="state.pendingDismissalNote = this.value"
+                placeholder="${state.pendingDismissalType === 'Caught' ? 'e.g. c Kohli (or leave blank for c & b ' + (bowlerObj?.name || 'Bowler') + ')' : (state.pendingDismissalType === 'Stumped' ? 'e.g. st Dhoni (or leave blank for st b ' + (bowlerObj?.name || 'Bowler') + ')' : (state.pendingDismissalType === 'Run Out' ? 'e.g. Direct hit by Jadeja' : 'Optional custom note (e.g. b ' + (bowlerObj?.name || 'Bowler') + ')'))}" 
+                style="width:100%;font-size:0.8rem;padding:0.4rem 0.6rem" />
+            </div>
+          </div>
+        </div>
+        <button type="button" class="commit-btn" onclick="commitBall()">✅ Record Ball</button>
+      </div>
+    </div>
+    <div style="display:flex;gap:0.75rem;margin-top:0.5rem;margin-bottom:1rem;flex-wrap:wrap">
+      <button type="button" class="btn btn-ghost" style="flex:1;min-width:110px" onclick="openBatsmenModal()">🏏 Set Batsmen</button>
+      <button type="button" class="btn btn-ghost" style="flex:1;min-width:110px" onclick="openBowlerModal()">⚾ Set Bowler</button>
+      <button type="button" class="btn btn-ghost" style="flex:1;min-width:110px;color:var(--danger);border-color:rgba(255,82,82,0.35)" onclick="declareAllOut()">${isLastInnings ? '🏆 End Match' : '🏁 End Innings'}</button>
+    </div>`;
+}
+
 function buildScorecardInnings(match, inn, idx, teamName, bowlTeamName, isCurrent) {
   const overs = formatOvers(inn.balls);
   const crr = inn.balls > 0 ? ((inn.runs / inn.balls) * 6).toFixed(2) : '0.00';
@@ -4128,6 +4300,16 @@ function buildScorecardInnings(match, inn, idx, teamName, bowlTeamName, isCurren
       </div>
       ${hostUser ? `<button class="btn btn-primary btn-sm" onclick="event.stopPropagation(); declareAllOut()" style="font-weight:800;padding:0.4rem 0.9rem">${isLastInnings ? '🏆 Complete Match (View Result)' : '🏁 End Innings (Switch Sides)'}</button>` : ''}
     </div>`;
+  }
+
+  // 🎙️ Embed AI Live Commentary on Scorecard
+  if (isCurrent) {
+    html += buildLiveCommentaryCardHTML();
+  }
+
+  // ⚾ Embed Live Scoring Keypad directly on Scorecard for Host
+  if (isCurrent && hostUser) {
+    html += buildLiveScoringControlsHTML(match, inn, idx, hostUser);
   }
 
   // Batting
@@ -4332,134 +4514,66 @@ function renderScoringPanel() {
     </div>
 
     <!-- 🎙️ AI LIVE COMMENTARY & COMMENTATOR TOOLBAR -->
-    <div class="scoring-commentary-card">
-      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:0.6rem">
-        <div style="display:flex;align-items:center;gap:0.6rem">
-          <label class="commentary-switch" title="Toggle AI Audio Commentary">
-            <input type="checkbox" id="scoring-commentary-toggle" ${localStorage.getItem('crickethub_ai_commentary_enabled') !== 'false' ? 'checked' : ''} onchange="window.toggleAiCommentary && window.toggleAiCommentary(this.checked); renderScoringPanel();">
-            <span class="commentary-slider"></span>
-          </label>
-          <div>
-            <div style="font-size:0.85rem;font-weight:800;color:#fff;display:flex;align-items:center;gap:0.4rem">
-              <span>🎙️ Live AI Commentary</span>
-              <span id="scoring-commentary-status-pill" class="scoring-commentary-status-pill" style="font-size:0.68rem;font-weight:700;padding:0.1rem 0.5rem;border-radius:999px;background:${localStorage.getItem('crickethub_ai_commentary_enabled') !== 'false' ? 'rgba(34,197,94,0.2)' : 'rgba(148,163,184,0.2)'};color:${localStorage.getItem('crickethub_ai_commentary_enabled') !== 'false' ? '#22c55e' : '#94a3b8'};border:1px solid ${localStorage.getItem('crickethub_ai_commentary_enabled') !== 'false' ? 'rgba(34,197,94,0.4)' : 'rgba(148,163,184,0.3)'}">
-                ${localStorage.getItem('crickethub_ai_commentary_enabled') !== 'false' ? 'ON AIR' : 'MUTED'}
-              </span>
-            </div>
-            <div style="font-size:0.7rem;color:#94a3b8">Voice narration for runs, wickets & extras</div>
-          </div>
-        </div>
+    ${buildLiveCommentaryCardHTML()}
 
-        <div style="display:flex;align-items:center;gap:0.4rem;flex-wrap:wrap">
-          <button type="button" class="btn btn-xs scoring-persona-btn ${(localStorage.getItem('crickethub_ai_persona') || 'shastri') === 'shastri' ? 'active' : ''}" 
-            data-persona="shastri"
-            style="padding:0.25rem 0.6rem;font-size:0.75rem;border-radius:20px;${(localStorage.getItem('crickethub_ai_persona') || 'shastri') === 'shastri' ? 'background:#38bdf8;color:#0b0f19;border-color:#38bdf8;font-weight:800;box-shadow:0 0 10px rgba(56,189,248,0.4)' : 'background:rgba(255,255,255,0.06);color:#cbd5e1;border-color:rgba(255,255,255,0.1)'}" 
-            onclick="window.setAiPersona && window.setAiPersona('shastri')">
-            ⚡ Ravi Shastri
-          </button>
-          <button type="button" class="btn btn-xs scoring-persona-btn ${(localStorage.getItem('crickethub_ai_persona') || 'shastri') === 'bhogle' ? 'active' : ''}" 
-            data-persona="bhogle"
-            style="padding:0.25rem 0.6rem;font-size:0.75rem;border-radius:20px;${(localStorage.getItem('crickethub_ai_persona') || 'shastri') === 'bhogle' ? 'background:#38bdf8;color:#0b0f19;border-color:#38bdf8;font-weight:800;box-shadow:0 0 10px rgba(56,189,248,0.4)' : 'background:rgba(255,255,255,0.06);color:#cbd5e1;border-color:rgba(255,255,255,0.1)'}" 
-            onclick="window.setAiPersona && window.setAiPersona('bhogle')">
-            🏏 Harsha Bhogle
-          </button>
-          <button type="button" class="btn btn-xs btn-ghost" title="Test voice" style="padding:0.25rem 0.5rem;font-size:0.75rem;border-color:rgba(255,255,255,0.15)" onclick="window.testCommentaryVoice && window.testCommentaryVoice('four')">
-            🔊 Test
-          </button>
-          <button type="button" class="btn btn-xs btn-ghost" title="Open Vision & Voice Studio" style="padding:0.25rem 0.5rem;font-size:0.75rem;border-color:rgba(255,255,255,0.15)" onclick="window.openAiStudio && window.openAiStudio()">
-            🎥 Studio
-          </button>
-        </div>
-      </div>
+    <!-- ⚾ LIVE SCORING KEYPAD & CONTROLS -->
+    ${buildLiveScoringControlsHTML(match, inn, idx, hostUser)}
+  `;
+}
 
-      <div id="scoring-commentary-ticker" style="margin-top:0.5rem;padding:0.4rem 0.65rem;background:rgba(0,0,0,0.35);border-radius:8px;border:1px solid rgba(255,255,255,0.06);display:flex;align-items:center;gap:0.5rem">
-        <span class="scoring-wave-indicator" id="scoring-wave-indicator" style="display:none">
-          <div class="ai-audio-bar"></div>
-          <div class="ai-audio-bar"></div>
-          <div class="ai-audio-bar"></div>
-          <div class="ai-audio-bar"></div>
-        </span>
-        <span id="scoring-commentary-text" class="scoring-commentary-text" style="font-size:0.76rem;color:#e2e8f0;font-style:italic;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
-          "Ready for match commentary — every ball, boundary & wicket will be announced live!"
-        </span>
-      </div>
-    </div>
+window.selectRun = function (r) {
+  state.pendingRuns = parseInt(r) || 0;
+  // If wicket is active and NOT Run Out, selecting a non-zero run turns off wicket (runs and normal wickets are mutually exclusive)
+  if (state.pendingWicket && state.pendingDismissalType !== 'Run Out' && state.pendingRuns > 0) {
+    state.pendingWicket = false;
+  }
+  renderScorecard();
+  renderScoringPanel();
+};
 
-    ${hostUser ? `
-    <div class="glass-card">
-      <div class="scoring-controls">
-        <div>
-          <div class="scoring-label">RUNS</div>
-          <div class="runs-grid">
-            ${[0, 1, 2, 3, '4', '5', '6'].map(r => `
-              <button class="run-btn ${r == '4' ? 'four-btn' : ''} ${r == '6' ? 'six-btn' : ''}"
-                onclick="selectRun(${r})" id="run-${r}">${r}</button>
-            `).join('')}
-          </div>
-        </div>
-        <div>
-          <div class="scoring-label">EXTRAS</div>
-          <div class="extras-row">
-            <button class="extra-btn" id="extra-wide"   onclick="toggleExtra('wide')">Wide (+1)</button>
-            <button class="extra-btn" id="extra-noBall" onclick="toggleExtra('noBall')">No Ball (+1)</button>
-            <button class="extra-btn" id="extra-bye"    onclick="toggleExtra('bye')">Bye</button>
-            <button class="extra-btn" id="extra-legBye" onclick="toggleExtra('legBye')">Leg Bye</button>
-          </div>
-        </div>
-        <div>
-          <div class="scoring-label">WICKET</div>
-          <div class="wicket-section">
-            <button class="wicket-toggle" id="wicket-toggle" onclick="toggleWicket()">🚫 Wicket</button>
-            
-            <div id="wicket-details-panel" style="display:${state.pendingWicket ? 'block' : 'none'};margin-top:0.75rem;padding:0.75rem;background:rgba(255,82,82,0.08);border:1px solid rgba(255,82,82,0.3);border-radius:10px">
-              <div style="font-size:0.75rem;font-weight:700;color:var(--danger);margin-bottom:0.4rem;display:flex;justify-content:space-between;align-items:center">
-                <span>DISMISSAL TYPE</span>
-                <span style="font-size:0.7rem;font-weight:700;color:${state.pendingDismissalType === 'Run Out' ? '#ffab00' : '#00e5ff'}">
-                  ${state.pendingDismissalType === 'Run Out' ? '🏃 Fielding (No Bowler Wicket)' : '⚾ Bowler\'s Wicket (+1 W)'}
-                </span>
-              </div>
-              <div class="dismissal-pills-grid" style="display:flex;gap:0.35rem;flex-wrap:wrap;margin-bottom:0.6rem">
-                ${['Bowled', 'Caught', 'LBW', 'Stumped', 'Hit Wicket', 'Run Out'].map(d => `
-                  <button type="button" class="btn btn-sm ${state.pendingDismissalType === d ? 'btn-primary' : 'btn-ghost'}" 
-                    style="padding:0.25rem 0.55rem;font-size:0.75rem;font-weight:700" 
-                    onclick="selectDismissalType('${d}')">${d}</button>
-                `).join('')}
-              </div>
+window.selectRunOutCompletedRuns = function (r) {
+  state.pendingRuns = parseInt(r) || 0;
+  renderScorecard();
+  renderScoringPanel();
+};
 
-              ${state.pendingDismissalType === 'Run Out' ? `
-                <div id="runout-batsman-select" style="margin-bottom:0.75rem;padding:0.75rem;background:rgba(0,0,0,0.35);border-radius:10px;border:1px solid rgba(255,171,0,0.4)">
-                  <div style="font-size:0.78rem;font-weight:800;color:#ffab00;margin-bottom:0.45rem;display:flex;align-items:center;gap:0.35rem">
-                    <span>🏃</span> WHO GOT RUN OUT?
-                  </div>
-                  <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:0.75rem">
-                    <button type="button" class="btn btn-sm ${state.pendingDismissedSlot === 'striker' ? 'btn-primary' : 'btn-ghost'}" 
-                      style="flex:1;min-width:130px;font-size:0.8rem;font-weight:700;padding:0.45rem 0.6rem;${state.pendingDismissedSlot === 'striker' ? 'box-shadow:0 0 10px rgba(0,229,255,0.4);' : ''}" 
-                      onclick="selectDismissedSlot('striker')">
-                      🏏 Striker (${escHtml(strikerObj?.name || 'Striker')})
-                    </button>
-                    ${(!inn.isSingleBatter && (nonStrikerObj || inn.currentBatsmen[1] !== null)) ? `
-                    <button type="button" class="btn btn-sm ${state.pendingDismissedSlot === 'non_striker' ? 'btn-primary' : 'btn-ghost'}" 
-                      style="flex:1;min-width:130px;font-size:0.8rem;font-weight:700;padding:0.45rem 0.6rem;${state.pendingDismissedSlot === 'non_striker' ? 'box-shadow:0 0 10px rgba(0,229,255,0.4);' : ''}" 
-                      onclick="selectDismissedSlot('non_striker')">
-                      ◇ Non-Striker (${escHtml(nonStrikerObj?.name || 'Non-Striker')})
-                    </button>
-                    ` : ''}
-                  </div>
+window.toggleExtra = function (type) {
+  state.pendingExtras[type] = !state.pendingExtras[type];
+  if (type === 'wide' && state.pendingExtras.wide) state.pendingExtras.noBall = false;
+  if (type === 'noBall' && state.pendingExtras.noBall) state.pendingExtras.wide = false;
+  renderScorecard();
+  renderScoringPanel();
+};
 
-                  <div style="font-size:0.78rem;font-weight:800;color:#00e5ff;margin-bottom:0.45rem;display:flex;align-items:center;gap:0.35rem">
-                    <span>⚡</span> RUNS COMPLETED BEFORE RUN OUT
-                  </div>
-                  <div style="display:flex;gap:0.4rem;flex-wrap:wrap;margin-bottom:0.35rem">
-                    ${[0, 1, 2, 3].map(r => `
-                      <button type="button" class="btn btn-sm ${(state.pendingRuns === r || (state.pendingRuns === null && r === 0)) ? 'btn-primary' : 'btn-ghost'}"
-                        style="flex:1;min-width:65px;font-size:0.8rem;font-weight:800;padding:0.4rem 0.6rem;${(state.pendingRuns === r || (state.pendingRuns === null && r === 0)) ? 'background:#00e5ff;color:#080c14;box-shadow:0 0 10px rgba(0,229,255,0.5);' : ''}"
-                        onclick="selectRunOutCompletedRuns(${r})">
-                        ${r === 0 ? '0 (No Run)' : `${r} ${r === 1 ? 'Run' : 'Runs'}`}
-                      </button>
-                    `).join('')}
-                  </div>
-                  <div style="font-size:0.72rem;color:var(--text-3);margin-top:0.35rem">
-                    ${(state.pendingRuns && state.pendingRuns > 0) ? `✅ ${state.pendingRuns} ${state.pendingRuns === 1 ? 'run' : 'runs'} will be added to team & batter total.` : 'No runs added (run out on delivery).'}
+window.toggleWicket = function () {
+  state.pendingWicket = !state.pendingWicket;
+  if (state.pendingWicket) {
+    if (!state.pendingDismissalType) state.pendingDismissalType = 'Bowled';
+    if (!state.pendingDismissedSlot) state.pendingDismissedSlot = 'striker';
+    // Wicket priority: reset runs to 0 unless Run Out
+    if (state.pendingDismissalType !== 'Run Out') {
+      state.pendingRuns = 0;
+    }
+  }
+  renderScorecard();
+  renderScoringPanel();
+};
+
+window.selectDismissalType = function (type) {
+  state.pendingDismissalType = type;
+  if (type !== 'Run Out') {
+    state.pendingRuns = 0;
+    state.pendingDismissedSlot = 'striker';
+  }
+  renderScorecard();
+  renderScoringPanel();
+};
+
+window.selectDismissedSlot = function (slot) {
+  state.pendingDismissedSlot = slot;
+  renderScorecard();
+  renderScoringPanel();
+};otal.` : 'No runs added (run out on delivery).'}
                   </div>
                 </div>
               ` : ''}

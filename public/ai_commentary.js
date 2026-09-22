@@ -26,27 +26,70 @@
   let activeNeuralAudio = null;
   let isSimulatedMode = false;
 
-  // Commentary Dictionaries with Authentic Signature Catchphrases
+  // Commentary Dictionaries with Authentic Signature Catchphrases for all scoring events
   const COMMENTARY_ARCHIVE = {
     shastri: {
+      RUN_0: [
+        "Solid defensive prod! Right in the middle of the bat, no run.",
+        "Right on the money from {bowler}! Forward in defense, dot ball.",
+        "Beaten outside off! Whistles past the edge of {striker}'s bat, no run taken!",
+        "Straight to the fielder at cover. Sits on the back foot and defends, dot ball.",
+        "Good tight line from {bowler}. {striker} lets it go through safely to the keeper."
+      ],
+      RUN_1: [
+        "Pushed into the gap for a brisk single! Good running between the wickets!",
+        "Tucked away off the hips towards deep square leg for one.",
+        "Dabbed down to third man, they scamper across for a sharp single!",
+        "Dropped with soft hands and off {striker} goes for a quick single!",
+        "Driven gently to long-on, easy single to rotate the strike."
+      ],
+      RUN_2: [
+        "Worked away into the deep! They will come back for the second, superb running!",
+        "Pushed into vacant territory, great hustle from {striker} for a brace!",
+        "Driven wide of long-on, pressure on the arm, and they complete two safely!",
+        "Clipped through midwicket, hard running between the wickets gets them two runs!"
+      ],
+      RUN_3: [
+        "Cracking shot into the deep gap! Long chase for the fielder, and they run three hard!",
+        "Magnificent placement from {striker}! Fielder slides to pull it back, three runs taken!",
+        "Superb running between the wickets! Three runs added to the scoreboard."
+      ],
+      RUN_4: [
+        "Shot! That went like a tracer bullet to the boundary! Four runs!",
+        "Pure class through the offside! {striker} has crunched that through covers for FOUR!",
+        "Width on offer from {bowler} and punished with sheer disdain! Four all the way!",
+        "Down the ground like an arrow! What a sensational boundary from {striker}!",
+        "Cracking square cut! Slapped through backward point, races away to the fence!"
+      ],
+      RUN_5: [
+        "Overthrows! Total confusion in the field and that costs five penalty runs!",
+        "Wild throw from the deep! Bonus runs for {striker}, five runs added to the total!"
+      ],
+      RUN_6: [
+        "High, handsome, and into the crowd! That has been pulled with ferocious power for SIX!",
+        "That's gone miles into the orbit! What a colossal maximum from {striker}!",
+        "The helicopter takes off! Smashed out of the stadium for a monster SIX!",
+        "If it's in the V, it's in the tree! Smashed straight over long-on for a colossal SIX!",
+        "In the air and all the way! Picked the bones out of that delivery for six!"
+      ],
       COVER_DRIVE: [
         "Shot! That went like a tracer bullet to the boundary! Magnificent cover drive!",
-        "Pure class through the offside! He's crunched that through the covers for four!",
+        "Pure class through the offside! {striker} crunched that through covers for four!",
         "If you're a bowler, you simply applaud that. Bludgeoned to the fence for four!"
       ],
       PULL_SHOT: [
         "High, handsome, and into the crowd! That has been pulled with ferocious power for SIX!",
         "That's gone miles! Picked the bones out of that short ball and sent it into orbit!",
-        "Smoked into the stands! What a colossal pull shot!"
+        "Smoked into the stands! What a colossal pull shot from {striker}!"
       ],
       STRAIGHT_DRIVE: [
         "Down the ground with supreme authority! Presenting the full face of the willow for four!",
-        "If it's in the V, it's in the tree! Smashed straight back past the bowler!",
-        "Straight as an arrow! You can watch that shot all day long!"
+        "If it's in the V, it's in the tree! Smashed straight back past {bowler} for four!",
+        "Straight as an arrow! You can watch that shot from {striker} all day long!"
       ],
       SQUARE_CUT: [
         "Flashes and flashes hard! Slapped through backward point for a scorching boundary!",
-        "Width offered and punished with disdain! That's four all the way!"
+        "Width offered by {bowler} and punished with disdain! That's four all the way!"
       ],
       HELICOPTER_SHOT: [
         "The helicopter takes off! Unbelievable wrist power, that is out of the stadium for SIX!",
@@ -54,19 +97,103 @@
       ],
       FORWARD_DEFENSE: [
         "Solid as a rock. Forward in defense, right right right on the money.",
-        "Respects the good ball. Soft hands, no run conceded."
+        "Respects the good ball. Soft hands from {striker}, no run conceded."
       ],
       PLAY_AND_MISS: [
-        "Beaten all ends up! He had no clue where that ball was heading!",
-        "A jaffa! Beaten by the pace and seam movement outside off!"
+        "Beaten all ends up! {striker} had no clue where that ball was heading!",
+        "A jaffa from {bowler}! Beaten by the pace and seam movement outside off!"
+      ],
+      WICKET_BOWLED: [
+        "Timber! He has castled him! Stumps are in a total mess! {striker} is clean bowled!",
+        "Knocked him over! {bowler} uproots the middle stump with raw pace!",
+        "Clean bowled! Straight through the gate, what an absolute ripper to dismiss {striker}!"
+      ],
+      WICKET_CAUGHT: [
+        "In the air... and taken cleanly! Up goes the finger and {striker} has to take the long walk back!",
+        "Edged and taken! Safe as houses in the field, huge wicket for {bowler}!",
+        "Spliced high into the air, fielder settles underneath, and takes a pressure catch!"
+      ],
+      WICKET_LBW: [
+        "Huge appeal from {bowler}... and the umpire raises the finger! Dead plumb LBW!",
+        "Struck right in front! No doubt about that one, {striker} trapped right on the crease!",
+        "Loud shout, finger goes up! Plumb in front of middle stump!"
+      ],
+      WICKET_STUMPED: [
+        "Gone! {striker} dragged his foot out and the bails are whipped off in a flash! Superb glovework!",
+        "Beaten in flight, drawn forward by {bowler}, and the keeper does the rest! Stumped!"
+      ],
+      WICKET_RUNOUT: [
+        "Direct hit! What a sensational throw! {striker} is miles out of his ground and run out!",
+        "Yes, no, sorry partner! Total mix-up and the stumps are broken at the danger end! RUN OUT!",
+        "Suicidal running! The throw is right on the money, and the batsman is caught short!"
+      ],
+      WICKET_HITWICKET: [
+        "Oh no! He stepped back onto his own stumps! Hit wicket, unbelievable misfortune for {striker}!"
+      ],
+      WICKET_GENERIC: [
+        "Wicket! That is a massive blow in the match! {bowler} strikes and the fielding side is ecstatic!",
+        "Gone! Up goes the finger, and a huge breakthrough is achieved!",
+        "Disaster strikes for the batting side! A massive wicket falls at a crucial stage!"
       ],
       WICKET: [
-        "Timber! He has castled him! Stumps are in a total mess!",
-        "Edged and taken! Up goes the finger and the batsman has to take the long walk back!",
-        "In the air... and taken cleanly! Huge moment in the match!"
+        "Timber! Stumps shattered, what a colossal wicket!",
+        "Edged and taken! Up goes the finger, huge moment in the match!",
+        "In the air... and taken cleanly! Sensational breakthrough!"
+      ],
+      EXTRA_WIDE: [
+        "Straying way down the leg side, the umpire stretches the arms for a wide ball!",
+        "Fired outside the tramlines by {bowler}! Wide ball signaled, extra run added."
+      ],
+      EXTRA_NOBALL: [
+        "Sirens blaring! {bowler} has overstepped the crease! No ball called and a free hit coming up!",
+        "Front foot no ball! Big opportunity for {striker}, free hit next!"
+      ],
+      EXTRA_BYE: [
+        "Beaten the bat and the keeper, they sneak through for an extra bye!",
+        "Misses everything and rolls away, a bye taken by the batsmen."
+      ],
+      EXTRA_LEGBYE: [
+        "Thudded into the pads and rolls away for a leg bye! Quick single stolen.",
+        "Off the thigh pad, scampering through to collect a leg bye."
       ]
     },
     bhogle: {
+      RUN_0: [
+        "Sensible defense. Head over the ball, softly played towards mid-off.",
+        "A gem of a delivery from {bowler}! Moving away just enough to beat the bat.",
+        "Respecting the good delivery. No urgency from {striker} to steal a run there.",
+        "Nicely bowled, tight line and length, keeping the batter quiet."
+      ],
+      RUN_1: [
+        "Gentle nudge into the off side, and {striker} rotates the strike effortlessly.",
+        "Turned neatly towards the leg side, easy single taken.",
+        "Smart cricket! Finding the gap and keeping the scoreboard ticking.",
+        "Soft hands into the covers, alert running to pick up a single."
+      ],
+      RUN_2: [
+        "Effortless placement into the vacant spaces, turning one into two with delightful running.",
+        "Gently caressed into the deep, excellent understanding between these two batters.",
+        "Pushed past midwicket, they sprint back for the second with supreme ease."
+      ],
+      RUN_3: [
+        "Glorious placement into the deep, requiring desperate fielding to save the boundary. Three runs taken.",
+        "Timed so sweetly by {striker}! Outfield slows it down and three runs are completed."
+      ],
+      RUN_4: [
+        "Oh, what a touch! {striker} didn't just hit that; he composed a symphony for four!",
+        "Pure velvet timing! Caressed through the extra cover boundary with supreme elegance!",
+        "Textbook perfection! The bat follows through with effortless grace for four!",
+        "Surgical precision through the gap, racing away like lightning to the fence!"
+      ],
+      RUN_5: [
+        "Drama in the outfield! A rushed throw and the batters pick up a handsome five runs!"
+      ],
+      RUN_6: [
+        "What a magnificent strike! Rocked onto the back foot and launched into the stands for six!",
+        "Defying the laws of physics! Pure timing and majestic swing from {striker} for six!",
+        "You could frame that photograph! Sweet connection and sailed effortlessly over the rope!",
+        "Sheer majesty! That ball belongs in a museum after a strike like that from {striker}!"
+      ],
       COVER_DRIVE: [
         "Oh, what a touch! He didn't just hit that; he composed a symphony through the covers for four!",
         "Sweet sound off the willow! Pure velvet timing, caressed into the extra cover boundary!",
@@ -96,10 +223,58 @@
         "He searched for the ball, but found only thin air. What a delivery from the bowler!",
         "Whispering past the outside edge! The bowler is asking all the right questions."
       ],
-      WICKET: [
+      WICKET_BOWLED: [
+        "The stumps are shattered! What a sensational delivery from {bowler} to breach the batsman's defense.",
+        "Past the inside edge and straight into the furniture! Total silence at the crease for {striker}.",
+        "Beaten by pure pace and accuracy! The bails go flying, what a sight for {bowler}!"
+      ],
+      WICKET_CAUGHT: [
+        "Gone! Sliced high into the sky, and held with cool composure in the outfield.",
+        "A feather of an edge and safely pouched! Crucial breakthrough for {bowler} to dismiss {striker}.",
+        "In the air... and safely held! The partnership is broken at a pivotal moment."
+      ],
+      WICKET_LBW: [
+        "Loud shout for leg-before, and up goes the finger! {striker} beaten by the trajectory from {bowler}.",
+        "Right in line with the middle stump! The umpire had no hesitation at all.",
+        "Trapped in front! That looked dead right from the moment it struck the pad."
+      ],
+      WICKET_STUMPED: [
+        "Lightning quick hands behind the stumps! {striker} caught on the wrong side of the line.",
+        "Deceived in the air by {bowler}, missed it completely, and the bails are dislodged in a millisecond."
+      ],
+      WICKET_RUNOUT: [
+        "Disaster between the wickets! Hesitation, panic, and a razor-sharp throw seals the dismissal!",
+        "That was suicidal! Direct hit at the striker's end, and {striker} has to depart.",
+        "Mix-up in the middle, and both batsmen were stranded at the same end! Run out!"
+      ],
+      WICKET_HITWICKET: [
+        "A bizarre and unfortunate end! {striker} dislodging his own bails while attempting the shot."
+      ],
+      WICKET_GENERIC: [
         "That is the sheer drama of cricket! Just when you think the batsman is in control, disaster strikes!",
         "Gone! A moment of brilliance in the field, and the match takes a dramatic twist!",
-        "The stumps are rattled! What a spectacular delivery to break the partnership!"
+        "And that is the breakthrough they were desperately looking for!"
+      ],
+      WICKET: [
+        "Gone! A moment of brilliance in the field, and the match takes a dramatic twist!",
+        "The stumps are rattled! What a spectacular delivery to break the partnership!",
+        "That is the sheer drama of cricket! Disaster strikes for the batting side!"
+      ],
+      EXTRA_WIDE: [
+        "A touch wayward from {bowler}, drifting wide of the mark. Extra run conceded.",
+        "Too wide outside off, extra run added to the total."
+      ],
+      EXTRA_NOBALL: [
+        "The umpire signals a no-ball! An expensive mistake by {bowler}, and a free hit for the batsman.",
+        "Overstepping the line, siren sounds, free hit coming up!"
+      ],
+      EXTRA_BYE: [
+        "Sneaking through past the keeper, fine awareness to steal a bye.",
+        "Beaten everyone, and they scamper across for an extra bye."
+      ],
+      EXTRA_LEGBYE: [
+        "Off the thigh pad, scampering through to collect a leg bye.",
+        "Deflected off the pads into the offside, single taken."
       ]
     }
   };
@@ -179,12 +354,52 @@
   document.addEventListener('click', unlockAudioEngine, { passive: true });
   document.addEventListener('touchstart', unlockAudioEngine, { passive: true });
 
+  let lastSpokenText = '';
+
+  function setSpeakingState(speaking, text = '') {
+    const waveIndicators = document.querySelectorAll('.scoring-wave-indicator, #scoring-wave-indicator');
+    waveIndicators.forEach(el => {
+      el.style.display = speaking ? 'inline-flex' : 'none';
+    });
+
+    const statusPills = document.querySelectorAll('.scoring-commentary-status-pill, #scoring-commentary-status-pill');
+    statusPills.forEach(el => {
+      if (!isAiEnabled) {
+        el.textContent = 'MUTED';
+        el.style.background = 'rgba(148,163,184,0.2)';
+        el.style.color = '#94a3b8';
+        el.style.borderColor = 'rgba(148,163,184,0.3)';
+      } else if (speaking) {
+        el.textContent = '🎙️ SPEAKING';
+        el.style.background = 'rgba(56,189,248,0.25)';
+        el.style.color = '#38bdf8';
+        el.style.borderColor = 'rgba(56,189,248,0.5)';
+      } else {
+        el.textContent = 'ON AIR';
+        el.style.background = 'rgba(34,197,94,0.2)';
+        el.style.color = '#22c55e';
+        el.style.borderColor = 'rgba(34,197,94,0.4)';
+      }
+    });
+
+    if (text) {
+      lastSpokenText = text;
+      const textEls = document.querySelectorAll('.scoring-commentary-text, #scoring-commentary-text');
+      textEls.forEach(el => {
+        el.textContent = `"${text}"`;
+      });
+    }
+  }
+
   /**
    * 🤖 ElevenLabs Neural Voice Cloning with Disk Cache & Graceful Fallback
    */
   async function playNeuralCommentaryVoice(text, persona = activePersona) {
     const userApiKey = localStorage.getItem('crickethub_elevenlabs_api_key') || '';
+    setSpeakingState(true, text);
+
     try {
+      console.log('[NeuralVoice] Requesting TTS for:', text.substring(0, 50) + '...');
       const res = await fetch('/api/ai/tts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -192,24 +407,73 @@
       });
 
       const contentType = res.headers.get('content-type') || '';
+      const ttsSource = res.headers.get('x-tts-source') || 'unknown';
+      console.log('[NeuralVoice] Response:', res.status, 'Content-Type:', contentType, 'Source:', ttsSource);
+
       if (res.ok && contentType.includes('audio/mpeg')) {
         const blob = await res.blob();
+        console.log('[NeuralVoice] Audio blob received, size:', blob.size, 'bytes');
+
+        if (blob.size < 100) {
+          console.warn('[NeuralVoice] Audio blob too small, likely empty/invalid');
+          speakCommentaryPhrase(text, persona);
+          updateNeuralBadge('🎙️ Voice Fallback: WebSpeech HD Active');
+          return false;
+        }
+
         const audioUrl = URL.createObjectURL(blob);
+
+        // Stop any previously playing neural audio
         if (activeNeuralAudio) {
           activeNeuralAudio.pause();
           activeNeuralAudio.currentTime = 0;
+          if (activeNeuralAudio._blobUrl) URL.revokeObjectURL(activeNeuralAudio._blobUrl);
         }
+
+        // Also stop any playing WAV sound effects
+        if (activeAudioPlayer) {
+          activeAudioPlayer.pause();
+          activeAudioPlayer.currentTime = 0;
+        }
+
+        // Cancel any ongoing browser speech
+        if ('speechSynthesis' in window) {
+          window.speechSynthesis.cancel();
+        }
+
         activeNeuralAudio = new Audio(audioUrl);
+        activeNeuralAudio._blobUrl = audioUrl;
         activeNeuralAudio.volume = 1.0;
+
+        activeNeuralAudio.onended = () => {
+          URL.revokeObjectURL(audioUrl);
+          setSpeakingState(false);
+          console.log('[NeuralVoice] Playback finished');
+        };
+
+        activeNeuralAudio.onerror = (e) => {
+          console.error('[NeuralVoice] Audio element error:', e);
+          URL.revokeObjectURL(audioUrl);
+          setSpeakingState(false);
+        };
+
         await activeNeuralAudio.play();
+        console.log('[NeuralVoice] ✅ Playing ElevenLabs neural voice');
         updateNeuralBadge('⚡ ElevenLabs Neural Voice: Active');
         return true;
       }
+
+      // If response is JSON (fallback message), log it
+      if (contentType.includes('application/json')) {
+        const jsonRes = await res.json();
+        console.warn('[NeuralVoice] Server returned fallback:', jsonRes.reason, jsonRes.message);
+      }
     } catch (err) {
-      console.warn('Neural voice synthesis note:', err);
+      console.warn('[NeuralVoice] Error:', err.message || err);
     }
 
     // Fallback: If ElevenLabs has no key or error, use browser voice
+    console.log('[NeuralVoice] Falling back to WebSpeech');
     speakCommentaryPhrase(text, persona);
     updateNeuralBadge('🎙️ Voice Fallback: WebSpeech HD Active');
     return false;
@@ -236,7 +500,10 @@
    * 🗣️ Spoken Voice Synthesis Engine (Ravi Shastri & Harsha Bhogle Persona Tuning)
    */
   function speakCommentaryPhrase(text, persona = activePersona) {
-    if (!('speechSynthesis' in window)) return;
+    if (!('speechSynthesis' in window)) {
+      setSpeakingState(false);
+      return;
+    }
     try {
       if (window.speechSynthesis.paused) {
         window.speechSynthesis.resume();
@@ -262,8 +529,13 @@
         if (voice) utterance.voice = voice;
       }
 
+      setSpeakingState(true, text);
+      utterance.onend = () => setSpeakingState(false);
+      utterance.onerror = () => setSpeakingState(false);
+
       window.speechSynthesis.speak(utterance);
     } catch (err) {
+      setSpeakingState(false);
       console.warn('Speech synthesis note:', err);
     }
   }
@@ -309,35 +581,97 @@
     if (tickerText) {
       tickerText.textContent = `"${text}"`;
     }
+    const scoringText = document.getElementById('scoring-commentary-text');
+    if (scoringText) {
+      scoringText.textContent = `"${text}"`;
+    }
     if (typeof window.toast === 'function') {
       window.toast(`🎙️ [${commentatorLabel}]: "${text}"`);
     }
   }
 
   /**
+   * 📝 Dynamic Context-Aware Commentary Text Generator
+   */
+  function generateCommentaryText(scoreData, persona = activePersona) {
+    const personaPool = COMMENTARY_ARCHIVE[persona] || COMMENTARY_ARCHIVE.shastri;
+    let category = 'RUN_0';
+    let striker = 'the batsman';
+    let bowler = 'the bowler';
+
+    if (typeof scoreData === 'number') {
+      category = `RUN_${scoreData}`;
+      if (!personaPool[category]) category = scoreData >= 6 ? 'RUN_6' : (scoreData >= 4 ? 'RUN_4' : 'RUN_0');
+    } else if (typeof scoreData === 'string') {
+      const s = scoreData.toLowerCase();
+      if (s === 'w' || s === 'wicket' || s === 'out') category = 'WICKET_GENERIC';
+      else if (s === 'wide') category = 'EXTRA_WIDE';
+      else if (s === 'noball' || s === 'no_ball') category = 'EXTRA_NOBALL';
+      else if (s === 'bye') category = 'EXTRA_BYE';
+      else if (s === 'legbye' || s === 'leg_bye') category = 'EXTRA_LEGBYE';
+      else if (s === 'dot' || s === '0') category = 'RUN_0';
+      else if (s === '4') category = 'RUN_4';
+      else if (s === '6') category = 'RUN_6';
+      else if (personaPool[scoreData]) category = scoreData;
+      else category = 'RUN_0';
+    } else if (scoreData && typeof scoreData === 'object') {
+      if (scoreData.strikerName) striker = scoreData.strikerName;
+      if (scoreData.bowlerName) bowler = scoreData.bowlerName;
+
+      if (scoreData.isWicket || scoreData.wicket) {
+        const dType = (scoreData.dismissalType || '').toLowerCase();
+        if (dType.includes('bowled')) category = 'WICKET_BOWLED';
+        else if (dType.includes('caught') || dType.includes('catch')) category = 'WICKET_CAUGHT';
+        else if (dType.includes('lbw')) category = 'WICKET_LBW';
+        else if (dType.includes('stump')) category = 'WICKET_STUMPED';
+        else if (dType.includes('run out') || dType.includes('runout')) category = 'WICKET_RUNOUT';
+        else if (dType.includes('hit wicket') || dType.includes('hitwicket')) category = 'WICKET_HITWICKET';
+        else category = 'WICKET_GENERIC';
+      } else if (scoreData.isWide || scoreData.extras?.wide) {
+        category = 'EXTRA_WIDE';
+      } else if (scoreData.isNoBall || scoreData.extras?.noBall) {
+        category = 'EXTRA_NOBALL';
+      } else if (scoreData.isBye || scoreData.extras?.bye) {
+        category = 'EXTRA_BYE';
+      } else if (scoreData.isLegBye || scoreData.extras?.legBye) {
+        category = 'EXTRA_LEGBYE';
+      } else {
+        const runs = typeof scoreData.runs !== 'undefined' ? scoreData.runs : 0;
+        category = `RUN_${runs}`;
+        if (!personaPool[category]) category = runs >= 6 ? 'RUN_6' : (runs >= 4 ? 'RUN_4' : 'RUN_0');
+      }
+    }
+
+    const phraseList = personaPool[category] || personaPool.RUN_0 || ["What a moment in the match!"];
+    const template = phraseList[Math.floor(Math.random() * phraseList.length)];
+    return template.replace(/\{striker\}/g, striker).replace(/\{bowler\}/g, bowler);
+  }
+
+  /**
    * Generates commentary for a specific stroke
    */
   async function triggerShotCommentary(shotKey, runValue = 4, explicitPersona = null) {
+    if (!isAiEnabled) return;
     const persona = explicitPersona || activePersona;
-    const personaPool = COMMENTARY_ARCHIVE[persona] || COMMENTARY_ARCHIVE.shastri;
-    const phrases = personaPool[shotKey] || personaPool.COVER_DRIVE;
-    const randomPhrase = phrases[Math.floor(Math.random() * phrases.length)];
+    const commentaryText = generateCommentaryText(shotKey, persona);
 
-    // 1. Play crisp willow bat crack cue
-    playRealCommentatorAudio(shotKey, persona);
+    // 1. Update HUD and on-screen Toast
+    updateTickerUI(persona, commentaryText);
 
-    // 2. Update HUD and on-screen Toast
-    updateTickerUI(persona, randomPhrase);
+    // 2. Play realistic human voice (ElevenLabs neural voice FIRST, WebSpeech as fallback)
+    const neuralVoicePlayed = await playNeuralCommentaryVoice(commentaryText, persona);
 
-    // 3. Play realistic human voice (ElevenLabs neural voice first, WebSpeech fallback only if no key/offline)
-    await playNeuralCommentaryVoice(randomPhrase, persona);
+    // 3. Only play the procedural sound-effect WAVs if neural voice was NOT used
+    if (!neuralVoicePlayed) {
+      playRealCommentatorAudio(shotKey, persona);
+    }
 
     // 4. If auto-sync is enabled and socket is live, dispatch scoring
     if (isAutoScoreSync && window.currentRoomCode) {
       autoSyncScore(shotKey, runValue);
     }
 
-    return randomPhrase;
+    return commentaryText;
   }
 
   function autoSyncScore(shotKey, runValue) {
@@ -670,33 +1004,65 @@
   }
 
   function setPersona(persona) {
-    activePersona = persona;
-    localStorage.setItem('crickethub_ai_persona', persona);
+    activePersona = persona === 'bhogle' ? 'bhogle' : 'shastri';
+    localStorage.setItem('crickethub_ai_persona', activePersona);
 
     const btnShastri = document.getElementById('ai-btn-shastri');
     const btnBhogle = document.getElementById('ai-btn-bhogle');
     if (btnShastri && btnBhogle) {
-      if (persona === 'shastri') {
-        btnShastri.classList.add('active');
-        btnBhogle.classList.remove('active');
-      } else {
-        btnBhogle.classList.add('active');
-        btnShastri.classList.remove('active');
-      }
+      btnShastri.classList.toggle('active', activePersona === 'shastri');
+      btnBhogle.classList.toggle('active', activePersona === 'bhogle');
     }
 
-    playRealCommentatorAudio('COVER_DRIVE', persona);
-    updateTickerUI(
-      persona,
-      persona === 'shastri'
-        ? "⚡ Ravi Shastri live on the microphone! Electrifying action coming up!"
-        : "🏏 Harsha Bhogle here! A delightful day for cricket, let's get into the action!"
-    );
+    document.querySelectorAll('.scoring-persona-btn').forEach(btn => {
+      const isMatch = btn.dataset.persona === activePersona;
+      btn.classList.toggle('active', isMatch);
+      if (isMatch) {
+        btn.style.background = '#38bdf8';
+        btn.style.color = '#0b0f19';
+        btn.style.borderColor = '#38bdf8';
+        btn.style.boxShadow = '0 0 10px rgba(56,189,248,0.4)';
+      } else {
+        btn.style.background = 'rgba(255,255,255,0.06)';
+        btn.style.color = '#cbd5e1';
+        btn.style.borderColor = 'rgba(255,255,255,0.1)';
+        btn.style.boxShadow = 'none';
+      }
+    });
+
+    const introPhrase = activePersona === 'shastri'
+      ? "⚡ Ravi Shastri live on the microphone! Electrifying action on the cards!"
+      : "🏏 Harsha Bhogle here! A delightful day for cricket, let's get into the action!";
+
+    updateTickerUI(activePersona, introPhrase);
+    if (isAiEnabled) {
+      playNeuralCommentaryVoice(introPhrase, activePersona);
+    }
   }
 
   function toggleAiCommentary(enabled) {
-    isAiEnabled = enabled;
-    localStorage.setItem('crickethub_ai_commentary_enabled', enabled ? 'true' : 'false');
+    if (typeof enabled === 'undefined') {
+      isAiEnabled = !isAiEnabled;
+    } else {
+      isAiEnabled = !!enabled;
+    }
+    localStorage.setItem('crickethub_ai_commentary_enabled', isAiEnabled ? 'true' : 'false');
+
+    const modalToggle = document.getElementById('ai-master-toggle');
+    if (modalToggle) modalToggle.checked = isAiEnabled;
+
+    const scoringToggle = document.getElementById('scoring-commentary-toggle');
+    if (scoringToggle) scoringToggle.checked = isAiEnabled;
+
+    setSpeakingState(false);
+
+    if (typeof window.toast === 'function') {
+      window.toast(isAiEnabled
+        ? `🎙️ Live Commentary enabled (${activePersona === 'shastri' ? 'Ravi Shastri' : 'Harsha Bhogle'})`
+        : '🔇 Live Commentary muted'
+      );
+    }
+    return isAiEnabled;
   }
 
   function toggleAutoSync(enabled) {
@@ -842,14 +1208,14 @@
 
     document.getElementById('ai-btn-test-six').onclick = () => {
       setPersona('shastri');
-      triggerShotCommentary('PULL_SHOT', 6, 'shastri');
+      testCommentaryVoice('six', 'shastri');
     };
     document.getElementById('ai-btn-test-four').onclick = () => {
       setPersona('bhogle');
-      triggerShotCommentary('COVER_DRIVE', 4, 'bhogle');
+      testCommentaryVoice('four', 'bhogle');
     };
     document.getElementById('ai-btn-test-wicket').onclick = () => {
-      triggerShotCommentary('WICKET', 0, activePersona);
+      testCommentaryVoice('wicket', activePersona);
     };
 
     document.getElementById('ai-master-toggle').onchange = (e) => toggleAiCommentary(e.target.checked);
@@ -857,19 +1223,53 @@
   }
 
   // Hook into live score events from main app
-  window.triggerLiveCommentaryOnScore = function (scoreType) {
+  async function triggerLiveCommentaryOnScore(scoreContext, optionalPersona = null) {
     if (!isAiEnabled) return;
-    if (scoreType === 6) triggerShotCommentary('PULL_SHOT', 6);
-    else if (scoreType === 4) triggerShotCommentary('COVER_DRIVE', 4);
-    else if (scoreType === 'W') triggerShotCommentary('WICKET', 0);
-    else if (scoreType === 0 || scoreType === 'dot') triggerShotCommentary('FORWARD_DEFENSE', 0);
-  };
+    const persona = optionalPersona || activePersona;
+    const commentaryText = generateCommentaryText(scoreContext, persona);
 
-  // Expose Global Studio Controller
+    // 1. Update HUD and on-screen Toast
+    updateTickerUI(persona, commentaryText);
+
+    // 2. Play voice (ElevenLabs neural voice FIRST, WebSpeech as fallback)
+    await playNeuralCommentaryVoice(commentaryText, persona);
+
+    return commentaryText;
+  }
+
+  async function testCommentaryVoice(testType = 'four', optionalPersona = null) {
+    const persona = optionalPersona || activePersona;
+    let sampleContext = { runs: 4, strikerName: 'the batsman', bowlerName: 'the bowler' };
+    if (testType === 'six') sampleContext = { runs: 6, strikerName: 'the batsman', bowlerName: 'the bowler' };
+    if (testType === 'wicket') sampleContext = { isWicket: true, dismissalType: 'Bowled', strikerName: 'the batsman', bowlerName: 'the bowler' };
+    if (testType === 'single') sampleContext = { runs: 1, strikerName: 'the batsman', bowlerName: 'the bowler' };
+    if (testType === 'dot') sampleContext = { runs: 0, strikerName: 'the batsman', bowlerName: 'the bowler' };
+
+    const text = generateCommentaryText(sampleContext, persona);
+    updateTickerUI(persona, text);
+    await playNeuralCommentaryVoice(text, persona);
+    return text;
+  }
+
+  function getAiCommentaryState() {
+    return {
+      isEnabled: isAiEnabled,
+      persona: activePersona,
+      isAutoSync: isAutoScoreSync,
+      lastText: lastSpokenText,
+      isPlaying: !!(activeNeuralAudio && !activeNeuralAudio.paused)
+    };
+  }
+
+  // Expose Global Studio Controller & Scoring Hooks
   window.openAiStudio = openAiStudio;
   window.closeAiStudio = closeAiStudio;
   window.setAiPersona = setPersona;
+  window.toggleAiCommentary = toggleAiCommentary;
   window.triggerAiShotCommentary = triggerShotCommentary;
+  window.triggerLiveCommentaryOnScore = triggerLiveCommentaryOnScore;
+  window.testCommentaryVoice = testCommentaryVoice;
+  window.getAiCommentaryState = getAiCommentaryState;
 
   // Pre-fetch voices when available
   if ('speechSynthesis' in window) {

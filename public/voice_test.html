@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Neural Voice Test</title>
+  <style>
+    body { background: #1a1a2e; color: #eee; font-family: system-ui; padding: 30px; }
+    button { padding: 15px 30px; font-size: 18px; margin: 10px; border: none; border-radius: 8px; cursor: pointer; background: #e94560; color: white; }
+    button:hover { background: #c81e45; }
+    #log { background: #0f0f23; padding: 15px; border-radius: 8px; font-family: monospace; font-size: 13px; white-space: pre-wrap; max-height: 400px; overflow-y: auto; margin-top: 20px; }
+    .ok { color: #0f0; } .err { color: #f44; } .info { color: #4af; }
+    h1 { color: #e94560; }
+    #audio-player { margin-top: 20px; width: 100%; }
+  </style>
+</head>
+<body>
+  <h1>🎙️ Neural Voice Test Page</h1>
+  <p>Click the button below to test ElevenLabs TTS directly:</p>
+  
+  <button onclick="testVoice('shastri')">🗣️ Test Shastri Voice</button>
+  <button onclick="testVoice('bhogle')">🗣️ Test Bhogle Voice</button>
+  <br>
+  <audio id="audio-player" controls style="display:none;"></audio>
+  <div id="log"></div>
+
+  <script>
+    const logDiv = document.getElementById('log');
+    function log(msg, cls = 'info') {
+      const line = document.createElement('div');
+      line.className = cls;
+      line.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+      logDiv.appendChild(line);
+      logDiv.scrollTop = logDiv.scrollHeight;
+    }
+
+    async function testVoice(persona) {
+      const text = persona === 'shastri' 
+        ? "Shot! That went like a tracer bullet to the boundary! Magnificent cover drive!" 
+        : "Oh, what a touch! He didn't just hit that; he composed a symphony through the covers!";
+      
+      log(`Requesting TTS for persona: ${persona}...`);
+      log(`Text: "${text}"`);
+
+      try {
+        const res = await fetch('/api/ai/tts', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text, persona, userApiKey: '' })
+        });
+
+        const contentType = res.headers.get('content-type') || '';
+        const ttsSource = res.headers.get('x-tts-source') || 'unknown';
+        log(`Response: HTTP ${res.status}, Content-Type: ${contentType}, Source: ${ttsSource}`);
+
+        if (res.ok && contentType.includes('audio/mpeg')) {
+          const blob = await res.blob();
+          log(`✅ Audio blob received: ${blob.size} bytes`, 'ok');
+
+          const audioUrl = URL.createObjectURL(blob);
+          const player = document.getElementById('audio-player');
+          player.src = audioUrl;
+          player.style.display = 'block';
+          
+          player.onplay = () => log('▶️ Audio playback started', 'ok');
+          player.onended = () => log('⏹️ Audio playback ended', 'ok');
+          player.onerror = (e) => log(`❌ Audio element error: ${e.message || 'unknown'}`, 'err');
+
+          try {
+            await player.play();
+            log('✅ play() resolved successfully', 'ok');
+          } catch (playErr) {
+            log(`❌ play() failed: ${playErr.message}`, 'err');
+            log('Try clicking the audio controls below to play manually', 'info');
+          }
+        } else {
+          const body = await res.text();
+          log(`❌ Not audio response: ${body}`, 'err');
+        }
+      } catch (err) {
+        log(`❌ Fetch error: ${err.message}`, 'err');
+      }
+    }
+
+    log('Ready. Click a button to test neural voice.');
+  </script>
+</body>
+</html>

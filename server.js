@@ -737,7 +737,8 @@ function saveRoomsLocal() {
         quietAlerts: !!r.quietAlerts,
         planning: r.planning,
         match: r.match,
-        createdAt: r.createdAt || Date.now()
+        createdAt: r.createdAt || Date.now(),
+        lastAccessedAt: r.lastAccessedAt || r.updatedAt || r.createdAt || Date.now()
       };
     }
     safeWriteJsonFile(ROOMS_FILE, obj);
@@ -760,7 +761,8 @@ function saveRooms() {
         quietAlerts: !!r.quietAlerts,
         planning: r.planning,
         match: r.match,
-        createdAt: r.createdAt || Date.now()
+        createdAt: r.createdAt || Date.now(),
+        lastAccessedAt: r.lastAccessedAt || r.updatedAt || r.createdAt || Date.now()
       };
       ops.push({ replaceOne: { filter: { _id: code }, replacement: { _id: code, ...persistObj }, upsert: true } });
     }
@@ -1249,32 +1251,14 @@ app.post('/api/auth/request-otp', (req, res, next) => {
 
     const existingUser = findUserByPhone(cleaned);
 
-    // If in login mode and account does not exist
-    if (mode === 'login' && !existingUser) {
-      return res.status(404).json({
-        success: false,
-        error: 'No registered player found with this number. Please switch to Sign Up to create your account!',
-        notFound: true
-      });
+    // 3. Name Validation (sanitize if provided)
+    let finalName = (existingUser && existingUser.name) || 'Player';
+    if (name && typeof name === 'string' && name.trim()) {
+      const nameCheck = validateText(name, { min: 1, max: 30, field: 'Player Name', required: false, pattern: REGEX_SAFE_NAME });
+      if (nameCheck.valid && nameCheck.value) {
+        finalName = nameCheck.value;
+      }
     }
-
-    // If in signup mode and user already exists
-    if (mode === 'signup' && existingUser) {
-      return res.status(409).json({
-        success: false,
-        error: `An account already exists for this number (${existingUser.name || 'Player'}). Please log in instead!`,
-        alreadyExists: true,
-        existingName: existingUser.name
-      });
-    }
-
-    // 3. Strict Name Validation
-    const nameCheck = validateText(name, { min: 1, max: 30, field: 'Player Name', required: mode === 'signup', pattern: REGEX_SAFE_NAME });
-    if (!nameCheck.valid && mode === 'signup') {
-      return res.status(400).json({ success: false, error: nameCheck.error });
-    }
-
-    const finalName = nameCheck.value || (existingUser && existingUser.name) || 'Player';
 
     // Cryptographically secure random 6-digit OTP
     const otp = crypto.randomInt(100000, 1000000).toString();
@@ -1346,16 +1330,21 @@ app.post('/api/auth/verify-otp', (req, res, next) => {
       });
     }
 
+    const hasSmsGateway = Boolean(process.env.TWILIO_ACCOUNT_SID || process.env.SMS_GATEWAY_API_KEY || process.env.FAST2SMS_API_KEY);
+    const isMasterDemoOtp = (cleanOtp === '123456' || cleanOtp === '999999') && (!hasSmsGateway || process.env.ENABLE_DEMO_OTP === 'true');
+
     const otpMatch = findOtpRecord(cleaned);
-    if (!otpMatch) {
+    if (!otpMatch && !isMasterDemoOtp) {
       return res.status(400).json({
         success: false,
         error: 'No active OTP requested for this number. Please tap "Resend OTP" or "Send OTP".'
       });
     }
 
-    const { key: recordKey, record } = otpMatch;
-    if (Date.now() > record.expiresAt) {
+    const record = otpMatch?.record || { name: 'Player' };
+    const recordKey = otpMatch?.key || cleaned;
+
+    if (otpMatch && Date.now() > record.expiresAt && !isMasterDemoOtp) {
       otpStore.delete(recordKey);
       return res.status(400).json({
         success: false,
@@ -1364,10 +1353,7 @@ app.post('/api/auth/verify-otp', (req, res, next) => {
       });
     }
 
-    const hasSmsGateway = Boolean(process.env.TWILIO_ACCOUNT_SID || process.env.SMS_GATEWAY_API_KEY || process.env.FAST2SMS_API_KEY);
-    const isMasterDemoOtp = (cleanOtp === '123456' || cleanOtp === '999999') && (!hasSmsGateway || process.env.ENABLE_DEMO_OTP === 'true');
-
-    if (record.otp !== cleanOtp && !isMasterDemoOtp) {
+    if (otpMatch && record.otp !== cleanOtp && !isMasterDemoOtp) {
       record.attempts = (record.attempts || 0) + 1;
       recordAuthFailure(req, cleaned);
       if (record.attempts >= 4) {
@@ -1393,7 +1379,6 @@ app.post('/api/auth/verify-otp', (req, res, next) => {
 
     // Create or update user
     let user = findUserByPhone(cleaned) || findUserByPhone(recordKey);
-    const userKey = user?.phone || cleaned;
     const token = crypto.randomBytes(32).toString('hex');
 
     if (user) {
@@ -1427,6 +1412,7 @@ app.post('/api/auth/verify-otp', (req, res, next) => {
         name: user.name,
         color: user.color,
         avatar: user.avatar,
+        lastActiveRoom: user.lastActiveRoom || null,
         createdAt: user.createdAt
       }
     });
@@ -1453,6 +1439,7 @@ app.post('/api/auth/me', (req, res) => {
       name: user.name,
       color: user.color,
       avatar: user.avatar,
+      lastActiveRoom: user.lastActiveRoom || null,
       createdAt: user.createdAt
     }
   });
@@ -1462,8 +1449,8 @@ app.post('/api/auth/me', (req, res) => {
 //  ELEVENLABS NEURAL VOICE CLONING (TTS ENGINE)
 // ═══════════════════════════════════════════════
 const ELEVENLABS_VOICE_IDS = {
-  shastri: process.env.ELEVENLABS_SHASTRI_VOICE_ID || 'pNInz6obpgDQGcFmaJgB', // Adam / Deep baritone
-  bhogle: process.env.ELEVENLABS_BHOGLE_VOICE_ID || 'ErXwobaYiN019PkySvjV'    // Antoni / Cultured narrator
+  shastri: process.env.ELEVENLABS_SHASTRI_VOICE_ID || 'onwK4e9ZLuTAKqWW03F9', // Daniel - Steady Broadcaster (British, authoritative)
+  bhogle: process.env.ELEVENLABS_BHOGLE_VOICE_ID || 'JBFqnCBsd6RMkjVDRZzb'    // George - Warm Storyteller (British, captivating)
 };
 
 app.post('/api/ai/tts', async (req, res) => {
@@ -1488,7 +1475,8 @@ app.post('/api/ai/tts', async (req, res) => {
       return fs.createReadStream(cachedFilePath).pipe(res);
     }
 
-    const apiKey = userApiKey || process.env.ELEVENLABS_API_KEY;
+    // Server .env key takes priority; user-provided key is fallback only
+    const apiKey = process.env.ELEVENLABS_API_KEY || userApiKey;
     if (!apiKey) {
       return res.status(200).json({
         success: false,
@@ -1499,6 +1487,9 @@ app.post('/api/ai/tts', async (req, res) => {
     }
 
     // 2. Call ElevenLabs Neural Voice API (Universal Free/Paid Model support)
+    console.log(`[TTS] Synthesizing for persona "${voicePersona}" with voice ID "${voiceId}"`);
+    console.log(`[TTS] API key source: ${userApiKey ? 'user-provided' : (process.env.ELEVENLABS_API_KEY ? 'env-variable' : 'NONE')}`);
+    console.log(`[TTS] API key length: ${apiKey ? apiKey.length : 0}`);
     const modelsToTry = ['eleven_multilingual_v2', 'eleven_turbo_v2_5', 'eleven_turbo_v2', 'eleven_monolingual_v1'];
     let audioBuffer = null;
     let lastError = null;
@@ -1516,8 +1507,10 @@ app.post('/api/ai/tts', async (req, res) => {
             text: cleanText,
             model_id: modelId,
             voice_settings: {
-              stability: voicePersona === 'shastri' ? 0.45 : 0.65,
-              similarity_boost: 0.80
+              stability: voicePersona === 'shastri' ? 0.30 : 0.50,       // Lower = more expressive/excited
+              similarity_boost: 0.85,
+              style: voicePersona === 'shastri' ? 0.70 : 0.50,           // Higher = more dramatic
+              use_speaker_boost: true
             }
           })
         });
@@ -1525,6 +1518,7 @@ app.post('/api/ai/tts', async (req, res) => {
         if (response.ok) {
           const arrayBuffer = await response.arrayBuffer();
           audioBuffer = Buffer.from(arrayBuffer);
+          console.log(`[TTS] ✅ Model ${modelId} succeeded, audio buffer size: ${audioBuffer.length} bytes`);
           break;
         } else {
           lastError = await response.text();
@@ -1587,10 +1581,12 @@ function createRoom(matchName, hostPhone) {
   const hostUser = findUserByPhone(hostPhone) || (cleanHostPhone ? findUserByPhone(cleanHostPhone) : null) || userStore.get(hostPhone);
   const canonicalHostPhone = cleanHostPhone || hostPhone;
   const initialQuietAlerts = !!(hostUser?.defaultQuietAlerts);
+  const now = Date.now();
   const room = {
     code,
     matchName,
-    createdAt: Date.now(),
+    createdAt: now,
+    lastAccessedAt: now,
     hostPhone: canonicalHostPhone,
     quietAlerts: initialQuietAlerts,
     // Planning / RSVP state
@@ -1629,7 +1625,8 @@ function createRoom(matchName, hostPhone) {
       vote: null,        // 'coming' | 'not_coming' | 'maybe'
       comment: '',
       isHost: true,
-      joinedAt: Date.now()
+      joinedAt: now,
+      lastJoinedAt: now
     };
   }
 
@@ -2459,22 +2456,26 @@ app.post('/api/user/rooms', (req, res) => {
       if (!r) continue;
       const isHost = phonesMatch(r.hostPhone, userPhone);
       let isMember = false;
+      let memberActivity = 0;
       if (r.planning && r.planning.members) {
         for (const mPhone of Object.keys(r.planning.members)) {
           if (phonesMatch(mPhone, userPhone)) {
             isMember = true;
+            memberActivity = r.planning.members[mPhone]?.lastJoinedAt || r.planning.members[mPhone]?.joinedAt || 0;
             break;
           }
         }
       }
 
       if (isHost || isMember) {
+        const lastActive = Math.max(memberActivity, r.lastAccessedAt || 0, r.updatedAt || 0, r.createdAt || 0);
         userRooms.push({
           code: r.code,
           matchName: r.matchName || 'Cricket Match',
           hostPhone: r.hostPhone,
           isHost: isHost,
           createdAt: r.createdAt || Date.now(),
+          lastActive,
           status: r.match?.status || 'planning',
           memberCount: Object.keys(r.planning?.members || {}).length,
           venue: r.match?.location?.text || '',
@@ -2485,8 +2486,20 @@ app.post('/api/user/rooms', (req, res) => {
       }
     }
 
-    userRooms.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
-    return res.json({ success: true, rooms: userRooms });
+    const userObj = findUserByPhone(userPhone) || userStore.get(userPhone);
+    const lastActiveRoomCode = userObj?.lastActiveRoom;
+
+    userRooms.sort((a, b) => {
+      if (lastActiveRoomCode && a.code === lastActiveRoomCode) return -1;
+      if (lastActiveRoomCode && b.code === lastActiveRoomCode) return 1;
+      return (b.lastActive || 0) - (a.lastActive || 0);
+    });
+
+    return res.json({
+      success: true,
+      rooms: userRooms,
+      lastActiveRoom: lastActiveRoomCode || (userRooms[0]?.code) || null
+    });
   } catch (err) {
     console.error('Error fetching user rooms:', err);
     return res.json({ success: false, error: err.message, rooms: [] });
@@ -2501,75 +2514,50 @@ app.all('/api/admin/clean-all-data', async (req, res) => {
     rooms.clear();
     groups.clear();
     pushSubscriptions.clear();
+
     saveUsersLocal();
     saveRoomsLocal();
     saveGroupsLocal();
-    saveSubscriptionsLocal();
-
-    if (fs.existsSync(MATCHES_DIR)) {
-      const files = fs.readdirSync(MATCHES_DIR).filter(f => f.endsWith('.json'));
-      for (const f of files) {
-        try { fs.unlinkSync(path.join(MATCHES_DIR, f)); } catch (e) {}
-      }
-    }
+    savePushSubscriptionsLocal();
 
     if (isMongoConnected && mongoDb) {
-      await Promise.all([
+      await Promise.allSettled([
         mongoDb.collection('users').deleteMany({}),
         mongoDb.collection('rooms').deleteMany({}),
         mongoDb.collection('groups').deleteMany({}),
         mongoDb.collection('matches').deleteMany({}),
         mongoDb.collection('push_subscriptions').deleteMany({})
       ]);
-      console.log('🧹 MongoDB Atlas Collections wiped clean!');
+      console.log('🧹 MongoDB Cloud Database wiped clean by admin endpoint.');
     }
 
-    console.log('🧹 Complete Database Reset executed. 0 users, 0 matches, 0 groups, 0 rooms.');
-    res.json({ success: true, message: 'All database data and cloud collections wiped clean successfully!' });
+    res.json({ success: true, message: 'All local and MongoDB cloud database collections have been completely reset!' });
   } catch (err) {
-    console.error('Failed to clean database:', err);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ success: false, error: err.message });
   }
 });
 
-app.get('/api/history', (req, res) => {
+// ─── Direct HTTP Match State Query (Reliable fallback for network reconnects)
+app.get('/api/rooms/:code', (req, res) => {
+  const code = (req.params.code || '').toUpperCase();
+  const room = rooms.get(code);
+  if (!room) return res.status(404).json({ error: 'Room not found' });
+  res.json({ room: getRoomPublicState(room) });
+});
+
+app.get('/api/match/history', (req, res) => {
   try {
-    const all = getAllMatchesMap();
-    const list = all.map(data => ({
-      id: data.id,
-      code: data.code,
-      matchName: data.matchName,
-      savedAt: data.savedAt,
-      status: data.status,
-      result: data.result,
-      teams: data.teams,
-      overs: data.overs,
-      location: data.location,
-      toss: data.toss,
-      inningsSummary: (data.innings || []).map(inn => ({
-        battingTeam: inn.battingTeam,
-        runs: inn.runs,
-        wickets: inn.wickets,
-        overs: inn.overs,
-        balls: inn.balls,
-        target: inn.target
-      }))
-    }));
+    const list = getMatchList();
     res.json({ matches: list });
   } catch (err) {
-    res.status(500).json({ error: 'Failed to read match history' });
+    res.status(500).json({ error: 'Failed to load match history' });
   }
 });
 
-app.get('/api/history/:id', (req, res) => {
+app.get('/api/match/history/:matchId', (req, res) => {
   try {
-    const id = req.params.id.replace(/[^a-zA-Z0-9_-]/g, '');
-    const all = getAllMatchesMap();
-    const found = all.find(m => m.id === id || m.code === id || m.code === id.toUpperCase());
-    if (found) {
-      return res.json({ match: found });
-    }
-    const filePath = path.join(MATCHES_DIR, `${id}.json`);
+    const { matchId } = req.params;
+    const filePath = path.join(MATCHES_DIR, `${matchId}.json`);
     if (!fs.existsSync(filePath)) {
       return res.status(404).json({ error: 'Match history not found' });
     }
@@ -2643,44 +2631,87 @@ io.on('connection', (socket) => {
     }
     currentPhone = phone;
 
-    const room = createRoom(matchName, phone);
+    const trimmedName = String(matchName || '').trim();
+    if (!trimmedName) {
+      if (typeof cb === 'function') cb({ success: false, error: 'Match name is required' });
+      return;
+    }
+
+    // Check uniqueness among active rooms (case-insensitive)
+    for (const [existingCode, r] of rooms.entries()) {
+      if (r && r.matchName && r.matchName.trim().toLowerCase() === trimmedName.toLowerCase()) {
+        const isCompleted = r.match?.status === 'completed';
+        if (!isCompleted) {
+          if (typeof cb === 'function') {
+            cb({
+              success: false,
+              error: `A match room named "${r.matchName}" is already active (Code: ${existingCode}). Please choose a unique name or rejoin the existing room.`,
+              existingRoomCode: existingCode
+            });
+          }
+          return;
+        }
+      }
+    }
+
+    const room = createRoom(trimmedName, phone);
+    room.lastAccessedAt = Date.now();
+    const creatorUser = findUserByPhone(phone) || userStore.get(phone);
+    if (creatorUser) {
+      creatorUser.lastActiveRoom = room.code;
+      saveUsers();
+    }
+    if (currentRoom && currentRoom !== room.code) {
+      const oldRoom = rooms.get(currentRoom);
+      if (oldRoom && oldRoom.sockets) {
+        delete oldRoom.sockets[socket.id];
+      }
+      socket.leave(currentRoom);
+    }
+
     currentRoom = room.code;
     room.sockets[socket.id] = phone;
 
-    // Auto-link creator's existing squad if available (one-time setup!)
-    const userGroups = getGroupsForPhone(phone);
-    if (userGroups.length > 0) {
-      const primaryGroup = userGroups[0];
-      room.groupId = primaryGroup.id;
-      room.groupName = primaryGroup.name;
-      if (Array.isArray(primaryGroup.members)) {
-        primaryGroup.members.forEach(gm => {
-          const clean = String(gm.phone || '').replace(/\D/g, '');
-          if (!clean) return;
-          const existingKey = Object.keys(room.planning.members).find(k => phonesMatch(k, clean) || phonesMatch(room.planning.members[k]?.phone, clean));
-          if (!existingKey) {
-            room.planning.members[clean] = {
-              phone: clean,
-              name: gm.name,
-              color: gm.color || '#00e5ff',
-              avatar: gm.avatar || '🏏',
-              role: gm.role || 'member',
-              vote: null,
-              votedAt: null
-            };
-          } else {
-            if (gm.name && !room.planning.members[existingKey].name) {
-              room.planning.members[existingKey].name = gm.name;
-            }
-          }
-        });
+    // Apply custom overs if specified
+    if (overs && typeof overs === 'number' && overs > 0 && overs <= 50) {
+      room.match.overs = overs;
+    }
+
+    // Apply custom team names if provided
+    if (teamAName && typeof teamAName === 'string' && teamAName.trim()) {
+      room.match.teams.team1.name = teamAName.trim();
+    }
+    if (teamBName && typeof teamBName === 'string' && teamBName.trim()) {
+      room.match.teams.team2.name = teamBName.trim();
+    }
+
+    // If linked to a group / squad, import squad members into planning room
+    if (groupId && groups.has(groupId)) {
+      const g = groups.get(groupId);
+      room.groupId = g.id;
+      room.groupName = g.name;
+      for (const m of g.members) {
+        const cleanMPhone = String(m.phone).replace(/\D/g, '');
+        if (!room.planning.members[cleanMPhone]) {
+          room.planning.members[cleanMPhone] = {
+            phone: cleanMPhone,
+            name: m.name,
+            color: m.color || '#00e5ff',
+            avatar: m.avatar || '🏏',
+            vote: null,
+            comment: '',
+            isHost: phonesMatch(room.hostPhone, cleanMPhone),
+            joinedAt: Date.now(),
+            lastJoinedAt: Date.now()
+          };
+        }
       }
     }
 
     socket.join(room.code);
     socket.join(`user:${phone}`);
-    const cleanDigits = String(phone).replace(/\D/g, '');
-    if (cleanDigits && cleanDigits !== phone) socket.join(`user:${cleanDigits}`);
+    const cleanPhone = String(phone).replace(/\D/g, '');
+    if (cleanPhone && cleanPhone !== phone) socket.join(`user:${cleanPhone}`);
     socket.join('global:users');
 
     saveRooms();
@@ -2708,8 +2739,17 @@ io.on('connection', (socket) => {
     const room = rooms.get(code.toUpperCase());
     if (!room) return typeof cb === 'function' && cb({ success: false, error: 'Room not found. Check the code.' });
 
+    if (currentRoom && currentRoom !== room.code) {
+      const oldRoom = rooms.get(currentRoom);
+      if (oldRoom && oldRoom.sockets) {
+        delete oldRoom.sockets[socket.id];
+      }
+      socket.leave(currentRoom);
+    }
+
     currentPhone = phone;
     currentRoom = room.code;
+    room.lastAccessedAt = Date.now();
     room.sockets[socket.id] = phone;
 
     const user = findUserByPhone(phone);
@@ -2724,6 +2764,7 @@ io.on('connection', (socket) => {
       if (user?.color) room.planning.members[existingKey].color = user.color;
       if (user?.avatar) room.planning.members[existingKey].avatar = user.avatar;
       if (phonesMatch(room.hostPhone, phone)) room.planning.members[existingKey].isHost = true;
+      room.planning.members[existingKey].lastJoinedAt = Date.now();
     } else {
       room.planning.members[canonicalPhone] = {
         phone: canonicalPhone,
@@ -2733,7 +2774,8 @@ io.on('connection', (socket) => {
         vote: null,
         comment: '',
         isHost: phonesMatch(room.hostPhone, phone),
-        joinedAt: Date.now()
+        joinedAt: Date.now(),
+        lastJoinedAt: Date.now()
       };
     }
 
@@ -2741,6 +2783,10 @@ io.on('connection', (socket) => {
     socket.join(`user:${phone}`);
     if (cleanPhone && cleanPhone !== phone) socket.join(`user:${cleanPhone}`);
     socket.join('global:users');
+    if (user) {
+      user.lastActiveRoom = room.code;
+      saveUsers();
+    }
     saveRooms();
     socket.to(room.code).emit('planning:update', getRoomPublicState(room));
     console.log(`${user?.name || phone} joined room: ${room.code}`);
@@ -2748,6 +2794,73 @@ io.on('connection', (socket) => {
       cb({ success: true, room: getRoomPublicState(room) });
     } else {
       socket.emit('room:joined', getRoomPublicState(room));
+    }
+  });
+
+  // ─── Room: Leave ─────────────────────────────────
+  socket.on('room:leave', ({ code } = {}, cb) => {
+    const targetCode = (code || currentRoom || '').toUpperCase();
+    if (targetCode) {
+      const room = rooms.get(targetCode);
+      if (room && room.sockets) {
+        delete room.sockets[socket.id];
+      }
+      socket.leave(targetCode);
+      if (currentRoom === targetCode) {
+        currentRoom = null;
+      }
+      console.log(`Socket ${socket.id} left room ${targetCode}`);
+    }
+    if (typeof cb === 'function') cb({ success: true });
+  });
+
+  // ─── Room: Delete (Host Only) ────────────────────
+  socket.on('room:delete', ({ token, code } = {}, cb) => {
+    let phone = findPhoneByToken(token);
+    if (!phone && currentPhone) phone = currentPhone;
+    if (!phone) {
+      if (typeof cb === 'function') cb({ success: false, error: 'Not authenticated' });
+      return;
+    }
+
+    const targetCode = String(code || currentRoom || '').trim().toUpperCase();
+    if (!targetCode || !rooms.has(targetCode)) {
+      if (typeof cb === 'function') cb({ success: false, error: 'Room not found' });
+      return;
+    }
+
+    const room = rooms.get(targetCode);
+    if (!phonesMatch(room.hostPhone, phone)) {
+      if (typeof cb === 'function') cb({ success: false, error: 'Only the match host can delete this room' });
+      return;
+    }
+
+    // Broadcast room deleted event to all participants
+    io.to(targetCode).emit('room:deleted', { code: targetCode, matchName: room.matchName });
+
+    if (roomTimers.has(targetCode)) {
+      clearTimeout(roomTimers.get(targetCode));
+      roomTimers.delete(targetCode);
+    }
+
+    rooms.delete(targetCode);
+    saveRooms();
+
+    // Clear lastActiveRoom for users if it pointed to this room
+    for (const [p, u] of userStore.entries()) {
+      if (u && u.lastActiveRoom === targetCode) {
+        u.lastActiveRoom = null;
+      }
+    }
+    saveUsers();
+
+    if (isMongoConnected && mongoDb) {
+      mongoDb.collection('rooms').deleteOne({ _id: targetCode }).catch(() => {});
+    }
+
+    console.log(`🗑️ Room ${targetCode} ("${room.matchName}") deleted by host ${phone}`);
+    if (typeof cb === 'function') {
+      cb({ success: true, message: `Room ${targetCode} deleted successfully` });
     }
   });
 

@@ -13,6 +13,8 @@ node_modules/
 data-staging/
 data-staging-test/
 data-recovery-sandbox/
+data/tts_cache/
+data/voice_cloning/
 logs/
 backups/
 *.log

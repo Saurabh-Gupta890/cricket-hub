@@ -315,6 +315,19 @@ socket.on('connect', () => {
   }
 });
 
+socket.on('room:deleted', ({ code, matchName }) => {
+  if (state.room?.code === code || sessionStorage.getItem('cricket_active_room') === code) {
+    state.room = null;
+    sessionStorage.removeItem('cricket_active_room');
+    localStorage.removeItem('cricket_last_room');
+    window.history.replaceState({}, document.title, window.location.pathname);
+    showHomeScreen();
+    toast(`⚠️ Match room "${matchName || code}" was deleted by the host.`);
+  } else {
+    renderHomeActiveRooms();
+  }
+});
+
 // Proactive silent reconnection and sync on tab switch / wake from sleep
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible') {
@@ -366,22 +379,14 @@ async function init() {
     state.session = saved;
     registerSocketUser();
 
-    // Check if opened via URL query ?room=CRK-XXXX or last visited room
-    const roomFromUrl = urlParams.get('room');
-    const lastRoom = roomFromUrl || localStorage.getItem('cricket_last_room');
+    // Check if opened via URL query ?room=CRK-XXXX or previously inside active room
+    const roomFromUrl = urlParams.get('room') || sessionStorage.getItem('cricket_active_room') || localStorage.getItem('cricket_last_room');
 
     if (roomFromUrl) {
+      sessionStorage.setItem('cricket_active_room', roomFromUrl);
       joinRoomDirect(roomFromUrl);
     } else {
       showHomeScreen();
-      if (lastRoom) {
-        socket.emit('room:join', { token: saved.token, code: lastRoom }, (res) => {
-          if (res?.success && res.room) {
-            state.room = res.room;
-            renderAll();
-          }
-        });
-      }
     }
 
     // 2. Validate and refresh user data in background with server
@@ -404,7 +409,11 @@ async function init() {
       if (data.success && data.user) {
         state.session.user = data.user;
         saveSession(state.session);
-        renderHomeScreen();
+        updateAllUserBadges();
+        const activeScreen = document.querySelector('.screen.active')?.id;
+        if (!roomFromUrl && !state.room && (!activeScreen || activeScreen === 'screen-home')) {
+          showHomeScreen();
+        }
       }
     } catch (err) {
       console.log('Running in cached session mode');
@@ -469,20 +478,19 @@ document.getElementById('auth-name').addEventListener('keydown', e => {
   if (e.key === 'Enter') document.getElementById('auth-phone').focus();
 });
 
+let isSendingOtp = false;
+let isResendingOtp = false;
+
 async function sendOtp() {
+  if (isSendingOtp) return;
   const nameInput = document.getElementById('auth-name');
   const name = nameInput?.value.trim() || '';
   const cc = document.getElementById('auth-country-code')?.value || '91';
   const rawPhone = (document.getElementById('auth-phone')?.value || '').trim().replace(/\D/g, '');
 
-  if (currentAuthMode === 'signup' && !name) {
-    if (nameInput) nameInput.focus();
-    return toast('👤 Please enter your Player Name to Sign Up');
-  }
-
   if (!rawPhone || rawPhone.length < 8) {
     document.getElementById('auth-phone')?.focus();
-    return toast('📱 Please enter a valid 10-digit mobile number');
+    return toast('📱 Please enter a valid mobile number');
   }
 
   // Handle duplicate country code if typed by user
@@ -498,6 +506,7 @@ async function sendOtp() {
   const btnText = document.getElementById('btn-send-otp-text');
   if (btnText) btnText.textContent = 'Sending code…';
   if (btn) btn.disabled = true;
+  isSendingOtp = true;
 
   try {
     const res = await fetch('/api/auth/request-otp', {
@@ -508,22 +517,7 @@ async function sendOtp() {
     const data = await res.json();
 
     if (!data.success) {
-      if (data.notFound && currentAuthMode === 'login') {
-        toast('ℹ️ ' + data.error);
-        setAuthMode('signup');
-        if (nameInput) nameInput.focus();
-        if (btnText) btnText.textContent = 'Create Profile & Send OTP 🚀';
-        if (btn) btn.disabled = false;
-        return;
-      }
-      if (data.alreadyExists && currentAuthMode === 'signup') {
-        toast('ℹ️ ' + data.error);
-        setAuthMode('login');
-        if (btnText) btnText.textContent = 'Send Login OTP 📲';
-        if (btn) btn.disabled = false;
-        return;
-      }
-      toast('❌ ' + data.error);
+      toast('❌ ' + (data.error || 'Failed to send OTP'));
       if (btnText) btnText.textContent = currentAuthMode === 'signup' ? 'Create Profile & Send OTP 🚀' : 'Send Login OTP 📲';
       if (btn) btn.disabled = false;
       return;
@@ -548,8 +542,9 @@ async function sendOtp() {
     const masked = data.maskedPhone || `+${full.slice(0, 2)} ••••• ••${full.slice(-3)}`;
     document.getElementById('otp-sent-to').textContent = `Code sent to ${masked}`;
 
-    // Store active phone and dev OTP in state
+    // Store active phone and dev OTP in state & sessionStorage
     state.lastRequestedPhone = full;
+    sessionStorage.setItem('crickethub_auth_phone', full);
     if (data.devOtp) {
       state.currentDevOtp = String(data.devOtp).replace(/\D/g, '').slice(0, 6);
       for (let i = 0; i < 6; i++) {
@@ -573,11 +568,14 @@ async function sendOtp() {
     toast('❌ Network error. Is the server running?');
     if (btnText) btnText.textContent = currentAuthMode === 'signup' ? 'Create Profile & Send OTP 🚀' : 'Send Login OTP 📲';
     if (btn) btn.disabled = false;
+  } finally {
+    isSendingOtp = false;
   }
 }
 
 // ── In-place Resend OTP ────────────────────────
 async function resendOtp() {
+  if (isResendingOtp) return;
   const name = document.getElementById('auth-name')?.value.trim() || '';
   const cc = document.getElementById('auth-country-code')?.value || '91';
   const rawPhone = (document.getElementById('auth-phone')?.value || '').trim().replace(/\D/g, '');
@@ -588,13 +586,15 @@ async function resendOtp() {
   } else if (cleanPhone.startsWith('0') && cleanPhone.length === 11) {
     cleanPhone = cleanPhone.slice(1);
   }
-  const full = cc + cleanPhone;
+  const fallbackFull = cc + cleanPhone;
+  const full = state.lastRequestedPhone || sessionStorage.getItem('crickethub_auth_phone') || fallbackFull;
 
   const resendBtn = document.getElementById('btn-resend-otp');
   if (resendBtn) {
     resendBtn.disabled = true;
     resendBtn.textContent = 'Requesting new OTP…';
   }
+  isResendingOtp = true;
 
   try {
     const res = await fetch('/api/auth/request-otp', {
@@ -605,13 +605,16 @@ async function resendOtp() {
     const data = await res.json();
 
     if (!data.success) {
-      toast('❌ ' + data.error);
+      toast('❌ ' + (data.error || 'Failed to request new code'));
       if (resendBtn) {
         resendBtn.disabled = false;
         resendBtn.textContent = '📲 Resend OTP';
       }
       return;
     }
+
+    state.lastRequestedPhone = full;
+    sessionStorage.setItem('crickethub_auth_phone', full);
 
     // Update dev banner
     const banner = document.getElementById('dev-otp-banner');
@@ -651,6 +654,8 @@ async function resendOtp() {
       resendBtn.disabled = false;
       resendBtn.textContent = '📲 Resend OTP';
     }
+  } finally {
+    isResendingOtp = false;
   }
 }
 
@@ -663,7 +668,7 @@ window.autofillDevOtp = function () {
     if (el) el.value = code[i] || '';
   }
   toast('✨ Auto-filled code: ' + code);
-  verifyOtp();
+  setTimeout(() => verifyOtp(), 50);
 };
 
 // ── OTP Digit Inputs ──────────────────────────
@@ -676,7 +681,7 @@ document.querySelectorAll('.otp-digit').forEach((input, idx) => {
     }
     if (idx === 5 && input.value) {
       // Auto-verify on last digit
-      verifyOtp();
+      setTimeout(() => verifyOtp(), 50);
     }
   });
   input.addEventListener('keydown', (e) => {
@@ -747,7 +752,7 @@ async function verifyOtp() {
     cleanPhone = cleanPhone.slice(1);
   }
   const fallbackFull = cc + cleanPhone;
-  const full = state.lastRequestedPhone || fallbackFull;
+  const full = state.lastRequestedPhone || sessionStorage.getItem('crickethub_auth_phone') || fallbackFull;
 
   const btn = document.getElementById('btn-verify-otp');
   if (btn) {
@@ -787,9 +792,18 @@ async function verifyOtp() {
     }
 
     clearOtpCountdown();
+    state.lastRequestedPhone = null;
+    sessionStorage.removeItem('crickethub_auth_phone');
     saveSession({ token: data.token, user: data.user });
     toast(`🏏 Welcome, ${data.user.name}!`);
-    showHomeScreen();
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const roomFromUrl = urlParams.get('room') || sessionStorage.getItem('cricket_active_room');
+    if (roomFromUrl) {
+      joinRoomDirect(roomFromUrl);
+    } else {
+      showHomeScreen();
+    }
     if ('Notification' in window && Notification.permission === 'granted') {
       subscribePushNotifications();
     }
@@ -1055,11 +1069,19 @@ async function renderHomeActiveRooms() {
   }
 
   const savedRoom = state.room;
-  const lastRoomCode = localStorage.getItem('cricket_last_room');
+  const currentActive = savedRoom?.code || sessionStorage.getItem('cricket_active_room') || user?.lastActiveRoom || localStorage.getItem('cricket_last_room');
 
-  if (serverRooms.length > 0) {
-    const primaryRoom = serverRooms[0];
+  let primaryRoom = null;
+  if (currentActive && serverRooms.length > 0) {
+    primaryRoom = serverRooms.find(r => r.code === currentActive);
+  }
+  if (!primaryRoom && serverRooms.length > 0) {
+    primaryRoom = serverRooms[0];
+  }
+
+  if (primaryRoom) {
     localStorage.setItem('cricket_last_room', primaryRoom.code);
+    sessionStorage.setItem('cricket_last_room', primaryRoom.code);
     activeBanner.style.display = 'flex';
     const nameEl = document.getElementById('home-active-room-name');
     const codeEl = document.getElementById('home-active-room-code');
@@ -1077,6 +1099,24 @@ async function renderHomeActiveRooms() {
       subEl.textContent = matchStatus === 'planning'
         ? `Planning in progress • ${primaryRoom.memberCount || 1} squad members registered`
         : (matchStatus === 'setup' ? 'Match configuration in progress' : 'Live match scoring in progress');
+    }
+    let homeDeleteBtn = document.getElementById('btn-home-delete-room');
+    if (!homeDeleteBtn) {
+      const resumeBtn = document.getElementById('btn-resume-active-room');
+      if (resumeBtn) {
+        homeDeleteBtn = document.createElement('button');
+        homeDeleteBtn.id = 'btn-home-delete-room';
+        homeDeleteBtn.className = 'btn btn-danger-outline btn-sm';
+        homeDeleteBtn.style.cssText = 'white-space:nowrap;padding:0.65rem 1rem;font-weight:700;display:inline-flex;align-items:center;gap:0.35rem;margin-left:0.5rem;';
+        homeDeleteBtn.innerHTML = '🗑️ Delete Room';
+        homeDeleteBtn.title = 'Delete this match room';
+        homeDeleteBtn.onclick = (e) => confirmDeleteActiveRoom(e);
+        resumeBtn.insertAdjacentElement('afterend', homeDeleteBtn);
+      }
+    }
+    if (homeDeleteBtn) {
+      const canDelete = !!primaryRoom.isHost || isHost();
+      homeDeleteBtn.style.display = canDelete ? 'inline-flex' : 'none';
     }
   } else if (savedRoom && savedRoom.code) {
     activeBanner.style.display = 'flex';
@@ -1097,26 +1137,95 @@ async function renderHomeActiveRooms() {
         ? `Planning in progress • ${memberCount} squad members registered`
         : (matchStatus === 'setup' ? 'Match configuration in progress' : 'Live match scoring in progress');
     }
-  } else if (lastRoomCode) {
-    activeBanner.style.display = 'flex';
-    const nameEl = document.getElementById('home-active-room-name');
-    const codeEl = document.getElementById('home-active-room-code');
-    const subEl = document.getElementById('home-active-room-sub');
-    if (nameEl) nameEl.textContent = 'Recent Match';
-    if (codeEl) codeEl.textContent = lastRoomCode;
-    if (subEl) subEl.textContent = 'Saved on this device • Click to rejoin and sync';
+    let homeDeleteBtn = document.getElementById('btn-home-delete-room');
+    if (!homeDeleteBtn) {
+      const resumeBtn = document.getElementById('btn-resume-active-room');
+      if (resumeBtn) {
+        homeDeleteBtn = document.createElement('button');
+        homeDeleteBtn.id = 'btn-home-delete-room';
+        homeDeleteBtn.className = 'btn btn-danger-outline btn-sm';
+        homeDeleteBtn.style.cssText = 'white-space:nowrap;padding:0.65rem 1rem;font-weight:700;display:inline-flex;align-items:center;gap:0.35rem;margin-left:0.5rem;';
+        homeDeleteBtn.innerHTML = '🗑️ Delete Room';
+        homeDeleteBtn.title = 'Delete this match room';
+        homeDeleteBtn.onclick = (e) => confirmDeleteActiveRoom(e);
+        resumeBtn.insertAdjacentElement('afterend', homeDeleteBtn);
+      }
+    }
+    if (homeDeleteBtn) {
+      homeDeleteBtn.style.display = isHost() ? 'inline-flex' : 'none';
+    }
   } else {
     activeBanner.style.display = 'none';
   }
 }
 window.renderHomeActiveRooms = renderHomeActiveRooms;
 
+window.confirmDeleteRoom = function () {
+  const roomCode = state.room?.code;
+  const matchName = state.room?.matchName || roomCode;
+  if (!roomCode) return toast('No active match room found');
+
+  if (!confirm(`Are you sure you want to permanently delete match room "${matchName}" (${roomCode})? This action cannot be undone.`)) {
+    return;
+  }
+
+  socket.emit('room:delete', { token: state.session?.token, code: roomCode }, (res) => {
+    if (!res || !res.success) {
+      return toast('❌ ' + (res?.error || 'Failed to delete room'));
+    }
+    state.room = null;
+    sessionStorage.removeItem('cricket_active_room');
+    localStorage.removeItem('cricket_last_room');
+    window.history.replaceState({}, document.title, window.location.pathname);
+    showHomeScreen();
+    toast(`🗑️ Match room "${matchName}" deleted successfully`);
+  });
+};
+
+window.confirmDeleteActiveRoom = function (e) {
+  if (e) e.stopPropagation();
+  const codeEl = document.getElementById('home-active-room-code');
+  const nameEl = document.getElementById('home-active-room-name');
+  const targetCode = codeEl?.textContent?.trim() || state.room?.code || localStorage.getItem('cricket_last_room');
+  const targetName = nameEl?.textContent?.trim() || targetCode;
+  if (!targetCode || targetCode === 'CRK-XXXX') return;
+
+  if (!confirm(`Are you sure you want to permanently delete match room "${targetName}" (${targetCode})? This action cannot be undone.`)) {
+    return;
+  }
+
+  socket.emit('room:delete', { token: state.session?.token, code: targetCode }, (res) => {
+    if (!res || !res.success) {
+      return toast('❌ ' + (res?.error || 'Failed to delete room'));
+    }
+    if (state.room?.code === targetCode) {
+      state.room = null;
+    }
+    sessionStorage.removeItem('cricket_active_room');
+    localStorage.removeItem('cricket_last_room');
+    renderHomeActiveRooms();
+    toast(`🗑️ Match room "${targetName}" deleted successfully`);
+  });
+};
+
 window.leavePlanningToHome = function () {
+  if (state.room?.code) {
+    socket.emit('room:leave', { code: state.room.code });
+  }
+  state.room = null;
+  sessionStorage.removeItem('cricket_active_room');
+  window.history.replaceState({}, document.title, window.location.pathname);
   showHomeScreen();
   toast('💾 Match planning saved! You can return anytime.');
 };
 
 window.leaveLobbyToHome = function () {
+  if (state.room?.code) {
+    socket.emit('room:leave', { code: state.room.code });
+  }
+  state.room = null;
+  sessionStorage.removeItem('cricket_active_room');
+  window.history.replaceState({}, document.title, window.location.pathname);
   showHomeScreen();
   toast('💾 Match saved! You can return anytime.');
 };
@@ -1146,8 +1255,15 @@ window.resumeActiveRoom = function () {
 window.logoutUser = function () {
   clearOtpCountdown();
   clearSession();
+  if (state.room?.code) {
+    socket.emit('room:leave', { code: state.room.code });
+  }
   state.room = null;
   localStorage.removeItem('cricket_last_room');
+  sessionStorage.removeItem('cricket_last_room');
+  sessionStorage.removeItem('cricket_active_room');
+  sessionStorage.removeItem('crickethub_auth_phone');
+  window.history.replaceState({}, document.title, window.location.pathname);
 
   // Close all open modals cleanly
   ['player-profile-modal', 'players-directory-modal', 'camera-capture-modal', 'photo-picker-modal', 'scorecard-modal', 'toss-modal', 'share-modal'].forEach(id => {
@@ -1183,6 +1299,10 @@ document.getElementById('btn-home-create').addEventListener('click', () => {
     if (!res.success) return toast('❌ ' + res.error);
     state.room = res.room;
     localStorage.setItem('cricket_last_room', res.room.code);
+    sessionStorage.setItem('cricket_last_room', res.room.code);
+    sessionStorage.setItem('cricket_active_room', res.room.code);
+    const newUrl = window.location.pathname + '?room=' + encodeURIComponent(res.room.code);
+    window.history.replaceState({}, document.title, newUrl);
     showPlanningScreen();
     toast(`✅ Room created! Code: ${res.room.code}`);
   });
@@ -1247,10 +1367,27 @@ function joinRoomDirect(code, autoVote = null, forcePlanning = false) {
     return;
   }
 
+  // Cleanly leave old room if switching
+  if (state.room?.code && state.room.code !== cleanCode) {
+    socket.emit('room:leave', { code: state.room.code });
+  }
+
   socket.emit('room:join', { token: state.session.token, code: cleanCode }, (res) => {
-    if (!res.success) return toast('❌ ' + res.error);
+    if (!res || !res.success) {
+      sessionStorage.removeItem('cricket_active_room');
+      localStorage.removeItem('cricket_last_room');
+      window.history.replaceState({}, document.title, window.location.pathname);
+      showHomeScreen();
+      return toast('❌ ' + (res?.error || 'Room not found. Check the code.'));
+    }
     state.room = res.room;
     localStorage.setItem('cricket_last_room', res.room.code);
+    sessionStorage.setItem('cricket_last_room', res.room.code);
+    sessionStorage.setItem('cricket_active_room', res.room.code);
+
+    // Sync URL query without reloading so refresh keeps the new room!
+    const newUrl = window.location.pathname + '?room=' + encodeURIComponent(res.room.code);
+    window.history.replaceState({}, document.title, newUrl);
 
     // Retain and route to the correct saved match phase (or force planning when viewing from alert/ping)
     const matchStatus = res.room.match?.status || 'planning';
@@ -1305,10 +1442,39 @@ function renderPlanningScreen() {
   renderPlanningChat();
   updateQuietAlertsUI();
 
-  // Host proceed button
+  // Host proceed button & Delete room button
   const hostUser = isHost();
   const proceedBtn = document.getElementById('btn-proceed-setup');
   if (proceedBtn) proceedBtn.style.display = hostUser ? 'block' : 'none';
+
+  let deleteBtn = document.getElementById('btn-delete-room');
+  if (!deleteBtn && proceedBtn) {
+    deleteBtn = document.createElement('button');
+    deleteBtn.id = 'btn-delete-room';
+    deleteBtn.className = 'btn btn-danger-outline btn-full btn-sm';
+    deleteBtn.style.cssText = 'margin-top:0.6rem;padding:0.65rem;font-weight:700;';
+    deleteBtn.innerHTML = '🗑️ Delete Match Room';
+    deleteBtn.onclick = () => confirmDeleteRoom();
+    proceedBtn.insertAdjacentElement('afterend', deleteBtn);
+  }
+  if (deleteBtn) deleteBtn.style.display = hostUser ? 'block' : 'none';
+
+  let hdrDeleteBtn = document.getElementById('btn-planning-delete-room-hdr');
+  if (!hdrDeleteBtn) {
+    const copyBtn = document.getElementById('btn-copy-planning-code');
+    if (copyBtn) {
+      hdrDeleteBtn = document.createElement('button');
+      hdrDeleteBtn.id = 'btn-planning-delete-room-hdr';
+      hdrDeleteBtn.className = 'btn btn-ghost btn-sm';
+      hdrDeleteBtn.style.color = 'var(--danger)';
+      hdrDeleteBtn.innerHTML = '🗑️ <span class="btn-hdr-text">Delete</span>';
+      hdrDeleteBtn.title = 'Delete this match room';
+      hdrDeleteBtn.onclick = () => confirmDeleteRoom();
+      copyBtn.insertAdjacentElement('afterend', hdrDeleteBtn);
+    }
+  }
+  if (hdrDeleteBtn) hdrDeleteBtn.style.display = hostUser ? 'inline-flex' : 'none';
+
   const pingPanel = document.getElementById('host-ping-panel');
   if (pingPanel) pingPanel.style.display = hostUser ? 'block' : 'none'; // Only host can send squad alerts
 
@@ -2792,6 +2958,15 @@ socket.on('chat:error', (err) => {
 //  PLANNING SOCKET EVENTS
 // ══════════════════════════════════════════════
 socket.on('planning:update', (room) => {
+  if (!room || !room.code) return;
+  if (!state.room || !state.room.code || state.room.code !== room.code) {
+    return;
+  }
+  const onHomeScreen = document.getElementById('screen-home')?.classList.contains('active');
+  const onAuthScreen = document.getElementById('screen-auth')?.classList.contains('active');
+  if (onHomeScreen || onAuthScreen) {
+    return;
+  }
   state.room = room;
   if (document.getElementById('screen-planning').classList.contains('active')) {
     renderPlanningScreen();
@@ -4156,6 +4331,60 @@ function renderScoringPanel() {
       </div>
     </div>
 
+    <!-- 🎙️ AI LIVE COMMENTARY & COMMENTATOR TOOLBAR -->
+    <div class="scoring-commentary-card">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:0.6rem">
+        <div style="display:flex;align-items:center;gap:0.6rem">
+          <label class="commentary-switch" title="Toggle AI Audio Commentary">
+            <input type="checkbox" id="scoring-commentary-toggle" ${localStorage.getItem('crickethub_ai_commentary_enabled') !== 'false' ? 'checked' : ''} onchange="window.toggleAiCommentary && window.toggleAiCommentary(this.checked); renderScoringPanel();">
+            <span class="commentary-slider"></span>
+          </label>
+          <div>
+            <div style="font-size:0.85rem;font-weight:800;color:#fff;display:flex;align-items:center;gap:0.4rem">
+              <span>🎙️ Live AI Commentary</span>
+              <span id="scoring-commentary-status-pill" class="scoring-commentary-status-pill" style="font-size:0.68rem;font-weight:700;padding:0.1rem 0.5rem;border-radius:999px;background:${localStorage.getItem('crickethub_ai_commentary_enabled') !== 'false' ? 'rgba(34,197,94,0.2)' : 'rgba(148,163,184,0.2)'};color:${localStorage.getItem('crickethub_ai_commentary_enabled') !== 'false' ? '#22c55e' : '#94a3b8'};border:1px solid ${localStorage.getItem('crickethub_ai_commentary_enabled') !== 'false' ? 'rgba(34,197,94,0.4)' : 'rgba(148,163,184,0.3)'}">
+                ${localStorage.getItem('crickethub_ai_commentary_enabled') !== 'false' ? 'ON AIR' : 'MUTED'}
+              </span>
+            </div>
+            <div style="font-size:0.7rem;color:#94a3b8">Voice narration for runs, wickets & extras</div>
+          </div>
+        </div>
+
+        <div style="display:flex;align-items:center;gap:0.4rem;flex-wrap:wrap">
+          <button type="button" class="btn btn-xs scoring-persona-btn ${(localStorage.getItem('crickethub_ai_persona') || 'shastri') === 'shastri' ? 'active' : ''}" 
+            data-persona="shastri"
+            style="padding:0.25rem 0.6rem;font-size:0.75rem;border-radius:20px;${(localStorage.getItem('crickethub_ai_persona') || 'shastri') === 'shastri' ? 'background:#38bdf8;color:#0b0f19;border-color:#38bdf8;font-weight:800;box-shadow:0 0 10px rgba(56,189,248,0.4)' : 'background:rgba(255,255,255,0.06);color:#cbd5e1;border-color:rgba(255,255,255,0.1)'}" 
+            onclick="window.setAiPersona && window.setAiPersona('shastri')">
+            ⚡ Ravi Shastri
+          </button>
+          <button type="button" class="btn btn-xs scoring-persona-btn ${(localStorage.getItem('crickethub_ai_persona') || 'shastri') === 'bhogle' ? 'active' : ''}" 
+            data-persona="bhogle"
+            style="padding:0.25rem 0.6rem;font-size:0.75rem;border-radius:20px;${(localStorage.getItem('crickethub_ai_persona') || 'shastri') === 'bhogle' ? 'background:#38bdf8;color:#0b0f19;border-color:#38bdf8;font-weight:800;box-shadow:0 0 10px rgba(56,189,248,0.4)' : 'background:rgba(255,255,255,0.06);color:#cbd5e1;border-color:rgba(255,255,255,0.1)'}" 
+            onclick="window.setAiPersona && window.setAiPersona('bhogle')">
+            🏏 Harsha Bhogle
+          </button>
+          <button type="button" class="btn btn-xs btn-ghost" title="Test voice" style="padding:0.25rem 0.5rem;font-size:0.75rem;border-color:rgba(255,255,255,0.15)" onclick="window.testCommentaryVoice && window.testCommentaryVoice('four')">
+            🔊 Test
+          </button>
+          <button type="button" class="btn btn-xs btn-ghost" title="Open Vision & Voice Studio" style="padding:0.25rem 0.5rem;font-size:0.75rem;border-color:rgba(255,255,255,0.15)" onclick="window.openAiStudio && window.openAiStudio()">
+            🎥 Studio
+          </button>
+        </div>
+      </div>
+
+      <div id="scoring-commentary-ticker" style="margin-top:0.5rem;padding:0.4rem 0.65rem;background:rgba(0,0,0,0.35);border-radius:8px;border:1px solid rgba(255,255,255,0.06);display:flex;align-items:center;gap:0.5rem">
+        <span class="scoring-wave-indicator" id="scoring-wave-indicator" style="display:none">
+          <div class="ai-audio-bar"></div>
+          <div class="ai-audio-bar"></div>
+          <div class="ai-audio-bar"></div>
+          <div class="ai-audio-bar"></div>
+        </span>
+        <span id="scoring-commentary-text" class="scoring-commentary-text" style="font-size:0.76rem;color:#e2e8f0;font-style:italic;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
+          "Ready for match commentary — every ball, boundary & wicket will be announced live!"
+        </span>
+      </div>
+    </div>
+
     ${hostUser ? `
     <div class="glass-card">
       <div class="scoring-controls">
@@ -4359,7 +4588,11 @@ window.commitBall = function () {
   const customNote = state.pendingDismissalNote || document.getElementById('dismissal-input')?.value || '';
   const dismissalText = state.pendingWicket ? (customNote.trim() || state.pendingDismissalType || 'out') : null;
 
-  socket.emit('score:ball', {
+  const strikerObj = getPlayer(inn.currentBatsmen[0]);
+  const nonStrikerObj = (!inn.isSingleBatter && inn.currentBatsmen[1] !== null) ? getPlayer(inn.currentBatsmen[1]) : null;
+  const bowlerObj = getPlayer(inn.currentBowler);
+
+  const scorePayload = {
     inningsIdx: idx,
     runs: finalRuns,
     extras: Object.values(state.pendingExtras).some(Boolean) ? { ...state.pendingExtras } : null,
@@ -4368,10 +4601,26 @@ window.commitBall = function () {
     dismissalType: state.pendingWicket ? state.pendingDismissalType : null,
     dismissedSlot: state.pendingWicket ? (state.pendingDismissedSlot || 'striker') : null,
     token: state.session?.token
-  });
+  };
+
+  socket.emit('score:ball', scorePayload);
 
   if (typeof window.triggerLiveCommentaryOnScore === 'function') {
-    window.triggerLiveCommentaryOnScore(state.pendingWicket ? 'W' : finalRuns);
+    window.triggerLiveCommentaryOnScore({
+      runs: finalRuns,
+      isWicket: !!state.pendingWicket,
+      dismissalType: state.pendingWicket ? (state.pendingDismissalType || 'Bowled') : null,
+      dismissedSlot: state.pendingWicket ? (state.pendingDismissedSlot || 'striker') : null,
+      isWide: !!state.pendingExtras?.wide,
+      isNoBall: !!state.pendingExtras?.noBall,
+      isBye: !!state.pendingExtras?.bye,
+      isLegBye: !!state.pendingExtras?.legBye,
+      strikerName: strikerObj?.name || 'Striker',
+      nonStrikerName: nonStrikerObj?.name || 'Non-striker',
+      bowlerName: bowlerObj?.name || 'Bowler',
+      battingTeamName: getTeamName(match, inn.battingTeam),
+      bowlingTeamName: getTeamName(match, inn.bowlingTeam)
+    });
   }
 
   state.pendingRuns = null;
@@ -4924,6 +5173,20 @@ function renderSummary() {
 //  SOCKET EVENTS — Match state updates
 // ══════════════════════════════════════════════
 socket.on('state:update', (room) => {
+  if (!room || !room.code) return;
+
+  // Ignore updates from other rooms if user is in a different room or not in a room
+  if (!state.room || !state.room.code || state.room.code !== room.code) {
+    return;
+  }
+
+  // If user is on home screen or auth screen and not viewing this room, ignore background match updates
+  const onHomeScreen = document.getElementById('screen-home')?.classList.contains('active');
+  const onAuthScreen = document.getElementById('screen-auth')?.classList.contains('active');
+  if (onHomeScreen || onAuthScreen) {
+    return;
+  }
+
   const prevRoom = state.room;
   const prevStatus = prevRoom?.match?.status;
   const prevAwait = prevRoom?.match?.innings?.[prevRoom?.match?.currentInnings]?.awaitingNewBowler;
@@ -4942,6 +5205,28 @@ socket.on('state:update', (room) => {
   renderPlanningLocation();
   renderPlanningAnnouncements();
   renderPlanningChat();
+
+  // Spectator live commentary audio sync
+  if (!isHost() && prevRoom?.match && room?.match) {
+    const curIdx = room.match.currentInnings;
+    const prevInn = prevRoom.match.innings?.[curIdx];
+    const currInn = room.match.innings?.[curIdx];
+    if (prevInn && currInn && (currInn.balls > prevInn.balls || currInn.runs > prevInn.runs || currInn.wickets > prevInn.wickets)) {
+      const runsDiff = Math.max(0, currInn.runs - prevInn.runs);
+      const wicketDiff = currInn.wickets - prevInn.wickets;
+      const strikerObj = getPlayer(currInn.currentBatsmen?.[0]);
+      const bowlerObj = getPlayer(currInn.currentBowler);
+      if (typeof window.triggerLiveCommentaryOnScore === 'function') {
+        window.triggerLiveCommentaryOnScore({
+          runs: wicketDiff > 0 ? 0 : runsDiff,
+          isWicket: wicketDiff > 0,
+          dismissalType: wicketDiff > 0 ? 'Wicket' : null,
+          strikerName: strikerObj?.name || 'the batsman',
+          bowlerName: bowlerObj?.name || 'the bowler'
+        });
+      }
+    }
+  }
 
   if (room.match.status === 'toss' && prevStatus !== 'toss') {
     if (isHost()) showTossModal();

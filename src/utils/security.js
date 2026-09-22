@@ -168,6 +168,12 @@ function checkWindowLimit(store, key, maxRequests, windowMs) {
  * Authentication Route Rate Limiting with Per-IP, Per-Account & Exponential Backoff
  */
 function checkAuthRateLimit(req, accountIdentifier = null) {
+  const isProd = process.env.NODE_ENV === 'production';
+  const isDemo = process.env.ENABLE_DEMO_OTP === 'true';
+  if (!isProd || isDemo) {
+    return { limited: false };
+  }
+
   const ip = getClientIp(req);
   const now = Date.now();
 
@@ -218,6 +224,10 @@ function checkAuthRateLimit(req, accountIdentifier = null) {
  * Record an authentication failure and apply exponential backoff
  */
 function recordAuthFailure(req, accountIdentifier = null) {
+  const isProd = process.env.NODE_ENV === 'production';
+  const isDemo = process.env.ENABLE_DEMO_OTP === 'true';
+  if (!isProd || isDemo) return;
+
   const ip = getClientIp(req);
   const now = Date.now();
   const backoffKey = accountIdentifier ? `acc:${accountIdentifier}` : `ip:${ip}`;

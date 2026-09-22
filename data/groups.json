@@ -1,1 +1,164 @@
-{}
+{
+  "grp_mtpz0sb58ibu": {
+    "id": "grp_mtpz0sb58ibu",
+    "code": "GRP-BAPB",
+    "name": "RCB Legends XI",
+    "description": "",
+    "hostPhone": "9999000111",
+    "hostName": "Virat Kohli",
+    "createdAt": 1788708775505,
+    "members": [
+      {
+        "phone": "9999000111",
+        "name": "Virat Kohli",
+        "color": "#69F0AE",
+        "avatar": "🏏",
+        "role": "captain",
+        "joinedAt": 1788708775505
+      },
+      {
+        "phone": "9999000222",
+        "name": "AB de Villiers",
+        "color": "#40C4FF",
+        "avatar": null,
+        "role": "Batsman",
+        "joinedAt": 1788708775509
+      }
+    ]
+  },
+  "grp_mtpzr4int6v2": {
+    "id": "grp_mtpzr4int6v2",
+    "code": "GRP-9BGB",
+    "name": "RCB Legends XI",
+    "description": "",
+    "hostPhone": "9999000111",
+    "hostName": "Virat Kohli",
+    "createdAt": 1788710004383,
+    "members": [
+      {
+        "phone": "9999000111",
+        "name": "Virat Kohli",
+        "color": "#69F0AE",
+        "avatar": "🏏",
+        "role": "captain",
+        "joinedAt": 1788710004383
+      },
+      {
+        "phone": "9999000222",
+        "name": "AB de Villiers",
+        "color": "#40C4FF",
+        "avatar": null,
+        "role": "Batsman",
+        "joinedAt": 1788710004387
+      }
+    ]
+  },
+  "grp_mtq4hfraqfov": {
+    "id": "grp_mtq4hfraqfov",
+    "code": "GRP-PCGQ",
+    "name": "RCB Legends XI",
+    "description": "",
+    "hostPhone": "9999000111",
+    "hostName": "Virat Kohli",
+    "createdAt": 1788717950470,
+    "members": [
+      {
+        "phone": "9999000111",
+        "name": "Virat Kohli",
+        "color": "#69F0AE",
+        "avatar": "🏏",
+        "role": "captain",
+        "joinedAt": 1788717950470
+      },
+      {
+        "phone": "9999000222",
+        "name": "AB de Villiers",
+        "color": "#40C4FF",
+        "avatar": null,
+        "role": "Batsman",
+        "joinedAt": 1788717950473
+      }
+    ]
+  },
+  "grp_mtq4pvs4g3mw": {
+    "id": "grp_mtq4pvs4g3mw",
+    "code": "GRP-DL22",
+    "name": "RCB Legends XI",
+    "description": "",
+    "hostPhone": "9999000111",
+    "hostName": "Virat Kohli",
+    "createdAt": 1788718344484,
+    "members": [
+      {
+        "phone": "9999000111",
+        "name": "Virat Kohli",
+        "color": "#69F0AE",
+        "avatar": "🏏",
+        "role": "captain",
+        "joinedAt": 1788718344484
+      },
+      {
+        "phone": "9999000222",
+        "name": "AB de Villiers",
+        "color": "#40C4FF",
+        "avatar": null,
+        "role": "Batsman",
+        "joinedAt": 1788718344487
+      }
+    ]
+  },
+  "grp_mtq5j9ne3xo1": {
+    "id": "grp_mtq5j9ne3xo1",
+    "code": "GRP-MNS9",
+    "name": "RCB Legends XI",
+    "description": "",
+    "hostPhone": "9999000111",
+    "hostName": "Virat Kohli",
+    "createdAt": 1788719715482,
+    "members": [
+      {
+        "phone": "9999000111",
+        "name": "Virat Kohli",
+        "color": "#69F0AE",
+        "avatar": "🏏",
+        "role": "captain",
+        "joinedAt": 1788719715482
+      },
+      {
+        "phone": "9999000222",
+        "name": "AB de Villiers",
+        "color": "#40C4FF",
+        "avatar": null,
+        "role": "Batsman",
+        "joinedAt": 1788719715486
+      }
+    ]
+  },
+  "grp_mtq6b2dn452q": {
+    "id": "grp_mtq6b2dn452q",
+    "code": "GRP-ZZMM",
+    "name": "RCB Legends XI",
+    "description": "",
+    "hostPhone": "9999000111",
+    "hostName": "Virat Kohli",
+    "createdAt": 1788721012427,
+    "members": [
+      {
+        "phone": "9999000111",
+        "name": "Virat Kohli",
+        "color": "#69F0AE",
+        "avatar": "🏏",
+        "role": "captain",
+        "joinedAt": 1788721012427
+      },
+      {
+        "phone": "9999000222",
+        "name": "AB de Villiers",
+        "color": "#40C4FF",
+        "avatar": null,
+        "role": "Batsman",
+        "joinedAt": 1788721012430
+      }
+    ]
+  }
+}

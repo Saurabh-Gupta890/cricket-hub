@@ -155,6 +155,21 @@
       EXTRA_LEGBYE: [
         "Thudded into the pads and rolls away for a leg bye! Quick single stolen.",
         "Off the thigh pad, scampering through to collect a leg bye."
+      ],
+      MATCH_WON: [
+        "It is all over! What an absolute thriller, and {winner} take the victory! Celebrations begin in the dugout, they have played extraordinary cricket today! {detail}",
+        "That is it! {winner} have sealed the deal! What a monumental victory, etched in glory! {detail}",
+        "Magnificent performance from {winner}! They held their nerves in the pressure cooker and come out on top! {detail}",
+        "It's all over! {winner} are the champions today! Pure ecstasy for the team and their fans! {detail}"
+      ],
+      MATCH_TIED: [
+        "Hold the phone! It is a tie! You cannot write a script like this! Incredible scenes here! {detail}",
+        "Scores level! What a match! We have witnessed pure drama, absolutely nothing between the two sides! {detail}"
+      ],
+      INNINGS_CHANGE: [
+        "And that is the end of the first innings! {battingTeam} finish on {runs} for {wickets}. The target is {target}! Grab your popcorn, the chase is going to be electrifying!",
+        "Innings break! {battingTeam} set a competitive target of {target} runs. {bowlingTeam} will need to bat out of their skins to chase this down!",
+        "First half done and dusted! {battingTeam} post {runs} on the board. All eyes on {bowlingTeam} now as they gear up for the chase of {target}!"
       ]
     },
     bhogle: {
@@ -275,6 +290,21 @@
       EXTRA_LEGBYE: [
         "Off the thigh pad, scampering through to collect a leg bye.",
         "Deflected off the pads into the offside, single taken."
+      ],
+      MATCH_WON: [
+        "And that is the final chapter written in this magnificent contest! {winner} emerge victorious! What an exhibition of skill, grit and determination. {detail}",
+        "Smiles, hugs, and pure relief! {winner} cross the finish line in style. A thoroughly well-deserved triumph! {detail}",
+        "Cricket is a game of fine margins, and today {winner} seized the moments that mattered. A fantastic victory! {detail}",
+        "The curtains come down on a gripping game! {winner} have won it with sheer class and poise. {detail}"
+      ],
+      MATCH_TIED: [
+        "Unbelievable! We have a tie! After all the twists and turns, both sides finish level on terms. Cricket at its magical best! {detail}",
+        "Neither side would yield an inch! A tie is the fairest reflection of an epic contest between two fantastic teams. {detail}"
+      ],
+      INNINGS_CHANGE: [
+        "The first innings comes to a close. {battingTeam} have put up {runs} for {wickets}, setting a target of {target}. A fascinating chase awaits us!",
+        "That brings us to the innings break! {battingTeam} finish at {runs}/{wickets}. {bowlingTeam} will need {target} runs to win. It promises to be a thrilling second half!",
+        "A very engrossing first chapter. {battingTeam} post {runs} runs. {bowlingTeam} have a target of {target} in front of them. Let's see how the pitch plays in the second half!"
       ]
     }
   };
@@ -612,13 +642,24 @@
       else if (s === 'dot' || s === '0') category = 'RUN_0';
       else if (s === '4') category = 'RUN_4';
       else if (s === '6') category = 'RUN_6';
+      else if (s === 'match_won' || s === 'match_win' || s === 'win' || s === 'winner') category = 'MATCH_WON';
+      else if (s === 'match_tied' || s === 'tie') category = 'MATCH_TIED';
+      else if (s === 'innings_change' || s === 'innings_break') category = 'INNINGS_CHANGE';
       else if (personaPool[scoreData]) category = scoreData;
       else category = 'RUN_0';
     } else if (scoreData && typeof scoreData === 'object') {
       if (scoreData.strikerName) striker = scoreData.strikerName;
       if (scoreData.bowlerName) bowler = scoreData.bowlerName;
 
-      if (scoreData.isWicket || scoreData.wicket) {
+      if (scoreData.type === 'MATCH_WON' || scoreData.event === 'match_won' || scoreData.isMatchWon) {
+        if (scoreData.isTie || scoreData.winner === 'tie' || scoreData.winner === 'Match Tied' || (typeof scoreData.winner === 'string' && scoreData.winner.toLowerCase().includes('tie'))) {
+          category = 'MATCH_TIED';
+        } else {
+          category = 'MATCH_WON';
+        }
+      } else if (scoreData.type === 'INNINGS_CHANGE' || scoreData.event === 'innings_change' || scoreData.isInningsChange) {
+        category = 'INNINGS_CHANGE';
+      } else if (scoreData.isWicket || scoreData.wicket) {
         const dType = (scoreData.dismissalType || '').toLowerCase();
         if (dType.includes('bowled')) category = 'WICKET_BOWLED';
         else if (dType.includes('caught') || dType.includes('catch')) category = 'WICKET_CAUGHT';
@@ -644,7 +685,17 @@
 
     const phraseList = personaPool[category] || personaPool.RUN_0 || ["What a moment in the match!"];
     const template = phraseList[Math.floor(Math.random() * phraseList.length)];
-    return template.replace(/\{striker\}/g, striker).replace(/\{bowler\}/g, bowler);
+    return template
+      .replace(/\{striker\}/g, striker)
+      .replace(/\{bowler\}/g, bowler)
+      .replace(/\{winner\}/g, (scoreData && scoreData.winner) || 'The winning team')
+      .replace(/\{detail\}/g, (scoreData && (scoreData.winnerDetail || scoreData.detail)) || '')
+      .replace(/\{battingTeam\}/g, (scoreData && (scoreData.battingTeam || scoreData.battingTeamName)) || 'The batting team')
+      .replace(/\{bowlingTeam\}/g, (scoreData && (scoreData.bowlingTeam || scoreData.bowlingTeamName)) || 'The bowling team')
+      .replace(/\{runs\}/g, (scoreData && scoreData.runs !== undefined) ? scoreData.runs : '0')
+      .replace(/\{wickets\}/g, (scoreData && scoreData.wickets !== undefined) ? scoreData.wickets : '0')
+      .replace(/\{target\}/g, (scoreData && scoreData.target !== undefined) ? scoreData.target : '')
+      .trim();
   }
 
   /**
@@ -1175,6 +1226,8 @@
         <button class="ai-control-btn primary" id="ai-btn-test-six">💥 Test 6 (Shastri)</button>
         <button class="ai-control-btn secondary" id="ai-btn-test-four">🪄 Test 4 (Bhogle)</button>
         <button class="ai-control-btn secondary" id="ai-btn-test-wicket">☝️ Test Wicket</button>
+        <button class="ai-control-btn secondary" id="ai-btn-test-win">🏆 Test Win</button>
+        <button class="ai-control-btn secondary" id="ai-btn-test-innings">🔄 Test Innings</button>
       </div>
 
       <div style="display:flex;justify-content:space-between;align-items:center;margin-top:0.75rem;padding:0.5rem 0.2rem;border-top:1px solid rgba(255,255,255,0.08);flex-wrap:wrap;gap:0.5rem">
@@ -1225,6 +1278,12 @@
     document.getElementById('ai-btn-test-wicket').onclick = () => {
       testCommentaryVoice('wicket', activePersona);
     };
+    document.getElementById('ai-btn-test-win').onclick = () => {
+      testCommentaryVoice('win', activePersona);
+    };
+    document.getElementById('ai-btn-test-innings').onclick = () => {
+      testCommentaryVoice('innings', activePersona);
+    };
 
     document.getElementById('ai-master-toggle').onchange = (e) => toggleAiCommentary(e.target.checked);
     document.getElementById('ai-sync-toggle').onchange = (e) => toggleAutoSync(e.target.checked);
@@ -1252,6 +1311,8 @@
     if (testType === 'wicket') sampleContext = { isWicket: true, dismissalType: 'Bowled', strikerName: 'the batsman', bowlerName: 'the bowler' };
     if (testType === 'single') sampleContext = { runs: 1, strikerName: 'the batsman', bowlerName: 'the bowler' };
     if (testType === 'dot') sampleContext = { runs: 0, strikerName: 'the batsman', bowlerName: 'the bowler' };
+    if (testType === 'win' || testType === 'winner') sampleContext = { type: 'MATCH_WON', winner: 'India', winnerDetail: 'India won by 4 wickets' };
+    if (testType === 'innings' || testType === 'innings_change') sampleContext = { type: 'INNINGS_CHANGE', battingTeam: 'Australia', bowlingTeam: 'India', runs: 165, wickets: 4, target: 166 };
 
     const text = generateCommentaryText(sampleContext, persona);
     updateTickerUI(persona, text);

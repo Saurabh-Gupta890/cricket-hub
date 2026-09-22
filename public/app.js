@@ -5338,16 +5338,34 @@ socket.on('state:update', (room) => {
       }
     }
   }
-  if (room.match.status === 'innings2' && prevStatus === 'innings1') {
-    const inn = room.match.innings[0];
-    toast(`✅ 1st Innings done! ${getTeamName(room.match, inn.battingTeam)}: ${inn.runs}/${inn.wickets}. Target: ${inn.runs + 1}`);
+  if ((room.match.status === 'innings2' && prevStatus === 'innings1') || (room.match.status === 'super_over_inn2' && prevStatus === 'super_over_inn1')) {
+    const isSO = room.match.status.startsWith('super_over');
+    const inn = room.match.innings[isSO ? 2 : 0];
+    const batTeam = getTeamName(room.match, inn.battingTeam);
+    const bowlTeam = getTeamName(room.match, inn.bowlingTeam);
+    toast(`✅ 1st Innings done! ${batTeam}: ${inn.runs}/${inn.wickets}. Target: ${inn.runs + 1}`);
     document.querySelector('.tab[data-tab="scoring"]')?.click();
     const nbModal = document.getElementById('next-batsman-modal');
     if (nbModal) nbModal.style.display = 'none';
     if (isHost()) {
       setTimeout(() => openBatsmenModal(), 400);
     }
+
+    // 🎙️ Trigger AI commentary for Innings Break / Target Set
+    if (typeof window.triggerLiveCommentaryOnScore === 'function') {
+      setTimeout(() => {
+        window.triggerLiveCommentaryOnScore({
+          type: 'INNINGS_CHANGE',
+          battingTeam: batTeam,
+          bowlingTeam: bowlTeam,
+          runs: inn.runs,
+          wickets: inn.wickets,
+          target: inn.runs + 1
+        });
+      }, 400);
+    }
   }
+
   if (room.match.status === 'completed' && prevStatus !== 'completed') {
     document.querySelector('.tab[data-tab="summary"]')?.click();
     toast('🏆 Match complete!');
@@ -5357,6 +5375,63 @@ socket.on('state:update', (room) => {
     if (bModal) bModal.style.display = 'none';
     const bowlModal = document.getElementById('bowler-modal');
     if (bowlModal) bowlModal.style.display = 'none';
+
+    // 🎙️ Trigger AI commentary for Match Winning & Result
+    if (typeof window.triggerLiveCommentaryOnScore === 'function') {
+      const m = room.match;
+      const inn1 = m.innings?.[0];
+      const inn2 = m.innings?.[1];
+      const bat1 = getTeamName(m, inn1?.battingTeam || '');
+      const bat2 = getTeamName(m, inn2?.battingTeam || '');
+      const res = m.result;
+      let winner = '', winnerDetail = '', isTie = false;
+
+      if (m.isSuperOver && m.innings?.length >= 4) {
+        const so1 = m.innings[2];
+        const so2 = m.innings[3];
+        if (res?.winner === 'tie' || (so1 && so2 && so1.runs === so2.runs)) {
+          isTie = true;
+          winner = '⚡ Super Over Tied';
+          winnerDetail = `Scores level in Super Over shootout (${so1.runs} - ${so2.runs})`;
+        } else if (res?.winnerName || res?.winner) {
+          winner = res.winnerName || getTeamName(m, res.winner);
+          winnerDetail = res.summary || `${winner} won via Super Over! 🏆`;
+        }
+      } else if (res?.winner === 'tie' || (inn1 && inn2 && inn1.runs === inn2.runs)) {
+        isTie = true;
+        winner = 'Match Tied';
+        winnerDetail = `Both teams scored ${inn1.runs} runs`;
+      } else if (res?.winnerName || res?.winner) {
+        winner = res.winnerName || getTeamName(m, res.winner);
+        winnerDetail = res.summary || `${winner} won`;
+      } else if (inn2 && inn2.target !== null && inn2.runs >= inn2.target) {
+        const w = Math.max(1, 10 - inn2.wickets);
+        winner = bat2;
+        winnerDetail = `${bat2} won by ${w} wicket${w !== 1 ? 's' : ''}`;
+      } else if (inn1 && inn2 && inn1.runs > inn2.runs) {
+        const d = inn1.runs - inn2.runs;
+        winner = bat1;
+        winnerDetail = `${bat1} won by ${d} run${d !== 1 ? 's' : ''}`;
+      } else if (inn1 && inn2 && inn2.runs > inn1.runs) {
+        const w = Math.max(1, 10 - inn2.wickets);
+        winner = bat2;
+        winnerDetail = `${bat2} won by ${w} wicket${w !== 1 ? 's' : ''}`;
+      } else {
+        winner = 'Match Completed';
+        winnerDetail = res?.summary || 'What an incredible match!';
+      }
+
+      setTimeout(() => {
+        window.triggerLiveCommentaryOnScore({
+          type: 'MATCH_WON',
+          winner: winner,
+          winnerDetail: winnerDetail,
+          isTie: isTie,
+          battingTeam: bat2,
+          bowlingTeam: bat1
+        });
+      }, 500);
+    }
 
     // Check if tied match and prompt Super Over shootout
     const inn1 = room.match.innings?.[0];

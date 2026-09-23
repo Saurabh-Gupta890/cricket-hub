@@ -63,8 +63,8 @@ async function runTest() {
   // 1. Create Room
   let roomCode;
   await new Promise((resolve) => {
-    socket.emit('room:create', { token, matchName: 'Bowler Wicket Test Room' }, (res) => {
-      roomCode = res.room.code;
+    socket.emit('room:create', { token, matchName: 'Bowler Wicket Test Room ' + Date.now() }, (res) => {
+      roomCode = res?.room?.code || res?.existingRoomCode;
       resolve();
     });
   });

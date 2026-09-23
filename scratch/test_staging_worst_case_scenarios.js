@@ -465,7 +465,7 @@ async function runWorstCaseTests() {
     const playersRes = await makeRequest('/api/players');
     assert(playersRes.statusCode === 200, `Players directory endpoint gracefully handled corrupted data with empty fallback.`);
     
-    const historyRes = await makeRequest('/api/history');
+    const historyRes = await makeRequest('/api/match/history');
     assert(historyRes.statusCode === 200, `Match history endpoint returned 200 OK cleanly.`);
     console.log('   ℹ️ safeReadJsonFile safely fell back to default structures without unhandled exceptions.\n');
 

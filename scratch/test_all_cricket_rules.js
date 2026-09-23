@@ -77,8 +77,8 @@ async function runCricketRulesTestSuite() {
   console.log('\n--- CATEGORY 1: Run Scoring & Mid-Over Strike Rotation ---');
   let roomCode;
   await new Promise((resolve) => {
-    socket.emit('room:create', { token: host.token, matchName: 'Rule Verification Room' }, (res) => {
-      roomCode = res.room.code;
+    socket.emit('room:create', { token: host.token, matchName: 'Rule Verification Room ' + Date.now() }, (res) => {
+      roomCode = res.room?.code;
       resolve();
     });
   });
@@ -314,8 +314,8 @@ async function runCricketRulesTestSuite() {
   // Create a quick 1-over tie match
   let tieRoomCode;
   await new Promise((resolve) => {
-    socket.emit('room:create', { token: host.token, matchName: 'Tie Test Room' }, (res) => {
-      tieRoomCode = res.room.code;
+    socket.emit('room:create', { token: host.token, matchName: 'Tie Test Room ' + Date.now() }, (res) => {
+      tieRoomCode = res.room?.code;
       resolve();
     });
   });
@@ -366,8 +366,8 @@ async function runCricketRulesTestSuite() {
   // Create match for undo test
   let undoRoomCode;
   await new Promise((resolve) => {
-    socket.emit('room:create', { token: host.token, matchName: 'Undo Test Room' }, (res) => {
-      undoRoomCode = res.room.code;
+    socket.emit('room:create', { token: host.token, matchName: 'Undo Test Room ' + Date.now() }, (res) => {
+      undoRoomCode = res.room?.code;
       resolve();
     });
   });

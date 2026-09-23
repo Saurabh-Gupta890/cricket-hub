@@ -2547,7 +2547,17 @@ app.get('/api/rooms/:code', (req, res) => {
 
 app.get('/api/match/history', (req, res) => {
   try {
-    const list = getMatchList();
+    const list = Array.from(getAllMatchesMap().values());
+    res.json({ matches: list });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to load match history' });
+  }
+});
+
+// Alias for convenience
+app.get('/api/history', (req, res) => {
+  try {
+    const list = Array.from(getAllMatchesMap().values());
     res.json({ matches: list });
   } catch (err) {
     res.status(500).json({ error: 'Failed to load match history' });

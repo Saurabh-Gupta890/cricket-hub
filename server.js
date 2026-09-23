@@ -3915,7 +3915,8 @@ io.on('connection', (socket) => {
       cb = data;
       data = {};
     }
-    const { inningsIdx, batsmanName, isSingleBatter, token } = (data || {});
+    const { inningsIdx, isSingleBatter, token } = (data || {});
+    const batsmanName = data?.batsmanName || data?.name;
 
     if (!currentRoom) {
       if (typeof cb === 'function') cb({ success: false, error: 'Unauthorized' });

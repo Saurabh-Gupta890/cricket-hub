@@ -26,18 +26,20 @@
   "919999900001": {
     "phone": "919999900001",
     "name": "Player",
-    "token": "f98529fd0581d85bf25ebab42ce96f97cee30c1b59d94751c1e22f4b3ba9e1a7",
+    "token": "c576b1256c580b7cf918c9f04e099186ab9e618c68d713fa09f6c29e370943d8",
     "avatar": null,
     "createdAt": 1788697077286,
-    "color": "#00E676"
+    "color": "#00E676",
+    "lastActiveRoom": "CRK-6UC2"
   },
   "919999900002": {
     "phone": "919999900002",
     "name": "Player",
-    "token": "7b0fadacd003e1b683b56e34fdba3e0e79c3690060a950e25d9ee81e22f78097",
+    "token": "d1d27c162b0c3d7b977d57913475ff8b16b8d3e94f04f34cfcff72d169e5d293",
     "avatar": null,
     "createdAt": 1788697077290,
-    "color": "#FF4081"
+    "color": "#FF4081",
+    "lastActiveRoom": "CRK-6UC2"
   },
   "919999900724": {
     "phone": "919999900724",
@@ -97,19 +99,21 @@
   },
   "9876540001": {
     "phone": "9876540001",
-    "name": "Captain Virat",
-    "token": "9ecd7ccf4dcc8206fcfce947aa6d1678f395a1cba92486abcaafb4977fdc18c2",
+    "name": "Captain Rohit",
+    "token": "2adb3dd55cb48f398c1b08c024802074902473004bc19a0cfdb89ad461d6eb1f",
     "avatar": null,
     "createdAt": 1788699273722,
-    "color": "#7C4DFF"
+    "color": "#7C4DFF",
+    "lastActiveRoom": null
   },
   "9876540002": {
     "phone": "9876540002",
-    "name": "Rohit Sharma",
-    "token": "514eaae6e5574afc97d8e7dc0e95b29a85ea789907307bc6b236db1e9599628f",
+    "name": "Fan Virat",
+    "token": "20a73328940059378f596a9384a82a1243fee12a0fa5c726a5e5ae4a146d76a6",
     "avatar": null,
     "createdAt": 1788699312890,
-    "color": "#00E676"
+    "color": "#00E676",
+    "lastActiveRoom": null
   },
   "9876540003": {
     "phone": "9876540003",
@@ -763,7 +767,7 @@
   "919999000001": {
     "phone": "919999000001",
     "name": "Host Captain",
-    "token": "b234350c443ec8ae44f426eb2f20d2a2745f84094a80c60bb2b5bb53c75901a1",
+    "token": "ee193dd8076abf84ec631ec3894eac22a1e7bf47c797c939a2f2254ae4445eca",
     "avatar": null,
     "createdAt": 1790067259705,
     "color": "#00E676",
@@ -772,10 +776,72 @@
   "919999000002": {
     "phone": "919999000002",
     "name": "Spectator User",
-    "token": "df3168858d3d1afc4e5841adb9c1d485edcd7a3bb929251d91ebe7936823b785",
+    "token": "b59552e4e84add8220555584e9832fd5383e3b4dda4f03ff0132685e6f2df127",
     "avatar": null,
     "createdAt": 1790067259712,
     "color": "#FF4081",
     "lastActiveRoom": null
+  },
+  "919999900050": {
+    "phone": "919999900050",
+    "name": "Player",
+    "token": "685a8b9a56ef1aa62dac2bff4fb5e483a993f147c1af9a6e67f411d3f4128552",
+    "avatar": null,
+    "createdAt": 1790093762361,
+    "color": "#FFD740",
+    "lastActiveRoom": "CRK-Y546"
+  },
+  "919999886269": {
+    "phone": "919999886269",
+    "name": "Umpire Official",
+    "token": "424f5dc1841096a3edd26722aa48bd39751409e28722d6d683bebc391bb7e769",
+    "avatar": null,
+    "createdAt": 1790141892783,
+    "color": "#69F0AE",
+    "lastActiveRoom": "CRK-G9ZF"
+  },
+  "919999885305": {
+    "phone": "919999885305",
+    "name": "Umpire Official",
+    "token": "6c3f738d8cb1da4606627fa2477398452ea3d606471abfd22274673ba128a3f1",
+    "avatar": null,
+    "createdAt": 1790142015607,
+    "color": "#40C4FF",
+    "lastActiveRoom": "CRK-X77G"
+  },
+  "919999886480": {
+    "phone": "919999886480",
+    "name": "Umpire Official",
+    "token": "b63926a3f6d012c5a9d77ee99b810f4684ade7c7ab906f3a185481693b496b42",
+    "avatar": null,
+    "createdAt": 1790142603954,
+    "color": "#FF6E40",
+    "lastActiveRoom": "CRK-86DG"
+  },
+  "919999900725": {
+    "phone": "919999900725",
+    "name": "Captain Rohit",
+    "token": "54ff6a11bc265c2fdddf31b40f02e4c631ff51efc4bd66ae931770b0c372ec71",
+    "avatar": null,
+    "createdAt": 1790142698852,
+    "color": "#EEFF41"
+  },
+  "919999900143": {
+    "phone": "919999900143",
+    "name": "Captain Rohit",
+    "token": "232960d0bd65923193c29d82cf18c9270157e08f2bf3f52503707411770c2715",
+    "avatar": null,
+    "createdAt": 1790142921866,
+    "color": "#00E5FF",
+    "lastActiveRoom": "CRK-DY8Q"
+  },
+  "919999882849": {
+    "phone": "919999882849",
+    "name": "Umpire Official",
+    "token": "9bcea9bb9f541ed1a5b90d834509c752456771ef6b2d4a0173795b43e183c123",
+    "avatar": null,
+    "createdAt": 1790142922444,
+    "color": "#FF6B35",
+    "lastActiveRoom": "CRK-BKPR"
   }
 }

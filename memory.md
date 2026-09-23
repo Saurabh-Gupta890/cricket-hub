@@ -30,3 +30,6 @@ This memory document tracks key architectural decisions, resolved issues, regres
 | **Chat Latency** | Client socket listener was re-rendering from room state without appending the new message, requiring refresh. | Added local array append with deduplication inside `socket.on('chat:message')`. |
 | **Quiet Mode Gating** | Broadcast alerts were still firing when quiet alerts was enabled. | Server rejects nudge and broadcast calls with `{ quiet: true }` when `room.quietAlerts` is true. |
 | **DPDP Compliance** | Tracking scripts firing without user knowledge. | Built opt-in cookie consent banner with granular categories and zero tracking before affirmative consent. |
+| **Rematch "Innings Completed" Bug** | `match:toss` after a finished match did not reset completed innings state, preventing re-scoring. | Re-initialize `[createInnings(), createInnings()]` with `currentInnings = 0` and archive previous game on rematch. |
+| **Auth Backoff in Staging/Prod** | Brute force exponential backoff was bypassed when demo OTP was enabled in dev. | Activated backoff in production & staging unconditionally, blocking automated brute-force scripts with HTTP 429. |
+| **Match History Route** | `/api/history` and `/api/match/history` threw ReferenceError if helper was misnamed. | Exported and unified with `Array.from(getAllMatchesMap().values())`. |

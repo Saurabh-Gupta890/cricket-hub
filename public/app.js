@@ -4141,9 +4141,6 @@ function buildLiveCommentaryCardHTML() {
             onclick="window.setAiPersona && window.setAiPersona('bhogle'); renderScorecard(); renderScoringPanel();">
             🏏 Harsha Bhogle
           </button>
-          <button type="button" class="btn btn-xs btn-ghost" title="Test voice" style="padding:0.25rem 0.5rem;font-size:0.75rem;border-color:rgba(255,255,255,0.15)" onclick="window.testCommentaryVoice && window.testCommentaryVoice('four')">
-            🔊 Test
-          </button>
           <button type="button" class="btn btn-xs btn-ghost" title="Open Vision & Voice Studio" style="padding:0.25rem 0.5rem;font-size:0.75rem;border-color:rgba(255,255,255,0.15)" onclick="window.openAiStudio && window.openAiStudio()">
             🎥 Studio
           </button>

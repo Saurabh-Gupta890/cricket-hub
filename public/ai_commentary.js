@@ -1223,11 +1223,6 @@
 
       <div class="ai-studio-controls">
         <button class="ai-control-btn camera-toggle" id="ai-btn-switch-cam">🔄 Switch Feed</button>
-        <button class="ai-control-btn primary" id="ai-btn-test-six">💥 Test 6 (Shastri)</button>
-        <button class="ai-control-btn secondary" id="ai-btn-test-four">🪄 Test 4 (Bhogle)</button>
-        <button class="ai-control-btn secondary" id="ai-btn-test-wicket">☝️ Test Wicket</button>
-        <button class="ai-control-btn secondary" id="ai-btn-test-win">🏆 Test Win</button>
-        <button class="ai-control-btn secondary" id="ai-btn-test-innings">🔄 Test Innings</button>
       </div>
 
       <div style="display:flex;justify-content:space-between;align-items:center;margin-top:0.75rem;padding:0.5rem 0.2rem;border-top:1px solid rgba(255,255,255,0.08);flex-wrap:wrap;gap:0.5rem">
@@ -1267,23 +1262,7 @@
       drawer.style.display = 'none';
     };
 
-    document.getElementById('ai-btn-test-six').onclick = () => {
-      setPersona('shastri');
-      testCommentaryVoice('six', 'shastri');
-    };
-    document.getElementById('ai-btn-test-four').onclick = () => {
-      setPersona('bhogle');
-      testCommentaryVoice('four', 'bhogle');
-    };
-    document.getElementById('ai-btn-test-wicket').onclick = () => {
-      testCommentaryVoice('wicket', activePersona);
-    };
-    document.getElementById('ai-btn-test-win').onclick = () => {
-      testCommentaryVoice('win', activePersona);
-    };
-    document.getElementById('ai-btn-test-innings').onclick = () => {
-      testCommentaryVoice('innings', activePersona);
-    };
+
 
     document.getElementById('ai-master-toggle').onchange = (e) => toggleAiCommentary(e.target.checked);
     document.getElementById('ai-sync-toggle').onchange = (e) => toggleAutoSync(e.target.checked);

@@ -43,25 +43,38 @@ async function runTest() {
   console.log('🔔 TESTING DIRECT PING -> "JUST VIEW" TO PLANNING PHASE');
   console.log('═══════════════════════════════════════════════════════════════════\n');
 
+  const phoneA = '9876541101';
+  const phoneB = '9876541102';
+
+  function waitForPopup(socket, timeoutMs = 6000) {
+    return new Promise((resolve, reject) => {
+      const timer = setTimeout(() => reject(new Error('Timeout waiting for popup:alert')), timeoutMs);
+      socket.once('popup:alert', (data) => {
+        clearTimeout(timer);
+        resolve(data);
+      });
+    });
+  }
+
   // 1. Authenticate User A (Host)
-  const otpResA = await makeRequest('POST', '/api/auth/request-otp', { phone: '9876540001', name: 'Captain Rohit' });
+  const otpResA = await makeRequest('POST', '/api/auth/request-otp', { phone: phoneA, name: 'Captain Rohit' });
   const authResA = await makeRequest('POST', '/api/auth/verify-otp', {
-    phone: '9876540001',
+    phone: phoneA,
     otp: otpResA.data.devOtp,
     name: 'Captain Rohit'
   });
   const tokenA = authResA.data.token;
-  console.log(`✅ User A Authenticated: Captain Rohit (+9876540001)`);
+  console.log(`✅ User A Authenticated: Captain Rohit (+${phoneA})`);
 
   // 2. Authenticate User B (Recipient)
-  const otpResB = await makeRequest('POST', '/api/auth/request-otp', { phone: '9876540002', name: 'Hardik Pandya' });
+  const otpResB = await makeRequest('POST', '/api/auth/request-otp', { phone: phoneB, name: 'Hardik Pandya' });
   const authResB = await makeRequest('POST', '/api/auth/verify-otp', {
-    phone: '9876540002',
+    phone: phoneB,
     otp: otpResB.data.devOtp,
     name: 'Hardik Pandya'
   });
   const tokenB = authResB.data.token;
-  console.log(`✅ User B Authenticated: Hardik Pandya (+9876540002)`);
+  console.log(`✅ User B Authenticated: Hardik Pandya (+${phoneB})`);
 
   // 3. Connect Sockets
   const socketA = io(BASE_URL, { reconnection: false, transports: ['websocket'] });
@@ -70,8 +83,8 @@ async function runTest() {
   await new Promise((resolve) => socketA.on('connect', resolve));
   await new Promise((resolve) => socketB.on('connect', resolve));
 
-  socketA.emit('user:register', { token: tokenA });
-  socketB.emit('user:register', { token: tokenB });
+  socketA.emit('user:register', { token: tokenA, phone: phoneA });
+  socketB.emit('user:register', { token: tokenB, phone: phoneB });
   await new Promise(r => setTimeout(r, 200));
   console.log('✅ Sockets connected & registered for User A & User B');
 
@@ -92,13 +105,11 @@ async function runTest() {
 
   // 5. Test Direct Ping from Planning Room (nudgeMember)
   console.log('\n🧪 [TEST 1] Direct Ping from Planning Screen to User B...');
-  const alertPromise1 = new Promise((resolve) => {
-    socketB.once('popup:alert', (data) => resolve(data));
-  });
+  const alertPromise1 = waitForPopup(socketB);
 
   await new Promise((resolve) => {
     socketA.emit('planning:nudge', {
-      targetPhone: '9876540002',
+      targetPhone: phoneB,
       message: 'Hey Hardik, are you playing? Please confirm availability!'
     }, resolve);
   });
@@ -133,14 +144,12 @@ async function runTest() {
 
   // 7. Test Home Screen Direct Ping without explicit roomCode in request body (Server auto-resolves active room)
   console.log('\n🧪 [TEST 3] Direct Broadcast Ping from Home Screen (Auto-resolve Active Room)...');
-  const alertPromise2 = new Promise((resolve) => {
-    socketB.once('popup:alert', (data) => resolve(data));
-  });
+  const alertPromise2 = waitForPopup(socketB);
 
   const broadcastRes = await makeRequest('POST', '/api/push/broadcast', {
     token: tokenA,
     author: 'Captain Rohit',
-    targetPhone: '9876540002',
+    targetPhone: phoneB,
     message: 'Hey Hardik, check the planning board!'
   });
 

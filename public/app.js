@@ -4410,7 +4410,7 @@ function renderScoringPanel() {
         <h3 style="font-family:var(--font-display);color:var(--text-1);margin:0.4rem 0 0.25rem">Coin Toss Phase</h3>
         <p style="color:var(--text-2);font-size:0.9rem;margin-bottom:1rem">Flip the coin and choose to bat or bowl to start scoring.</p>
         ${isHost() ? `
-          <button class="btn btn-primary" onclick="showTossModal()" style="font-weight:800;background:var(--grad-primary)">
+          <button class="btn btn-primary" onclick="showTossModal()" style="font-weight:800">
             🪙 Open Coin Toss Modal
           </button>
         ` : `
@@ -4432,7 +4432,7 @@ function renderScoringPanel() {
             📊 View Full Summary
           </button>
           ${isHost() ? `
-            <button class="btn btn-primary" id="btn-scoring-rematch" onclick="startRematch(false)" style="font-weight:800;background:var(--grad-primary)">
+            <button class="btn btn-primary" id="btn-scoring-rematch" onclick="startRematch(false)" style="font-weight:800">
               🔄 Start Rematch (New Toss)
             </button>
             <button class="btn btn-secondary" id="btn-scoring-reset" onclick="startRematch(true)" style="font-weight:700">
@@ -5289,7 +5289,7 @@ function renderSummary() {
           🎨 Export Poster 📲
         </button>
         ${isHost() ? `
-          <button class="btn btn-primary" id="btn-hero-rematch" onclick="startRematch(false)" style="font-weight:800;background:var(--grad-primary)">
+          <button class="btn btn-primary" id="btn-hero-rematch" onclick="startRematch(false)" style="font-weight:800">
             🔄 Start Rematch (New Toss)
           </button>
           <button class="btn btn-secondary" id="btn-hero-reset" onclick="startRematch(true)" style="font-weight:700">

@@ -23,6 +23,9 @@
   --warning: #FBBF24;
   --danger: #EF4444;
 
+  --grad-primary: linear-gradient(135deg, #00E5FF 0%, #00B4D8 100%);
+  --grad-secondary: linear-gradient(135deg, #FF6B35 0%, #E85D04 100%);
+
   --text-1: #F8FAFC;
   --text-2: #94A3B8;
   --text-3: #64748B;
@@ -456,14 +459,32 @@ input[type="datetime-local"]::-webkit-calendar-picker-indicator:hover {
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, #00E5FF 0%, #00B4D8 100%);
-  color: #04101e;
+  background: var(--grad-primary, linear-gradient(135deg, #00E5FF 0%, #00B4D8 100%));
+  color: #04101e !important;
   box-shadow: 0 4px 18px rgba(0, 229, 255, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.4);
   font-weight: 800;
 }
 
 .btn-primary:hover {
   box-shadow: 0 6px 26px rgba(0, 229, 255, 0.45);
+  transform: translateY(-2px);
+}
+
+#btn-hero-rematch,
+#btn-scoring-rematch,
+.btn-rematch {
+  background: linear-gradient(135deg, #00E5FF 0%, #00B4D8 100%) !important;
+  color: #04101e !important;
+  box-shadow: 0 4px 20px rgba(0, 229, 255, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.5) !important;
+  font-weight: 800 !important;
+  text-shadow: none !important;
+}
+
+#btn-hero-rematch:hover,
+#btn-scoring-rematch:hover,
+.btn-rematch:hover {
+  background: linear-gradient(135deg, #33EBFF 0%, #00C8F0 100%) !important;
+  box-shadow: 0 6px 28px rgba(0, 229, 255, 0.6) !important;
   transform: translateY(-2px);
 }
 

@@ -92,9 +92,9 @@ async function runTest() {
   sock2.emit('user:register', { token: user2.token });
 
   const roomRes = await new Promise(resolve => {
-    sock1.emit('room:create', { token: user1.token, matchName: 'Championship Derby' }, resolve);
+    sock1.emit('room:create', { token: user1.token, matchName: 'Championship Derby ' + Date.now() }, resolve);
   });
-  const roomCode = roomRes.room ? roomRes.room.code : roomRes.code;
+  const roomCode = roomRes?.room?.code || roomRes?.code || roomRes?.existingRoomCode;
   console.log('Created Planning Room:', roomCode);
 
   // 3. Verify planning room does NOT show in /api/history
@@ -138,9 +138,10 @@ async function runTest() {
   if (!matchRec) {
     throw new Error(`FAILED: Could not find match ${roomCode} in history`);
   }
-  console.log('Match in History -> Name:', matchRec.matchName, 'Code:', matchRec.code, 'Score Inn 1:', matchRec.inningsSummary[0].runs, 'Runs in', matchRec.inningsSummary[0].balls, 'balls');
+  const innList = matchRec.inningsSummary || matchRec.innings;
+  console.log('Match in History -> Name:', matchRec.matchName, 'Code:', matchRec.code, 'Score Inn 1:', innList[0].runs, 'Runs in', innList[0].balls, 'balls');
   
-  if (matchRec.inningsSummary[0].runs !== 10 || matchRec.inningsSummary[0].balls !== 2) {
+  if (innList[0].runs !== 10 || innList[0].balls !== 2) {
     throw new Error('FAILED: History scorecard did not match actual played balls!');
   }
   console.log('✅ Match in History accurately reflects genuine played scorecard!');

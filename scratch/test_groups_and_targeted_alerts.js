@@ -103,7 +103,7 @@ async function testGroupsAndTargetedAlerts() {
   const roomCreated = await new Promise((resolve) => {
     socketA.emit('room:create', {
       token: userA.token,
-      matchName: 'Sunday Derby',
+      matchName: 'Sunday Derby ' + Date.now(),
       format: 'T20',
       overs: 20
     }, resolve);

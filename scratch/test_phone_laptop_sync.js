@@ -81,7 +81,7 @@ async function runTest() {
   await new Promise((resolve, reject) => {
     socketPhone.emit('room:create', {
       token: tokenPhone,
-      matchName: 'Sunday League Match',
+      matchName: 'Sunday League Match ' + Date.now(),
       overs: 10
     }, (res) => {
       if (!res.success) return reject(new Error(res.error));
@@ -181,6 +181,7 @@ async function runTest() {
   console.log('\n═══════════════════════════════════════════════════════════════════');
   console.log('🎉 ALL PHONE & LAPTOP REAL-TIME SYNC TESTS PASSED 100%');
   console.log('═══════════════════════════════════════════════════════════════════\n');
+  process.exit(0);
 }
 
 runTest().catch((err) => {

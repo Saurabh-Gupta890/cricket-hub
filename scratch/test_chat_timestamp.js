@@ -85,8 +85,8 @@ async function testChatTimestamp() {
   // 1. Create Room
   let roomCode;
   await new Promise((resolve) => {
-    socket.emit('room:create', { token, matchName: 'Chat Time Test Room' }, (res) => {
-      roomCode = res.room.code;
+    socket.emit('room:create', { token, matchName: 'Chat Time Test Room ' + Date.now() }, (res) => {
+      roomCode = res?.room?.code || res?.existingRoomCode;
       resolve();
     });
   });
@@ -120,6 +120,7 @@ async function testChatTimestamp() {
 
   socket.disconnect();
   console.log('🎉 ALL CHAT TIMESTAMP TESTS PASSED 100%!');
+  process.exit(0);
 }
 
 testChatTimestamp().catch(err => {

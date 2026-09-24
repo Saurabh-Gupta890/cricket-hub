@@ -89,9 +89,9 @@ async function runLifetimeQuietAlertsTest() {
 
   // 2. Create Room
   const createRes = await new Promise((res) => {
-    socket1.emit('room:create', { token: hostToken, matchName: 'Quiet Mode Lifetime Test' }, res);
+    socket1.emit('room:create', { token: hostToken, matchName: 'Quiet Mode Lifetime Test ' + Date.now() }, res);
   });
-  const roomCode = createRes.room.code;
+  const roomCode = createRes?.room?.code || createRes?.existingRoomCode;
   assert.ok(roomCode);
   console.log(`✅ Room created: ${roomCode}`);
 
@@ -171,6 +171,7 @@ async function runLifetimeQuietAlertsTest() {
   socket2.disconnect();
 
   console.log('\n🎉 ALL LIFETIME QUIET ALERTS PERSISTENCE TESTS PASSED 100%!\n');
+  process.exit(0);
 }
 
 runLifetimeQuietAlertsTest().catch(err => {

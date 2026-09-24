@@ -40,10 +40,12 @@ async function testFullFlow() {
   const socket1 = io('http://localhost:3000', { transports: ['websocket'] });
   await new Promise(r => socket1.on('connect', r));
 
+  const uniqueName = 'Sunday Mega Clash ' + Date.now();
   const roomRes = await new Promise(resolve => {
-    socket1.emit('room:create', { token: tokenA, matchName: 'Sunday Mega Clash' }, resolve);
+    socket1.emit('room:create', { token: tokenA, matchName: uniqueName }, resolve);
   });
-  console.log('   Room created:', roomRes.room.code);
+  const roomCode = roomRes?.room?.code || roomRes?.existingRoomCode;
+  console.log('   Room created:', roomCode);
 
   console.log('\n🧪 3. Client 2 (Mobile Browser with same number 9876540001) fetches active rooms...');
   const mobileRooms = await post('/api/user/rooms', { phone: '9876540001', token: tokenA });
@@ -58,7 +60,7 @@ async function testFullFlow() {
   const socket2 = io('http://localhost:3000', { transports: ['websocket'] });
   await new Promise(r => socket2.on('connect', r));
   const joinRes = await new Promise(resolve => {
-    socket2.emit('room:join', { token: tokenB, code: roomRes.room.code }, resolve);
+    socket2.emit('room:join', { token: tokenB, code: roomCode }, resolve);
   });
   console.log('   Member joined:', joinRes.success ? 'YES' : 'NO');
   console.log('   Planning members:', Object.keys(joinRes.room.planning.members));
@@ -71,6 +73,10 @@ async function testFullFlow() {
   socket1.disconnect();
   socket2.disconnect();
   console.log('\n🎉 ALL CROSS-DEVICE SYNC & SQUAD TESTS PASSED!');
+  process.exit(0);
 }
 
-testFullFlow().catch(console.error);
+testFullFlow().catch(err => {
+  console.error(err);
+  process.exit(1);
+});

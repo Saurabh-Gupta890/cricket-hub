@@ -61,7 +61,7 @@ async function testWicketPriorityAndRunout() {
   // Create room
   let roomCode;
   await new Promise((resolve) => {
-    socket.emit('room:create', { token, matchName: 'Wicket Test Room' }, (res) => {
+    socket.emit('room:create', { token, matchName: 'Wicket Test Room ' + Date.now() }, (res) => {
       roomCode = res.room.code;
       resolve();
     });

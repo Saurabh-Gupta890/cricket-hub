@@ -62,10 +62,20 @@ async function testWicketAndRematchFlow() {
   socketHost.emit('user:register', { token, phone: phoneHost });
 
   // 1. Create Room & Setup match with only 2 players in Team 1
-  const pCreate = waitForEvent(socketHost, 'room:created');
-  socketHost.emit('room:create', { token, matchName: '2-Player Small Match', overs: 1 });
-  const roomData = await pCreate;
-  const roomId = roomData.code;
+  let roomId;
+  await new Promise((resolve, reject) => {
+    socketHost.emit('room:create', { token, matchName: '2-Player Small Match ' + Date.now(), overs: 1 }, (res) => {
+      if (res && res.success) {
+        roomId = res.room.code;
+        resolve();
+      } else if (res && res.existingRoomCode) {
+        roomId = res.existingRoomCode;
+        resolve();
+      } else {
+        reject(new Error(res?.error || 'Room creation failed'));
+      }
+    });
+  });
   console.log(`✅ Created match room: ${roomId}`);
 
   const pSetup = waitForEvent(socketHost, 'state:update');
@@ -197,6 +207,7 @@ async function testWicketAndRematchFlow() {
 
   socketHost.disconnect();
   console.log('\n🎉 ALL WICKET NON-ABRUPT & REMATCH TESTS PASSED 100%!');
+  process.exit(0);
 }
 
 testWicketAndRematchFlow().catch(err => {

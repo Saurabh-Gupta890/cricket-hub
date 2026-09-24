@@ -38,7 +38,7 @@ eval(appCode.slice(appCode.indexOf('function phonesMatch'), appCode.indexOf('fun
 eval(appCode.slice(appCode.indexOf('function escHtml'), appCode.indexOf('let playersCache')));
 eval(appCode.slice(appCode.indexOf('function getAvatarHtml'), appCode.indexOf('function sanitizeUrl')));
 eval(appCode.slice(appCode.indexOf('function isHost'), appCode.indexOf('function toast')));
-eval(appCode.slice(appCode.indexOf('function renderRsvpStats'), appCode.indexOf('function renderPlanningAnnouncements')));
+eval(appCode.slice(appCode.indexOf('function getDeduplicatedPlanningMembers'), appCode.indexOf('function renderPlanningAnnouncements')));
 
 // Setup test state
 global.state = {

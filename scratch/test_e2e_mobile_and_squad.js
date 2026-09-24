@@ -50,7 +50,7 @@ eval(appCode.slice(appCode.indexOf('function phonesMatch'), appCode.indexOf('fun
 eval(appCode.slice(appCode.indexOf('function escHtml'), appCode.indexOf('let playersCache')));
 eval(appCode.slice(appCode.indexOf('function getAvatarHtml'), appCode.indexOf('function sanitizeUrl')));
 eval(appCode.slice(appCode.indexOf('function isHost'), appCode.indexOf('function toast')));
-eval(appCode.slice(appCode.indexOf('function renderRsvpStats'), appCode.indexOf('function renderPlanningAnnouncements')));
+eval(appCode.slice(appCode.indexOf('function getDeduplicatedPlanningMembers'), appCode.indexOf('function renderPlanningAnnouncements')));
 
 function post(path, body) {
   return new Promise((resolve, reject) => {
@@ -99,9 +99,9 @@ async function runE2ETest() {
   await new Promise(r => laptopSocket.on('connect', r));
 
   const roomRes = await new Promise(resolve => {
-    laptopSocket.emit('room:create', { token: token1, matchName: 'IPL Mega Final 2026' }, resolve);
+    laptopSocket.emit('room:create', { token: token1, matchName: 'IPL Mega Final 2026 ' + Date.now() }, resolve);
   });
-  const roomCode = roomRes.room.code;
+  const roomCode = roomRes?.room?.code || roomRes?.existingRoomCode;
   console.log(`   ✅ Room created: ${roomCode}`);
 
   // STEP 3: Mobile Browser Client logs in with same number (9876540001)
@@ -176,6 +176,7 @@ async function runE2ETest() {
   console.log('\n═══════════════════════════════════════════════════════════════════');
   console.log('🎉 ALL END-TO-END TESTS COMPLETED AND FULLY PASSING (100%)');
   console.log('═══════════════════════════════════════════════════════════════════');
+  process.exit(0);
 }
 
 runE2ETest().catch(err => {

@@ -160,5 +160,439 @@
         "joinedAt": 1788721012430
       }
     ]
+  },
+  "grp_mudoywrmldiu": {
+    "id": "grp_mudoywrmldiu",
+    "code": "GRP-3QQZ",
+    "name": "India Champions",
+    "description": "",
+    "hostPhone": "9888000111",
+    "hostName": "Rohit Sharma",
+    "createdAt": 1790143080035,
+    "members": [
+      {
+        "phone": "9888000111",
+        "name": "Rohit Sharma",
+        "color": "#40C4FF",
+        "avatar": "🏏",
+        "role": "captain",
+        "joinedAt": 1790143080035
+      },
+      {
+        "phone": "9888000222",
+        "name": "Jasprit Bumrah",
+        "color": "#FF6E40",
+        "avatar": null,
+        "role": "All-Rounder",
+        "joinedAt": 1790143080040
+      }
+    ]
+  },
+  "grp_mudpgepmzzbb": {
+    "id": "grp_mudpgepmzzbb",
+    "code": "GRP-CU8U",
+    "name": "India Champions",
+    "description": "",
+    "hostPhone": "9888000111",
+    "hostName": "Rohit Sharma",
+    "createdAt": 1790143896442,
+    "members": [
+      {
+        "phone": "9888000111",
+        "name": "Rohit Sharma",
+        "color": "#40C4FF",
+        "avatar": "🏏",
+        "role": "captain",
+        "joinedAt": 1790143896442
+      },
+      {
+        "phone": "9888000222",
+        "name": "Jasprit Bumrah",
+        "color": "#FF6E40",
+        "avatar": null,
+        "role": "All-Rounder",
+        "joinedAt": 1790143896445
+      }
+    ]
+  },
+  "grp_mudpgmiyfl5w": {
+    "id": "grp_mudpgmiyfl5w",
+    "code": "GRP-K9T6",
+    "name": "Thunderbolts XI",
+    "description": "Sunday morning friendly cricket club",
+    "hostPhone": "91981065521",
+    "hostName": "Alice Captain",
+    "createdAt": 1790143906570,
+    "members": [
+      {
+        "phone": "91981065521",
+        "name": "Alice Captain",
+        "color": "#00E5FF",
+        "avatar": "🏏",
+        "role": "captain",
+        "joinedAt": 1790143906570
+      },
+      {
+        "phone": "91981065522",
+        "name": "Bob Batsman",
+        "color": "#FF6B35",
+        "avatar": null,
+        "role": "member",
+        "joinedAt": 1790143906572
+      },
+      {
+        "phone": "91981065524",
+        "name": "David Bowler",
+        "color": "#00E676",
+        "avatar": null,
+        "role": "All-Rounder",
+        "joinedAt": 1790143906574
+      }
+    ]
+  },
+  "grp_mudpgtbevlni": {
+    "id": "grp_mudpgtbevlni",
+    "code": "GRP-EB5B",
+    "name": "RCB Legends XI",
+    "description": "",
+    "hostPhone": "9999000111",
+    "hostName": "Virat Kohli",
+    "createdAt": 1790143915370,
+    "members": [
+      {
+        "phone": "9999000111",
+        "name": "Virat Kohli",
+        "color": "#69F0AE",
+        "avatar": "🏏",
+        "role": "captain",
+        "joinedAt": 1790143915370
+      },
+      {
+        "phone": "9999000222",
+        "name": "AB de Villiers",
+        "color": "#40C4FF",
+        "avatar": null,
+        "role": "Batsman",
+        "joinedAt": 1790143915374
+      },
+      {
+        "phone": "9999000444",
+        "name": "Mohammed Siraj",
+        "color": "#EEFF41",
+        "avatar": null,
+        "role": "Bowler",
+        "joinedAt": 1790143915383
+      }
+    ]
+  },
+  "grp_mudpyd8qypfq": {
+    "id": "grp_mudpyd8qypfq",
+    "code": "GRP-NZPY",
+    "name": "RCB Legends XI",
+    "description": "",
+    "hostPhone": "9999000111",
+    "hostName": "Virat Kohli",
+    "createdAt": 1790144734346,
+    "members": [
+      {
+        "phone": "9999000111",
+        "name": "Virat Kohli",
+        "color": "#69F0AE",
+        "avatar": "🏏",
+        "role": "captain",
+        "joinedAt": 1790144734346
+      },
+      {
+        "phone": "9999000222",
+        "name": "AB de Villiers",
+        "color": "#40C4FF",
+        "avatar": null,
+        "role": "Batsman",
+        "joinedAt": 1790144734350
+      },
+      {
+        "phone": "9999000444",
+        "name": "Mohammed Siraj",
+        "color": "#EEFF41",
+        "avatar": null,
+        "role": "Bowler",
+        "joinedAt": 1790144734365
+      }
+    ]
+  },
+  "grp_mudq20c9f42w": {
+    "id": "grp_mudq20c9f42w",
+    "code": "GRP-Q5UA",
+    "name": "RCB Legends XI",
+    "description": "",
+    "hostPhone": "9999000111",
+    "hostName": "Virat Kohli",
+    "createdAt": 1790144904249,
+    "members": [
+      {
+        "phone": "9999000111",
+        "name": "Virat Kohli",
+        "color": "#69F0AE",
+        "avatar": "🏏",
+        "role": "captain",
+        "joinedAt": 1790144904249
+      },
+      {
+        "phone": "9999000222",
+        "name": "AB de Villiers",
+        "color": "#40C4FF",
+        "avatar": null,
+        "role": "Batsman",
+        "joinedAt": 1790144904254
+      },
+      {
+        "phone": "9999000444",
+        "name": "Mohammed Siraj",
+        "color": "#EEFF41",
+        "avatar": null,
+        "role": "Bowler",
+        "joinedAt": 1790144904260
+      }
+    ]
+  },
+  "grp_mudq3c3s813b": {
+    "id": "grp_mudq3c3s813b",
+    "code": "GRP-JEGM",
+    "name": "RCB Legends XI",
+    "description": "",
+    "hostPhone": "9999000111",
+    "hostName": "Virat Kohli",
+    "createdAt": 1790144966153,
+    "members": [
+      {
+        "phone": "9999000111",
+        "name": "Virat Kohli",
+        "color": "#69F0AE",
+        "avatar": "🏏",
+        "role": "captain",
+        "joinedAt": 1790144966153
+      },
+      {
+        "phone": "9999000222",
+        "name": "AB de Villiers",
+        "color": "#40C4FF",
+        "avatar": null,
+        "role": "Batsman",
+        "joinedAt": 1790144966157
+      }
+    ]
+  },
+  "grp_muf41bz1lmfp": {
+    "id": "grp_muf41bz1lmfp",
+    "code": "GRP-LQYS",
+    "name": "India Champions",
+    "description": "",
+    "hostPhone": "9888000111",
+    "hostName": "Rohit Sharma",
+    "createdAt": 1790228853469,
+    "members": [
+      {
+        "phone": "9888000111",
+        "name": "Rohit Sharma",
+        "color": "#40C4FF",
+        "avatar": "🏏",
+        "role": "captain",
+        "joinedAt": 1790228853469
+      },
+      {
+        "phone": "9888000222",
+        "name": "Jasprit Bumrah",
+        "color": "#FF6E40",
+        "avatar": null,
+        "role": "All-Rounder",
+        "joinedAt": 1790228853474
+      }
+    ]
+  },
+  "grp_muf41k6lumj1": {
+    "id": "grp_muf41k6lumj1",
+    "code": "GRP-MWJQ",
+    "name": "Thunderbolts XI",
+    "description": "Sunday morning friendly cricket club",
+    "hostPhone": "91981640901",
+    "hostName": "Alice Captain",
+    "createdAt": 1790228864109,
+    "members": [
+      {
+        "phone": "91981640901",
+        "name": "Alice Captain",
+        "color": "#40C4FF",
+        "avatar": "🏏",
+        "role": "captain",
+        "joinedAt": 1790228864109
+      },
+      {
+        "phone": "91981640902",
+        "name": "Bob Batsman",
+        "color": "#FF6E40",
+        "avatar": null,
+        "role": "member",
+        "joinedAt": 1790228864110
+      },
+      {
+        "phone": "91981640904",
+        "name": "David Bowler",
+        "color": "#00E5FF",
+        "avatar": null,
+        "role": "All-Rounder",
+        "joinedAt": 1790228864113
+      }
+    ]
+  },
+  "grp_muf42qmdforn": {
+    "id": "grp_muf42qmdforn",
+    "code": "GRP-JGWC",
+    "name": "RCB Legends XI",
+    "description": "",
+    "hostPhone": "9999000111",
+    "hostName": "Virat Kohli",
+    "createdAt": 1790228919109,
+    "members": [
+      {
+        "phone": "9999000111",
+        "name": "Virat Kohli",
+        "color": "#69F0AE",
+        "avatar": "🏏",
+        "role": "captain",
+        "joinedAt": 1790228919109
+      },
+      {
+        "phone": "9999000222",
+        "name": "AB de Villiers",
+        "color": "#40C4FF",
+        "avatar": null,
+        "role": "Batsman",
+        "joinedAt": 1790228919114
+      }
+    ]
+  },
+  "grp_muf48sv93bdc": {
+    "id": "grp_muf48sv93bdc",
+    "code": "GRP-5X2K",
+    "name": "Thunderbolts XI",
+    "description": "Sunday morning friendly cricket club",
+    "hostPhone": "91981018821",
+    "hostName": "Alice Captain",
+    "createdAt": 1790229201958,
+    "members": [
+      {
+        "phone": "91981018821",
+        "name": "Alice Captain",
+        "color": "#40C4FF",
+        "avatar": "🏏",
+        "role": "captain",
+        "joinedAt": 1790229201958
+      },
+      {
+        "phone": "91981018822",
+        "name": "Bob Batsman",
+        "color": "#FF6E40",
+        "avatar": null,
+        "role": "member",
+        "joinedAt": 1790229201962
+      },
+      {
+        "phone": "91981018824",
+        "name": "David Bowler",
+        "color": "#00E5FF",
+        "avatar": null,
+        "role": "All-Rounder",
+        "joinedAt": 1790229201966
+      }
+    ]
+  },
+  "grp_muf4gyyfvcfj": {
+    "id": "grp_muf4gyyfvcfj",
+    "code": "GRP-YATA",
+    "name": "India Champions",
+    "description": "",
+    "hostPhone": "9888000111",
+    "hostName": "Rohit Sharma",
+    "createdAt": 1790229583095,
+    "members": [
+      {
+        "phone": "9888000111",
+        "name": "Rohit Sharma",
+        "color": "#40C4FF",
+        "avatar": "🏏",
+        "role": "captain",
+        "joinedAt": 1790229583095
+      },
+      {
+        "phone": "9888000222",
+        "name": "Jasprit Bumrah",
+        "color": "#FF6E40",
+        "avatar": null,
+        "role": "All-Rounder",
+        "joinedAt": 1790229583113
+      }
+    ]
+  },
+  "grp_muf4h84y06l0": {
+    "id": "grp_muf4h84y06l0",
+    "code": "GRP-VSPH",
+    "name": "Thunderbolts XI",
+    "description": "Sunday morning friendly cricket club",
+    "hostPhone": "91981949721",
+    "hostName": "Alice Captain",
+    "createdAt": 1790229594994,
+    "members": [
+      {
+        "phone": "91981949721",
+        "name": "Alice Captain",
+        "color": "#FF6E40",
+        "avatar": "🏏",
+        "role": "captain",
+        "joinedAt": 1790229594994
+      },
+      {
+        "phone": "91981949722",
+        "name": "Bob Batsman",
+        "color": "#EEFF41",
+        "avatar": null,
+        "role": "member",
+        "joinedAt": 1790229594998
+      },
+      {
+        "phone": "91981949724",
+        "name": "David Bowler",
+        "color": "#FF6B35",
+        "avatar": null,
+        "role": "All-Rounder",
+        "joinedAt": 1790229595001
+      }
+    ]
+  },
+  "grp_muf4hi2d2rbu": {
+    "id": "grp_muf4hi2d2rbu",
+    "code": "GRP-2FBE",
+    "name": "RCB Legends XI",
+    "description": "",
+    "hostPhone": "9999000111",
+    "hostName": "Virat Kohli",
+    "createdAt": 1790229607861,
+    "members": [
+      {
+        "phone": "9999000111",
+        "name": "Virat Kohli",
+        "color": "#69F0AE",
+        "avatar": "🏏",
+        "role": "captain",
+        "joinedAt": 1790229607861
+      },
+      {
+        "phone": "9999000222",
+        "name": "AB de Villiers",
+        "color": "#40C4FF",
+        "avatar": null,
+        "role": "Batsman",
+        "joinedAt": 1790229607865
+      }
+    ]
   }
 }

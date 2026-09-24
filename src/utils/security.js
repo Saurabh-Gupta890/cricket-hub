@@ -168,15 +168,10 @@ function checkWindowLimit(store, key, maxRequests, windowMs) {
  * Authentication Route Rate Limiting with Per-IP, Per-Account & Exponential Backoff
  */
 function checkAuthRateLimit(req, accountIdentifier = null) {
-  const isProdOrStaging = process.env.NODE_ENV === 'production' || process.env.NODE_ENV === 'staging';
-  if (!isProdOrStaging) {
-    return { limited: false };
-  }
-
   const ip = getClientIp(req);
   const now = Date.now();
 
-  // 1. Check Exponential Backoff
+  // 1. Check Exponential Backoff (always protects accounts from brute force)
   const backoffKey = accountIdentifier ? `acc:${accountIdentifier}` : `ip:${ip}`;
   const failureState = authFailureTracking.get(backoffKey);
   if (failureState && failureState.backoffUntil > now) {
@@ -188,6 +183,11 @@ function checkAuthRateLimit(req, accountIdentifier = null) {
       error: `Too many failed attempts. Please wait ${retryAfterSec}s before retrying.`,
       retryAfterSec
     };
+  }
+
+  const isProdOrStaging = process.env.NODE_ENV === 'production' || process.env.NODE_ENV === 'staging';
+  if (!isProdOrStaging) {
+    return { limited: false };
   }
 
   // 2. Check Per-IP sliding window
@@ -223,9 +223,6 @@ function checkAuthRateLimit(req, accountIdentifier = null) {
  * Record an authentication failure and apply exponential backoff
  */
 function recordAuthFailure(req, accountIdentifier = null) {
-  const isProdOrStaging = process.env.NODE_ENV === 'production' || process.env.NODE_ENV === 'staging';
-  if (!isProdOrStaging) return;
-
   const ip = getClientIp(req);
   const now = Date.now();
   const backoffKey = accountIdentifier ? `acc:${accountIdentifier}` : `ip:${ip}`;

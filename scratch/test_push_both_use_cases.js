@@ -116,9 +116,9 @@ async function runTest() {
   // ─────────────────────────────────────────────────────────────────
   console.log('\n🧪 [USE CASE 2] Testing Squad-Wide Ping After Creating Room...');
   const roomRes = await new Promise((resolve) => {
-    socket1.emit('room:create', { token: token1, matchName: 'Wankhede Weekend T20', creatorPhone: user1Phone }, resolve);
+    socket1.emit('room:create', { token: token1, matchName: 'Wankhede Weekend T20 ' + Date.now(), creatorPhone: user1Phone }, resolve);
   });
-  const roomCode = roomRes.room.code;
+  const roomCode = roomRes?.room?.code || roomRes?.existingRoomCode;
   console.log(`   ✅ Match Room Created: ${roomCode}`);
 
   // User 2 joins match room

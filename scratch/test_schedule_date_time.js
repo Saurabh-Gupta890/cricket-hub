@@ -36,6 +36,12 @@ global.localStorage = {
 
 global.toast = (msg) => {};
 
+global.state = {
+  session: { user: { phone: '9876540001', name: 'Captain Virat' } },
+  room: { hostPhone: '9876540001', match: {} }
+};
+var state = global.state;
+
 // Load app.js
 const appCode = fs.readFileSync(path.join(__dirname, '../public/app.js'), 'utf8');
 eval(appCode.slice(appCode.indexOf('function phonesMatch'), appCode.indexOf('function formatOvers')));
@@ -86,9 +92,9 @@ async function testMatchSchedule() {
   await new Promise(r => socket.on('connect', r));
 
   const roomRes = await new Promise(resolve => {
-    socket.emit('room:create', { token, matchName: 'Sunday Championship' }, resolve);
+    socket.emit('room:create', { token, matchName: 'Sunday Championship ' + Date.now() }, resolve);
   });
-  const roomCode = roomRes.room.code;
+  const roomCode = roomRes?.room?.code || roomRes?.existingRoomCode;
   console.log(`✅ Created match room: ${roomCode}`);
 
   // 2. Test Quick Presets on Client
@@ -134,6 +140,7 @@ async function testMatchSchedule() {
   console.log('\n═══════════════════════════════════════════════════════════════════');
   console.log('🎉 ALL MATCH DATE & TIME TESTS PASSED 100%');
   console.log('═══════════════════════════════════════════════════════════════════');
+  process.exit(0);
 }
 
 testMatchSchedule().catch(err => {

@@ -158,7 +158,7 @@ async function runMasterE2ETest() {
     socket2.emit('user:register', { token: p2Token, phone: p2User.phone });
 
     const createRes = await new Promise((res) => {
-      socket1.emit('room:create', { token: hostToken, matchName: 'Wankhede Grand Final' }, res);
+      socket1.emit('room:create', { token: hostToken, matchName: 'Wankhede Grand Final ' + Date.now() }, res);
     });
     assert.ok(createRes.success && createRes.room.code);
     const room = createRes.room;

@@ -51,7 +51,7 @@ async function testWicketAndNextBatsmanFlow() {
   // TEST PART 1: Wicket -> Block Bowling -> Next Batsman Walks In
   // ──────────────────────────────────────────────
   const createPromise = new Promise(r => socketHost.on('room:created', r));
-  socketHost.emit('room:create', { token, matchName: 'Wicket & Next Batsman Test', overs: 2 });
+  socketHost.emit('room:create', { token, matchName: 'Wicket & Next Batsman Test ' + Date.now(), overs: 2 });
   const roomData = await createPromise;
   const roomId = roomData.code;
   console.log(`✅ Created match 1: ${roomId}`);
@@ -137,7 +137,7 @@ async function testWicketAndNextBatsmanFlow() {
   // TEST PART 2: Single Batter Mode Activation after Wicket
   // ──────────────────────────────────────────────
   const createPromise2 = new Promise(r => socketHost.on('room:created', r));
-  socketHost.emit('room:create', { token, matchName: 'Single Batter Mode Test', overs: 2 });
+  socketHost.emit('room:create', { token, matchName: 'Single Batter Mode Test ' + Date.now(), overs: 2 });
   const roomData2 = await createPromise2;
   const roomId2 = roomData2.code;
   console.log(`\n✅ Created match 2: ${roomId2}`);
@@ -210,7 +210,7 @@ async function testWicketAndNextBatsmanFlow() {
   // TEST PART 3: Starting Match directly in Single Batter Mode
   // ──────────────────────────────────────────────
   const createPromise3 = new Promise(r => socketHost.on('room:created', r));
-  socketHost.emit('room:create', { token, matchName: 'Solo Opener Match', overs: 1 });
+  socketHost.emit('room:create', { token, matchName: 'Solo Opener Match ' + Date.now(), overs: 1 });
   const roomData3 = await createPromise3;
   console.log(`\n✅ Created match 3: ${roomData3.code}`);
 

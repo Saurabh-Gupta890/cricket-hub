@@ -61,8 +61,11 @@ async function testPlayerSelectionFallback() {
   // 1. Create Room (Starts with empty players in teams)
   let roomCode;
   await new Promise((resolve) => {
-    socket.emit('room:create', { token, matchName: 'No Predefined Squad Room' }, (res) => {
-      roomCode = res.room.code;
+    socket.emit('room:create', { token, matchName: 'No Predefined Squad Room ' + Date.now() }, (res) => {
+      if (!res?.room?.code) {
+        console.error('room:create response:', res);
+      }
+      roomCode = res?.room?.code || res?.existingRoomCode;
       resolve();
     });
   });

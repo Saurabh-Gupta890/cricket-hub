@@ -1,7 +1,43 @@
 const io = require('socket.io-client');
+const http = require('http');
+
+function postJson(path, data) {
+  return new Promise((resolve, reject) => {
+    const payload = JSON.stringify(data);
+    const req = http.request('http://localhost:3000' + path, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Content-Length': Buffer.byteLength(payload)
+      }
+    }, (res) => {
+      let body = '';
+      res.on('data', chunk => body += chunk);
+      res.on('end', () => {
+        try {
+          resolve({ status: res.statusCode, data: JSON.parse(body) });
+        } catch (e) {
+          resolve({ status: res.statusCode, raw: body });
+        }
+      });
+    });
+    req.on('error', reject);
+    req.write(payload);
+    req.end();
+  });
+}
 
 async function testMatchSetupPlayerAddition() {
   console.log('🧪 Testing Match Setup Player Addition & Normalization...');
+
+  const phone = '9876543210';
+  const otpRes = await postJson('/api/auth/request-otp', { phone });
+  const verifyRes = await postJson('/api/auth/verify-otp', {
+    phone,
+    otp: otpRes.data.devOtp,
+    name: 'Captain Marvel'
+  });
+  const token = verifyRes.data.token;
 
   const socket = io('http://localhost:3000', { transports: ['websocket'] });
 
@@ -9,13 +45,13 @@ async function testMatchSetupPlayerAddition() {
   console.log('✅ Socket connected');
 
   // Register user
-  socket.emit('user:register', { phone: '919876543210', name: 'Captain Marvel' });
+  socket.emit('user:register', { token, phone });
 
   // Create room
   const createPromise = new Promise((resolve) => {
     socket.on('room:created', (data) => resolve(data));
   });
-  socket.emit('room:create', { matchName: 'Setup Player Test Derby', overs: 2 });
+  socket.emit('room:create', { token, matchName: 'Setup Player Test Derby ' + Date.now(), overs: 2 });
   const roomData = await createPromise;
   const roomCode = roomData.code;
   console.log('✅ Room created:', roomCode);

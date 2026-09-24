@@ -48,6 +48,9 @@ async function testOtpRetryLimits() {
   assert.strictEqual(wrong1.data.remainingAttempts, 4);
   console.log(`✅ Wrong OTP response: "${wrong1.data.error}"`);
 
+  // Wait for 2s backoff cooldown to expire before requesting next OTPs
+  await new Promise(r => setTimeout(r, 2100));
+
   // 3. Request OTP 2nd, 3rd, 4th, 5th times
   console.log('--- Step 3: Requesting OTP 2nd, 3rd, 4th, 5th times ---');
   for (let i = 2; i <= 5; i++) {

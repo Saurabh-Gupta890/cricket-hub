@@ -1251,6 +1251,14 @@ app.post('/api/auth/request-otp', (req, res, next) => {
 
     const existingUser = findUserByPhone(cleaned);
 
+    if (mode === 'login' && !existingUser) {
+      return res.status(404).json({
+        success: false,
+        notFound: true,
+        error: 'No account found with this phone number. Please sign up first.'
+      });
+    }
+
     // 3. Name Validation (sanitize if provided)
     let finalName = (existingUser && existingUser.name) || 'Player';
     if (name && typeof name === 'string' && name.trim()) {
@@ -1264,6 +1272,18 @@ app.post('/api/auth/request-otp', (req, res, next) => {
     const otp = crypto.randomInt(100000, 1000000).toString();
     const expiresAt = Date.now() + OTP_TTL;
 
+    const existingOtp = findOtpRecord(cleaned);
+    const prevRequestCount = (existingOtp && existingOtp.record && existingOtp.record.requestCount) || 0;
+    const requestCount = prevRequestCount + 1;
+    const MAX_OTP_REQUESTS_IN_A_GO = 5;
+    if (requestCount > MAX_OTP_REQUESTS_IN_A_GO) {
+      return res.status(429).json({
+        success: false,
+        requestLimitReached: true,
+        error: 'Too many OTP requests in a row. Please wait a few minutes before trying again.'
+      });
+    }
+
     // Clear any existing OTP records for this phone number and variants
     for (const [k, _] of Array.from(otpStore.entries())) {
       if (phonesMatch(k, cleaned)) {
@@ -1276,6 +1296,7 @@ app.post('/api/auth/request-otp', (req, res, next) => {
       expiresAt,
       name: finalName,
       attempts: 0,
+      requestCount,
       isNew: !existingUser,
       existingKey: existingUser?.phone
     });
@@ -1288,7 +1309,9 @@ app.post('/api/auth/request-otp', (req, res, next) => {
       success: true,
       isNew: !existingUser,
       name: finalName,
-      maskedPhone: maskPhone(cleaned)
+      maskedPhone: maskPhone(cleaned),
+      requestCount,
+      requestsRemaining: Math.max(0, MAX_OTP_REQUESTS_IN_A_GO - requestCount)
     };
 
     // If no external paid SMS gateway is active, return devOtp so users on Render / mobile PWA / local web can instantly log in
@@ -1356,15 +1379,18 @@ app.post('/api/auth/verify-otp', (req, res, next) => {
     if (otpMatch && record.otp !== cleanOtp && !isMasterDemoOtp) {
       record.attempts = (record.attempts || 0) + 1;
       recordAuthFailure(req, cleaned);
-      if (record.attempts >= 4) {
+      const remainingAttempts = Math.max(0, 5 - record.attempts);
+      if (record.attempts >= 5) {
         otpStore.delete(recordKey);
         return res.status(400).json({
           success: false,
+          remainingAttempts: 0,
           error: 'Maximum OTP verification attempts exceeded. Please request a new OTP.'
         });
       }
       return res.status(400).json({
         success: false,
+        remainingAttempts,
         error: 'Incorrect OTP code. Please check the code or tap Resend OTP.'
       });
     }
@@ -2002,6 +2028,7 @@ function getAllMatchesMap() {
           battingFirst: match.battingFirst,
           location: match.location,
           innings: cleanInnings,
+          inningsSummary: cleanInnings,
           planningMembers: Object.values(room.planning?.members || {})
         };
         const existing = matchMap.get(code);
@@ -2652,6 +2679,11 @@ io.on('connection', (socket) => {
       if (r && r.matchName && r.matchName.trim().toLowerCase() === trimmedName.toLowerCase()) {
         const isCompleted = r.match?.status === 'completed';
         if (!isCompleted) {
+          const hasBalls = r.match?.innings && r.match.innings.some(inn => (inn.balls || 0) > 0);
+          if (r.creatorPhone === phone && !hasBalls) {
+            rooms.delete(existingCode);
+            break;
+          }
           if (typeof cb === 'function') {
             cb({
               success: false,
@@ -2696,11 +2728,25 @@ io.on('connection', (socket) => {
     }
 
     // If linked to a group / squad, import squad members into planning room
+    let targetGroup = null;
     if (groupId && groups.has(groupId)) {
-      const g = groups.get(groupId);
-      room.groupId = g.id;
-      room.groupName = g.name;
-      for (const m of g.members) {
+      targetGroup = groups.get(groupId);
+    } else if (!groupId) {
+      let latestGroup = null;
+      for (const g of groups.values()) {
+        if (phonesMatch(g.hostPhone, phone)) {
+          if (!latestGroup || (g.createdAt || 0) >= (latestGroup.createdAt || 0)) {
+            latestGroup = g;
+          }
+        }
+      }
+      targetGroup = latestGroup;
+    }
+
+    if (targetGroup) {
+      room.groupId = targetGroup.id;
+      room.groupName = targetGroup.name;
+      for (const m of targetGroup.members) {
         const cleanMPhone = String(m.phone).replace(/\D/g, '');
         if (!room.planning.members[cleanMPhone]) {
           room.planning.members[cleanMPhone] = {

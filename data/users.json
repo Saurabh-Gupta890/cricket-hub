@@ -26,20 +26,20 @@
   "919999900001": {
     "phone": "919999900001",
     "name": "Player",
-    "token": "c576b1256c580b7cf918c9f04e099186ab9e618c68d713fa09f6c29e370943d8",
+    "token": "6c891aaf4240c9ff68c819eb412dce14b1c9eedfec39d522fe6c5ad714d86bd3",
     "avatar": null,
     "createdAt": 1788697077286,
     "color": "#00E676",
-    "lastActiveRoom": "CRK-6UC2"
+    "lastActiveRoom": "CRK-F8SP"
   },
   "919999900002": {
     "phone": "919999900002",
     "name": "Player",
-    "token": "d1d27c162b0c3d7b977d57913475ff8b16b8d3e94f04f34cfcff72d169e5d293",
+    "token": "2817d89d186742b2c15204469189971cd8a1072611ee4cc7d1ef687b9e95cd78",
     "avatar": null,
     "createdAt": 1788697077290,
     "color": "#FF4081",
-    "lastActiveRoom": "CRK-6UC2"
+    "lastActiveRoom": "CRK-F8SP"
   },
   "919999900724": {
     "phone": "919999900724",
@@ -92,28 +92,29 @@
   "9876543210": {
     "phone": "9876543210",
     "name": "Saurabh Live",
-    "token": "17e5337a0aff7772e5860d5d2211c6cbbee267dd6d8c1b04783faadf665b71f2",
+    "token": "170e51d7f766955da1444ad7b5e8197288ea03e6cd27ca77175779de0f50afee",
     "avatar": null,
     "createdAt": 1788699193050,
-    "color": "#FF6B35"
+    "color": "#FF6B35",
+    "lastActiveRoom": "CRK-55DE"
   },
   "9876540001": {
     "phone": "9876540001",
-    "name": "Captain Rohit",
-    "token": "2adb3dd55cb48f398c1b08c024802074902473004bc19a0cfdb89ad461d6eb1f",
+    "name": "Captain Virat",
+    "token": "74226210463894a4d8cd5d192266b858255541e3da6c4d64af6f4a8cab7c954e",
     "avatar": null,
     "createdAt": 1788699273722,
     "color": "#7C4DFF",
-    "lastActiveRoom": null
+    "lastActiveRoom": "CRK-RXU4"
   },
   "9876540002": {
     "phone": "9876540002",
-    "name": "Fan Virat",
-    "token": "20a73328940059378f596a9384a82a1243fee12a0fa5c726a5e5ae4a146d76a6",
+    "name": "Rohit",
+    "token": "7ccb7d7cef952626565dd9079718036c2dde8b3d074981789da8dd1d15b4adf5",
     "avatar": null,
     "createdAt": 1788699312890,
     "color": "#00E676",
-    "lastActiveRoom": null
+    "lastActiveRoom": "CRK-6L2P"
   },
   "9876540003": {
     "phone": "9876540003",
@@ -134,10 +135,11 @@
   "9999000111": {
     "phone": "9999000111",
     "name": "Virat Kohli",
-    "token": "5e61213cfd466b3914262569b73e7923a3a5b239da38a39ee3f44decb0badb8e",
+    "token": "1e2dc07a6b329a18fb8e0b9fc9e4a70a761382b286aebc69d938f5cbae6c2238",
     "avatar": null,
     "createdAt": 1788708775503,
-    "color": "#69F0AE"
+    "color": "#69F0AE",
+    "lastActiveRoom": "CRK-Y4GK"
   },
   "9999000222": {
     "phone": "9999000222",
@@ -198,10 +200,11 @@
   "919876540001": {
     "phone": "9876540001",
     "name": "Captain Virat",
-    "token": "7a2dac10e43bcbbaea2536cea0f86cc4e19ebb8a260158b79e7c4118fc286b14",
+    "token": "ca21d22f34e7bde11660a146d8792d0c2a3ceee0183881a818f8f69ac90cf87e",
     "avatar": null,
     "createdAt": 1788699273722,
-    "color": "#7C4DFF"
+    "color": "#7C4DFF",
+    "lastActiveRoom": "CRK-APP9"
   },
   "919999887456": {
     "phone": "919999887456",
@@ -703,7 +706,8 @@
     "token": "43013aa67f7a1cb99e746f74b995b91a456512eb04f6897ae70b9630a5280b81",
     "avatar": null,
     "createdAt": 1788699193050,
-    "color": "#FF6B35"
+    "color": "#FF6B35",
+    "lastActiveRoom": "CRK-U7X4"
   },
   "919999888877": {
     "phone": "919999888877",
@@ -767,7 +771,7 @@
   "919999000001": {
     "phone": "919999000001",
     "name": "Host Captain",
-    "token": "ee193dd8076abf84ec631ec3894eac22a1e7bf47c797c939a2f2254ae4445eca",
+    "token": "7652a82bf77a45443a4cfff7e79b4d705e595310ce5681789514b80b8704e4ae",
     "avatar": null,
     "createdAt": 1790067259705,
     "color": "#00E676",
@@ -776,7 +780,7 @@
   "919999000002": {
     "phone": "919999000002",
     "name": "Spectator User",
-    "token": "b59552e4e84add8220555584e9832fd5383e3b4dda4f03ff0132685e6f2df127",
+    "token": "a1315bf6824a57f1b5499ac84966670158a892a9a264b3622f0bd5c8ac0bdada",
     "avatar": null,
     "createdAt": 1790067259712,
     "color": "#FF4081",
@@ -785,11 +789,11 @@
   "919999900050": {
     "phone": "919999900050",
     "name": "Player",
-    "token": "685a8b9a56ef1aa62dac2bff4fb5e483a993f147c1af9a6e67f411d3f4128552",
+    "token": "32db8bc3ac326ee7550cf956616bf27034a9182fd232c94e57cf0f103f0c5d21",
     "avatar": null,
     "createdAt": 1790093762361,
     "color": "#FFD740",
-    "lastActiveRoom": "CRK-Y546"
+    "lastActiveRoom": "CRK-VNLJ"
   },
   "919999886269": {
     "phone": "919999886269",
@@ -843,5 +847,752 @@
     "createdAt": 1790142922444,
     "color": "#FF6B35",
     "lastActiveRoom": "CRK-BKPR"
+  },
+  "9876533476": {
+    "phone": "9876533476",
+    "name": "Player",
+    "token": "9c71b994d898fa59575c5c06e1faa40adfd1d5009d9ab51855a24969c251c9e2",
+    "avatar": null,
+    "createdAt": 1790143075763,
+    "color": "#7C4DFF"
+  },
+  "9876562481": {
+    "phone": "9876562481",
+    "name": "Player",
+    "token": "6d2055e239d62d767a49a18f1cb573dc1e162c68b32ffe65f01d542e328130e9",
+    "avatar": null,
+    "createdAt": 1790143075768,
+    "color": "#00E676"
+  },
+  "919999900999": {
+    "phone": "919999900999",
+    "name": "Player",
+    "token": "fd36b048a394becaa8539c34a10b3a3023f246085e375a8afacf38f5010d03a2",
+    "avatar": null,
+    "createdAt": 1790143077541,
+    "color": "#FF4081",
+    "lastActiveRoom": "CRK-SRPA"
+  },
+  "919999883901": {
+    "phone": "919999883901",
+    "name": "Umpire Official",
+    "token": "32348ef1aa606b7cc42f6ea3b0e45543f899bcb150d31fc6ced4bdf321605999",
+    "avatar": null,
+    "createdAt": 1790143077770,
+    "color": "#FFD740",
+    "lastActiveRoom": "CRK-ZP8L"
+  },
+  "919999900777": {
+    "phone": "919999900777",
+    "name": "Player",
+    "token": "973375dabbcaa0d018f630571f423c6b216d378efc868cf160f552f7df9cff9b",
+    "avatar": null,
+    "createdAt": 1790143079481,
+    "color": "#69F0AE",
+    "lastActiveRoom": "CRK-SZNC"
+  },
+  "9888000111": {
+    "phone": "9888000111",
+    "name": "Rohit Sharma",
+    "token": "5955544eebab4854536e2345db7449d55498404458270ede45afe21edc962cc5",
+    "avatar": null,
+    "createdAt": 1790143080030,
+    "color": "#40C4FF"
+  },
+  "9888000222": {
+    "phone": "9888000222",
+    "name": "Jasprit Bumrah",
+    "color": "#FF6E40",
+    "avatar": null,
+    "role": "All-Rounder",
+    "createdAt": 1790143080039
+  },
+  "919999900965": {
+    "phone": "919999900965",
+    "name": "Captain Rohit",
+    "token": "97dbacd1a4961cd8706250692ecc27a1fee19d36c8912228158041e7636456ce",
+    "avatar": null,
+    "createdAt": 1790143080444,
+    "color": "#EEFF41",
+    "lastActiveRoom": "CRK-BX43"
+  },
+  "919810809991": {
+    "phone": "919810809991",
+    "name": "Rohit S",
+    "token": "d822c318962c1c0ed51d7e6d1c1691ce55ab7f0f696976e758cb7e58ec349078",
+    "avatar": null,
+    "createdAt": 1790143081010,
+    "color": "#00E5FF",
+    "lastActiveRoom": "CRK-P54B"
+  },
+  "919810809992": {
+    "phone": "919810809992",
+    "name": "Bumrah J",
+    "token": "fc718bc2b65b29ddbb02c8c4f58c603c3e031bbf9f83cc53cb01bcb2664a2eef",
+    "avatar": null,
+    "createdAt": 1790143081014,
+    "color": "#FF6B35",
+    "lastActiveRoom": "CRK-P54B"
+  },
+  "919999900555": {
+    "phone": "919999900555",
+    "name": "Player",
+    "token": "8a3a64d2e80c0e589bb657931a33326ccae098563f71528d716ce0a07ca9ddac",
+    "avatar": null,
+    "createdAt": 1790143084198,
+    "color": "#7C4DFF",
+    "lastActiveRoom": "CRK-LF7S"
+  },
+  "91987657894": {
+    "phone": "91987657894",
+    "name": "Player 7894",
+    "token": "1e293130ebce6ee201d7714b2fd15667567f71764ee2704865ccde109fa7bf7c",
+    "avatar": null,
+    "createdAt": 1790143084433,
+    "color": "#00E676"
+  },
+  "9876548378": {
+    "phone": "9876548378",
+    "name": "Player",
+    "token": "8c8db939534ff3bda60d799cf9f8607de68d50f3ff4cded96e160e70bce1edda",
+    "avatar": null,
+    "createdAt": 1790143138599,
+    "color": "#FF4081"
+  },
+  "9876587003": {
+    "phone": "9876587003",
+    "name": "Player",
+    "token": "48782f2d2edb412fed1e5d483b8f25843354f48e34e0ea86542a8be068df4d6c",
+    "avatar": null,
+    "createdAt": 1790143138603,
+    "color": "#FFD740"
+  },
+  "9876533126": {
+    "phone": "9876533126",
+    "name": "Player",
+    "token": "d5a177f4abb635f68eb41c969477539f3ecd1bdb4b617adbc35042b100d65206",
+    "avatar": null,
+    "createdAt": 1790143159454,
+    "color": "#69F0AE",
+    "lastActiveRoom": "CRK-MJ7H",
+    "defaultQuietAlerts": true
+  },
+  "9876510661": {
+    "phone": "9876510661",
+    "name": "Player",
+    "token": "c1b533aeab87e8af0e977106b8e6adef643fff53da9d90f3888b394df0a9a740",
+    "avatar": null,
+    "createdAt": 1790143159457,
+    "color": "#40C4FF",
+    "lastActiveRoom": "CRK-MJ7H"
+  },
+  "919815309011": {
+    "phone": "919815309011",
+    "name": "Rohit S",
+    "token": "0e6bcc074d541ebe0aa8c69ce990bcfa5f8bff8fce630c048ad00f06b4601811",
+    "avatar": null,
+    "createdAt": 1790143530922,
+    "color": "#FF6E40"
+  },
+  "919815309012": {
+    "phone": "919815309012",
+    "name": "Bumrah J",
+    "token": "8b2e1d3db8312059415ebdcd51621592f98ab176d8b1d12dcd8d2ea653eaadef",
+    "avatar": null,
+    "createdAt": 1790143530934,
+    "color": "#EEFF41"
+  },
+  "919817170071": {
+    "phone": "919817170071",
+    "name": "Rohit S",
+    "token": "81c030de9e9ee4ad928dafd5069267923b8d4ce85b15c3288fd7e0c52618d5b3",
+    "avatar": null,
+    "createdAt": 1790143717032,
+    "color": "#00E5FF",
+    "lastActiveRoom": "CRK-JB5J"
+  },
+  "919817170072": {
+    "phone": "919817170072",
+    "name": "Bumrah J",
+    "token": "6d5a820eb59edf2f60e43547e89332dc602ad8c3cf828d065651ab4754c22118",
+    "avatar": null,
+    "createdAt": 1790143717045,
+    "color": "#FF6B35",
+    "lastActiveRoom": "CRK-JB5J"
+  },
+  "9876583100": {
+    "phone": "9876583100",
+    "name": "Player",
+    "token": "ee475ccb89af6bc604c6b294f2bc5d998307dbbb3520908be393d5adad975aa3",
+    "avatar": null,
+    "createdAt": 1790143889654,
+    "color": "#7C4DFF",
+    "lastActiveRoom": "CRK-ZQ4Q",
+    "defaultQuietAlerts": true
+  },
+  "9876538747": {
+    "phone": "9876538747",
+    "name": "Player",
+    "token": "8cbf2e0a40ca1512383e4526d7c363b49ddf46cf45ccdfb35ad616e621825992",
+    "avatar": null,
+    "createdAt": 1790143889658,
+    "color": "#00E676",
+    "lastActiveRoom": "CRK-ZQ4Q"
+  },
+  "919999887770": {
+    "phone": "919999887770",
+    "name": "Umpire Official",
+    "token": "ff0afc29d69ee908c1f64b2b750987c99a3afe654d8dc384287466fa00e5a7d2",
+    "avatar": null,
+    "createdAt": 1790143894151,
+    "color": "#FF4081",
+    "lastActiveRoom": "CRK-HQD6"
+  },
+  "919999900693": {
+    "phone": "919999900693",
+    "name": "Captain Rohit",
+    "token": "6f5a6fef7edb2b68f03313c1253f6fc72dcf90ca489256909ca84aaf91eaebc3",
+    "avatar": null,
+    "createdAt": 1790143897311,
+    "color": "#FFD740",
+    "lastActiveRoom": "CRK-X8MA"
+  },
+  "919818978621": {
+    "phone": "919818978621",
+    "name": "Rohit S",
+    "token": "51f2e9c2ea40839979cd86f4a2d4854519ede374df0c6f272bdf8ff51b2765f2",
+    "avatar": null,
+    "createdAt": 1790143897872,
+    "color": "#69F0AE",
+    "lastActiveRoom": "CRK-CLX2"
+  },
+  "919818978622": {
+    "phone": "919818978622",
+    "name": "Bumrah J",
+    "token": "42cef5b490b2fe71c5d83ddee6447479ed0273db01262c011e6b6195d973c329",
+    "avatar": null,
+    "createdAt": 1790143897881,
+    "color": "#40C4FF",
+    "lastActiveRoom": "CRK-CLX2"
+  },
+  "91987654408": {
+    "phone": "91987654408",
+    "name": "Player 4408",
+    "token": "85da0beb8390955ea4c5808442a659e1980a1e75418fca466e744a2e65f8e4c0",
+    "avatar": null,
+    "createdAt": 1790143901359,
+    "color": "#FF6E40"
+  },
+  "919876500111": {
+    "phone": "919876500111",
+    "name": "Player",
+    "token": "722984e3f281b2a4f754e02e769a2f5c6c2ddb580ddfa008efa38e3c326e052d",
+    "avatar": null,
+    "createdAt": 1790143902225,
+    "color": "#EEFF41",
+    "lastActiveRoom": "CRK-F3J9"
+  },
+  "91981065521": {
+    "phone": "91981065521",
+    "name": "Alice Captain",
+    "token": "a3a61c179eea58875cac6af4e6b29656a3a642884090c697f09a7f98ab7957c7",
+    "avatar": null,
+    "createdAt": 1790143906563,
+    "color": "#00E5FF",
+    "lastActiveRoom": "CRK-UU4E"
+  },
+  "91981065522": {
+    "phone": "91981065522",
+    "name": "Bob Batsman",
+    "token": "36ec479de17effa808a4479cd1e07a9a57f2224d86a848a19bc038d9626a0b65",
+    "avatar": null,
+    "createdAt": 1790143906566,
+    "color": "#FF6B35",
+    "lastActiveRoom": "CRK-UU4E"
+  },
+  "91981065523": {
+    "phone": "91981065523",
+    "name": "Charlie Outsider",
+    "token": "71e9de98511c55c5906e1ef8b6601901d47b89715230aec2e76e8cb3ccd62e6e",
+    "avatar": null,
+    "createdAt": 1790143906568,
+    "color": "#7C4DFF"
+  },
+  "91981065524": {
+    "phone": "91981065524",
+    "name": "David Bowler",
+    "color": "#00E676",
+    "avatar": null,
+    "role": "All-Rounder",
+    "createdAt": 1790143906574
+  },
+  "919829088501": {
+    "phone": "919829088501",
+    "name": "Virat K",
+    "token": "95a1ceeb36621c8cebe5ce40a76bfe6dd61465b3e7eec593afcc02d0d030c0d9",
+    "avatar": null,
+    "createdAt": 1790143908852,
+    "color": "#FF4081",
+    "lastActiveRoom": "CRK-WYXD"
+  },
+  "919829088502": {
+    "phone": "919829088502",
+    "name": "Hardik P",
+    "token": "1f16039a167a0dc97dd02359460accfa4603524b4cc690e161ac60e3f14419cd",
+    "avatar": null,
+    "createdAt": 1790143908858,
+    "color": "#FFD740"
+  },
+  "9876532251": {
+    "phone": "9876532251",
+    "name": "Player",
+    "token": "702bb184cab979b9e8931a2f22da576474496960a5e8f6b7f3add6d94b22b6c7",
+    "avatar": null,
+    "createdAt": 1790143911848,
+    "color": "#69F0AE"
+  },
+  "9876573147": {
+    "phone": "9876573147",
+    "name": "Player",
+    "token": "657cbd1c3eb18cab54d3a44ac5439b38d3a49d3e51b323f693b0821c031b1cc4",
+    "avatar": null,
+    "createdAt": 1790143911851,
+    "color": "#40C4FF"
+  },
+  "919999911111": {
+    "phone": "919999911111",
+    "name": "Player",
+    "token": "cc59dc96cfa81051873a6b1b16bdcf49c61fa8c345b32b6911606a975356f2eb",
+    "avatar": null,
+    "createdAt": 1790143912228,
+    "color": "#FF6E40",
+    "lastActiveRoom": "CRK-SU4L"
+  },
+  "919999922222": {
+    "phone": "919999922222",
+    "name": "Player",
+    "token": "a79aa758ab3ab0a2a95230fc6caf7428f9bb6bd6e3db0b16b538d2d60f503365",
+    "avatar": null,
+    "createdAt": 1790143912230,
+    "color": "#EEFF41",
+    "lastActiveRoom": "CRK-SU4L"
+  },
+  "919999900666": {
+    "phone": "919999900666",
+    "name": "Player",
+    "token": "171d244d27b25a539445f3570e36fb00511aa99edccc87d2adeb2c687e6ee983",
+    "avatar": null,
+    "createdAt": 1790143913412,
+    "color": "#00E5FF",
+    "lastActiveRoom": "CRK-N4UW"
+  },
+  "919822455871": {
+    "phone": "919822455871",
+    "name": "Virat K",
+    "token": "bb5f2129903eb5dd5fff1480df483235f7a951877117fdf7d01ce01c703aa45d",
+    "avatar": null,
+    "createdAt": 1790144245590,
+    "color": "#FF6B35",
+    "lastActiveRoom": "CRK-H3P3"
+  },
+  "919822455872": {
+    "phone": "919822455872",
+    "name": "Hardik P",
+    "token": "bddbfca67d82531ee248ae63fc2f381249ce707b22c16d8e6a4052595328dcf6",
+    "avatar": null,
+    "createdAt": 1790144245594,
+    "color": "#7C4DFF"
+  },
+  "9876524822": {
+    "phone": "9876524822",
+    "name": "Player",
+    "token": "bd3b75feebdefabb9b4602ff44ca49d1ec414924d042557c919a8f2df3b1be76",
+    "avatar": null,
+    "createdAt": 1790144289224,
+    "color": "#00E676",
+    "lastActiveRoom": "CRK-ZUXC",
+    "defaultQuietAlerts": false
+  },
+  "9876564220": {
+    "phone": "9876564220",
+    "name": "Player",
+    "token": "8c491df459e4fd4179f902bb5c34b15d191d64882bbed72779706f85dba0121e",
+    "avatar": null,
+    "createdAt": 1790144289228,
+    "color": "#FF4081",
+    "lastActiveRoom": "CRK-ZUXC"
+  },
+  "91987843103": {
+    "phone": "91987843103",
+    "name": "Shubman Gill",
+    "token": "96b80feb400f951278f439b70d28aaa5a4d161533857c7e9fdbd5720af32bc16",
+    "avatar": null,
+    "createdAt": 1790144843129,
+    "color": "#FFD740"
+  },
+  "91984884575": {
+    "phone": "91984884575",
+    "name": "Fresh User",
+    "token": "b1c155be7865608303bfd59bc653dcb153d2814f0a4993f340e1fde3b9eadaca",
+    "avatar": null,
+    "createdAt": 1790144886714,
+    "color": "#69F0AE"
+  },
+  "919999900333": {
+    "phone": "919999900333",
+    "name": "Player",
+    "token": "d200d0329ce17ab2b15b67f4272638f34e18162c1334488c1fd59fe88418b619",
+    "avatar": null,
+    "createdAt": 1790145023824,
+    "color": "#40C4FF",
+    "lastActiveRoom": "CRK-N3Q6"
+  },
+  "919999900010": {
+    "phone": "919999900010",
+    "name": "Player",
+    "token": "1a49bfae4d6a3473bf59fe3692f61766d7134e7f9f8bf420ad82c2f6f552c0a8",
+    "avatar": null,
+    "createdAt": 1790145034741,
+    "color": "#FF6E40",
+    "lastActiveRoom": "CRK-Y5N9"
+  },
+  "919999900888": {
+    "phone": "919999900888",
+    "name": "Player",
+    "token": "afc1b619d09fa164b78835030fe47abb8820b654e6f9ff04af1a68f1957867bc",
+    "avatar": null,
+    "createdAt": 1790228821025,
+    "color": "#EEFF41",
+    "lastActiveRoom": "CRK-7S2Q"
+  },
+  "9876562440": {
+    "phone": "9876562440",
+    "name": "Player",
+    "token": "b899e744115d7c3e31e6c13e300a454ca6a8153abf10cd28ce9377a76d4a32ff",
+    "avatar": null,
+    "createdAt": 1790228845769,
+    "color": "#00E5FF",
+    "lastActiveRoom": "CRK-ZG7A",
+    "defaultQuietAlerts": true
+  },
+  "9876543599": {
+    "phone": "9876543599",
+    "name": "Player",
+    "token": "186aa7126cc327dd438bcdda8a517b4e136c7cc1846e47ec04e889c0eee1b3fe",
+    "avatar": null,
+    "createdAt": 1790228845782,
+    "color": "#FF6B35",
+    "lastActiveRoom": "CRK-ZG7A"
+  },
+  "919999884707": {
+    "phone": "919999884707",
+    "name": "Umpire Official",
+    "token": "1d05bb03ecdadb574be3a093d7db4b2c30288cdd23a8026083c08bbd2bc5de3c",
+    "avatar": null,
+    "createdAt": 1790228850783,
+    "color": "#7C4DFF",
+    "lastActiveRoom": "CRK-E74L"
+  },
+  "919999900256": {
+    "phone": "919999900256",
+    "name": "Captain Rohit",
+    "token": "21d7ec4e229a5ba01214acde0aa41d7bb70841de679cb36840f95ab14a891a5e",
+    "avatar": null,
+    "createdAt": 1790228854150,
+    "color": "#00E676",
+    "lastActiveRoom": "CRK-473S"
+  },
+  "919818547241": {
+    "phone": "919818547241",
+    "name": "Rohit S",
+    "token": "f54ab9b61c2b6657c282a2e7b027dc2be4d6768bceb9b1b288fafa41ef7a7e85",
+    "avatar": null,
+    "createdAt": 1790228854735,
+    "color": "#FF4081",
+    "lastActiveRoom": "CRK-5P7Y"
+  },
+  "919818547242": {
+    "phone": "919818547242",
+    "name": "Bumrah J",
+    "token": "6b39fbe96fb9b0cff14f9e3fa2e5c6a61e2f73082d98b9370bd4653118da917f",
+    "avatar": null,
+    "createdAt": 1790228854739,
+    "color": "#FFD740",
+    "lastActiveRoom": "CRK-5P7Y"
+  },
+  "91987658169": {
+    "phone": "91987658169",
+    "name": "Player 8169",
+    "token": "7d7ba539ad6f6930265529de4ce758893a406318549a01799540c1b329edc9fa",
+    "avatar": null,
+    "createdAt": 1790228858380,
+    "color": "#69F0AE"
+  },
+  "91981640901": {
+    "phone": "91981640901",
+    "name": "Alice Captain",
+    "token": "0f9ffb183614678915496d3d80395a3185170a0780c3b786ec5ab0891aabe150",
+    "avatar": null,
+    "createdAt": 1790228864101,
+    "color": "#40C4FF"
+  },
+  "91981640902": {
+    "phone": "91981640902",
+    "name": "Bob Batsman",
+    "token": "41c799c35a1c0140f95cbfa4c0024c74fd1a728b0a151c99fbe6f8da795c9e14",
+    "avatar": null,
+    "createdAt": 1790228864104,
+    "color": "#FF6E40"
+  },
+  "91981640903": {
+    "phone": "91981640903",
+    "name": "Charlie Outsider",
+    "token": "3f987150b5008fbd2f02d22d831214c40b268269d8303fb4c6bb76acf18351d5",
+    "avatar": null,
+    "createdAt": 1790228864107,
+    "color": "#EEFF41"
+  },
+  "91981640904": {
+    "phone": "91981640904",
+    "name": "David Bowler",
+    "color": "#00E5FF",
+    "avatar": null,
+    "role": "All-Rounder",
+    "createdAt": 1790228864112
+  },
+  "919828648631": {
+    "phone": "919828648631",
+    "name": "Virat K",
+    "token": "abd8c69cd5b4366931cd3df035b7a1b387245f8b13f5c60fbc1e2bab5389ab7f",
+    "avatar": null,
+    "createdAt": 1790228864872,
+    "color": "#FF6B35",
+    "lastActiveRoom": "CRK-3CMJ"
+  },
+  "919828648632": {
+    "phone": "919828648632",
+    "name": "Hardik P",
+    "token": "d4e6308e1e13ce3d445141d3ccb31dfaa9a86c1c06ea03bbfa85c83dab2e0578",
+    "avatar": null,
+    "createdAt": 1790228864881,
+    "color": "#7C4DFF"
+  },
+  "9876565754": {
+    "phone": "9876565754",
+    "name": "Player",
+    "token": "e7dded0c75faddc527e806fc85bd5ef0e327efa9fe65e1045cafb67af5cf5a78",
+    "avatar": null,
+    "createdAt": 1790228868020,
+    "color": "#00E676",
+    "lastActiveRoom": "CRK-DMWG",
+    "defaultQuietAlerts": false
+  },
+  "9876519705": {
+    "phone": "9876519705",
+    "name": "Player",
+    "token": "bba0febff0dc9ce41cdba8fbdd36ccbcc9a333721843fb9164568aac06351179",
+    "avatar": null,
+    "createdAt": 1790228868023,
+    "color": "#FF4081",
+    "lastActiveRoom": "CRK-DMWG"
+  },
+  "91987868318": {
+    "phone": "91987868318",
+    "name": "Shubman Gill",
+    "token": "e8a1eb262b7edb5f6dcfbdbb49dbc3081ac11729d19fced0a3631ad1aa9bb6cc",
+    "avatar": null,
+    "createdAt": 1790228868330,
+    "color": "#FFD740"
+  },
+  "91984914242": {
+    "phone": "91984914242",
+    "name": "Fresh User",
+    "token": "82aa40b21499d626193cb5700d9c324ec3cd66c9f245299534ca119311235b11",
+    "avatar": null,
+    "createdAt": 1790228916375,
+    "color": "#69F0AE"
+  },
+  "91981018821": {
+    "phone": "91981018821",
+    "name": "Alice Captain",
+    "token": "6d940407aa57be93199eea9364e5f3d554160a913b6cff0b8de181651733f131",
+    "avatar": null,
+    "createdAt": 1790229201935,
+    "color": "#40C4FF",
+    "lastActiveRoom": "CRK-CLUL"
+  },
+  "91981018822": {
+    "phone": "91981018822",
+    "name": "Bob Batsman",
+    "token": "4d17ad23f5b2d5bb175327655acba182f7a0d9fda4df8c30f8a76453790730d0",
+    "avatar": null,
+    "createdAt": 1790229201942,
+    "color": "#FF6E40",
+    "lastActiveRoom": "CRK-CLUL"
+  },
+  "91981018823": {
+    "phone": "91981018823",
+    "name": "Charlie Outsider",
+    "token": "3b588fa5cd8191c88d5fa2bceec6c131681c90ea22e967c18ef690e6ea843e34",
+    "avatar": null,
+    "createdAt": 1790229201947,
+    "color": "#EEFF41"
+  },
+  "91981018824": {
+    "phone": "91981018824",
+    "name": "David Bowler",
+    "color": "#00E5FF",
+    "avatar": null,
+    "role": "All-Rounder",
+    "createdAt": 1790229201965
+  },
+  "9876571868": {
+    "phone": "9876571868",
+    "name": "Player",
+    "token": "3d583a5c8a0cce5c67fb516334d158f714eb640934a1abc63f0013ebc861681c",
+    "avatar": null,
+    "createdAt": 1790229575002,
+    "color": "#FF6B35",
+    "lastActiveRoom": "CRK-Q5CX",
+    "defaultQuietAlerts": true
+  },
+  "9876563483": {
+    "phone": "9876563483",
+    "name": "Player",
+    "token": "e479e3ca6e75316fe633cd247674a15b52af317ce409238b422916603b4fba71",
+    "avatar": null,
+    "createdAt": 1790229575009,
+    "color": "#7C4DFF",
+    "lastActiveRoom": "CRK-Q5CX"
+  },
+  "919999886378": {
+    "phone": "919999886378",
+    "name": "Umpire Official",
+    "token": "9228972f26ad69a875816f6c00b5cb5cbc1fc04114d6d352bb60ecadac0c4ee3",
+    "avatar": null,
+    "createdAt": 1790229580011,
+    "color": "#00E676",
+    "lastActiveRoom": "CRK-JZ2S"
+  },
+  "919999900134": {
+    "phone": "919999900134",
+    "name": "Captain Rohit",
+    "token": "f06d7f77aa749f80a834393eaa6a917349e218c6b11320f98e6c2081edb08c83",
+    "avatar": null,
+    "createdAt": 1790229583847,
+    "color": "#FF4081",
+    "lastActiveRoom": "CRK-SXUA"
+  },
+  "919815844811": {
+    "phone": "919815844811",
+    "name": "Rohit S",
+    "token": "e36d3bbc967e3529910e173b13b42dd165a8227e94be842112a8e3427fb655dd",
+    "avatar": null,
+    "createdAt": 1790229584494,
+    "color": "#FFD740",
+    "lastActiveRoom": "CRK-39N7"
+  },
+  "919815844812": {
+    "phone": "919815844812",
+    "name": "Bumrah J",
+    "token": "e94a959a43fa4b9a547fcab1e742441f078a5616fd935c035d4c0a031d52d15a",
+    "avatar": null,
+    "createdAt": 1790229584498,
+    "color": "#69F0AE",
+    "lastActiveRoom": "CRK-39N7"
+  },
+  "91987658263": {
+    "phone": "91987658263",
+    "name": "Player 8263",
+    "token": "26fc0370a7f1d20942188f13ab10c2f231681eadbeab4802a8853884a0325b8e",
+    "avatar": null,
+    "createdAt": 1790229588552,
+    "color": "#40C4FF"
+  },
+  "91981949721": {
+    "phone": "91981949721",
+    "name": "Alice Captain",
+    "token": "ad6a24fee73c80197785d2e7019b7a08599fa76e23cc861be510e9e29310f01e",
+    "avatar": null,
+    "createdAt": 1790229594983,
+    "color": "#FF6E40",
+    "lastActiveRoom": "CRK-CVQ3"
+  },
+  "91981949722": {
+    "phone": "91981949722",
+    "name": "Bob Batsman",
+    "token": "b332b4b9ed9344168cfe45f99d44f798c726e3ddf935dfb3894b6ce576743800",
+    "avatar": null,
+    "createdAt": 1790229594986,
+    "color": "#EEFF41",
+    "lastActiveRoom": "CRK-CVQ3"
+  },
+  "91981949723": {
+    "phone": "91981949723",
+    "name": "Charlie Outsider",
+    "token": "2ef8730b05808621e50f341b387208fc033aefa8cf2c315424e4a4c458739ab6",
+    "avatar": null,
+    "createdAt": 1790229594991,
+    "color": "#00E5FF"
+  },
+  "91981949724": {
+    "phone": "91981949724",
+    "name": "David Bowler",
+    "color": "#FF6B35",
+    "avatar": null,
+    "role": "All-Rounder",
+    "createdAt": 1790229595000
+  },
+  "919825975881": {
+    "phone": "919825975881",
+    "name": "Virat K",
+    "token": "dce3ba98a64d10ab768a08286687f61bfb3710c08762c5179478b0987cfb59ac",
+    "avatar": null,
+    "createdAt": 1790229597591,
+    "color": "#7C4DFF",
+    "lastActiveRoom": "CRK-XJDP"
+  },
+  "919825975882": {
+    "phone": "919825975882",
+    "name": "Hardik P",
+    "token": "d5a2d32b2217bfcd1434676cd56b7d1f9449ee83dee5abf7fb235564fbc76e2b",
+    "avatar": null,
+    "createdAt": 1790229597595,
+    "color": "#00E676"
+  },
+  "9876585234": {
+    "phone": "9876585234",
+    "name": "Player",
+    "token": "f2eb72239511caec7c856e927de6e5937d8d86fa592a7315f77efa74c6582ed6",
+    "avatar": null,
+    "createdAt": 1790229600893,
+    "color": "#FF4081",
+    "lastActiveRoom": "CRK-694K",
+    "defaultQuietAlerts": false
+  },
+  "9876593895": {
+    "phone": "9876593895",
+    "name": "Player",
+    "token": "55c1da926b1a3287756221de56386ca1712cf863bd7813209827564ce5f2c3bc",
+    "avatar": null,
+    "createdAt": 1790229600896,
+    "color": "#FFD740",
+    "lastActiveRoom": "CRK-694K"
+  },
+  "91987601103": {
+    "phone": "91987601103",
+    "name": "Shubman Gill",
+    "token": "a5d0838fbc0070ced5d7f592359b322f0bdf7a266b2e9539e11c9fe99aed649b",
+    "avatar": null,
+    "createdAt": 1790229601115,
+    "color": "#69F0AE"
+  },
+  "91984602350": {
+    "phone": "91984602350",
+    "name": "Fresh User",
+    "token": "214628dc26689408cfad628f0ce535cb3c1fbce77d2cfcd28500a074f44159c2",
+    "avatar": null,
+    "createdAt": 1790229604487,
+    "color": "#40C4FF"
   }
 }

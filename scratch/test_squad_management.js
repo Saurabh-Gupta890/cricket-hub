@@ -84,7 +84,7 @@ async function testSquadPersistenceAndManagement() {
   });
 
   socket.emit('room:create', {
-    matchName: 'Chinnaswamy Clash',
+    matchName: 'Chinnaswamy Clash ' + Date.now(),
     creatorName: captainName,
     creatorPhone: captainPhone
   });
@@ -126,6 +126,7 @@ async function testSquadPersistenceAndManagement() {
 
   socket.disconnect();
   console.log('\n🎉 ALL SQUAD PERSISTENCE & ADD/REMOVE TESTS PASSED PERFECTLY!\n');
+  process.exit(0);
 }
 
 testSquadPersistenceAndManagement()

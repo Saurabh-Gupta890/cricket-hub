@@ -58,9 +58,9 @@ async function testAlertDelivery() {
 
   // Create match room
   const roomRes = await new Promise(resolve => {
-    hostSocket.emit('room:create', { token: hostToken, matchName: 'Alert Test Cup' }, resolve);
+    hostSocket.emit('room:create', { token: hostToken, matchName: 'Alert Test Cup ' + Date.now() }, resolve);
   });
-  const roomCode = roomRes.room.code;
+  const roomCode = roomRes?.room?.code || roomRes?.existingRoomCode;
   console.log(`✅ Room created: ${roomCode}`);
 
   // User joins room

@@ -95,25 +95,22 @@ async function runTest() {
 
   // 3. Create a real match room with Player A and Player B
   console.log('\n--- Step 3: Play a Match with explicit scoring ---');
-  const sockA = io('http://localhost:3000', { transports: ['websocket'] });
-  const sockB = io('http://localhost:3000', { transports: ['websocket'] });
+  const sockA = io('http://localhost:3000', { transports: ['websocket'], forceNew: true, auth: { token: userA.token } });
+  const sockB = io('http://localhost:3000', { transports: ['websocket'], forceNew: true, auth: { token: userB.token } });
 
   await new Promise(r => sockA.on('connect', r));
   await new Promise(r => sockB.on('connect', r));
 
-  sockA.emit('user:register', { token: userA.token });
-  sockB.emit('user:register', { token: userB.token });
-
   // Create room
   const roomData = await new Promise(resolve => {
-    sockA.emit('room:create', { token: userA.token, matchName: 'Stats Accuracy Test Match' }, resolve);
+    sockA.emit('room:create', { token: userA.token, matchName: 'Stats Accuracy Test Match ' + Date.now() }, resolve);
   });
-  const roomCode = roomData.room ? roomData.room.code : roomData.code;
+  const roomCode = roomData?.room?.code || roomData?.code || roomData?.existingRoomCode;
   console.log('Created room:', roomCode);
 
   // Join room
   await new Promise(resolve => {
-    sockB.emit('room:join', { code: roomCode, token: userB.token }, resolve);
+    sockB.emit('room:join', { token: userB.token, code: roomCode }, resolve);
   });
 
   // Setup teams and start match
@@ -151,6 +148,10 @@ async function runTest() {
 
   // Ball 4: Wicket bowled by Bumrah J (striker now NonStriker 1)
   sockA.emit('score:ball', { inningsIdx: 0, runs: 0, extras: null, wicket: true, dismissal: 'bowled' });
+  await new Promise(r => setTimeout(r, 200));
+
+  // Select next batsman to unblock scoring after wicket
+  sockA.emit('score:nextBatsman', { inningsIdx: 0, batsmanName: 'NonStriker 2' });
   await new Promise(r => setTimeout(r, 200));
 
   // Ball 5: 2 runs

@@ -80,7 +80,7 @@ async function runTest() {
   await new Promise((resolve, reject) => {
     socketA.emit('room:create', {
       token: tokenA,
-      matchName: 'Mumbai Derby 2026',
+      matchName: 'Mumbai Derby 2026 ' + Date.now(),
       overs: 20
     }, (res) => {
       if (!res.success) return reject(new Error(res.error));
@@ -163,6 +163,7 @@ async function runTest() {
   console.log('\n═══════════════════════════════════════════════════════════════════');
   console.log('🎉 ALL DIRECT PING & "JUST VIEW" PLANNING TESTS PASSED 100%');
   console.log('═══════════════════════════════════════════════════════════════════\n');
+  process.exit(0);
 }
 
 runTest().catch((err) => {

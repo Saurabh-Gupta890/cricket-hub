@@ -92,9 +92,9 @@ async function runTest() {
 
   // Phone creates room
   const roomRes = await new Promise((resolve) => {
-    phoneSocket.emit('room:create', { token: phoneToken, matchName: 'Wankhede T20 Derby', creatorPhone: hostPhone }, resolve);
+    phoneSocket.emit('room:create', { token: phoneToken, matchName: 'Wankhede T20 Derby ' + Date.now(), creatorPhone: hostPhone }, resolve);
   });
-  const roomCode = roomRes.room.code;
+  const roomCode = roomRes?.room?.code || roomRes?.existingRoomCode;
   console.log(`✅ Room Created on Phone: ${roomCode}`);
 
   // Phone puts status as 'coming'

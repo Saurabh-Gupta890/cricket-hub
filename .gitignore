@@ -10,6 +10,7 @@ node_modules/
 !.env.example
 
 # Runtime Data Sandboxes, Logs & Backups
+data/matches/
 data-staging/
 data-staging-test/
 data-recovery-sandbox/
